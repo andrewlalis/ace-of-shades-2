@@ -13,6 +13,7 @@ public class ChunkRenderer {
 	private final int projectionTransformUniform;
 	private final int viewTransformUniform;
 	private final int normalTransformUniform;
+	private final int chunkPositionUniform;
 
 	private final Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
 
@@ -27,6 +28,7 @@ public class ChunkRenderer {
 		this.projectionTransformUniform = shaderProgram.getUniform("projectionTransform");
 		this.viewTransformUniform = shaderProgram.getUniform("viewTransform");
 		this.normalTransformUniform = shaderProgram.getUniform("normalTransform");
+		this.chunkPositionUniform = shaderProgram.getUniform("chunkPosition");
 
 		// Preemptively load projection transform, which doesn't change much.
 		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
@@ -42,7 +44,11 @@ public class ChunkRenderer {
 		glUniformMatrix3fv(normalTransformUniform, false, normalTransform.get(new float[9]));
 		shaderProgram.use();
 
-		for (var mesh : chunkMeshes) mesh.draw();
+		for (var mesh : chunkMeshes) {
+			// For each chunk, specify its position so that the shaders can draw it offset.
+			glUniform3iv(chunkPositionUniform, mesh.getPositionData());
+			mesh.draw();
+		}
 	}
 
 	public void free() {

@@ -18,24 +18,30 @@ public class Aos2Client {
 	public static void main(String[] args) {
 		long windowHandle = initUI();
 
-		Chunk chunk = Chunk.random(new Vector3i(0, 0, 0), new Random(1));
 		Camera cam = new Camera();
 		glfwSetCursorPosCallback(windowHandle, cam);
 
+		Chunk chunk = Chunk.random(new Vector3i(0, 0, 0), new Random(1));
 		for (int i = 0; i < 16; i++) {
 			chunk.setBlockAt(i, 0, 0, (byte) 8);
 			chunk.setBlockAt(0, i, 0, (byte) 40);
 			chunk.setBlockAt(0, 0, i, (byte) 120);
 		}
-		chunk.setBlockAt(0, 15, 0, (byte) 0);
-		chunk.setBlockAt(1, 15, 0, (byte) 0);
-		chunk.setBlockAt(2, 15, 0, (byte) 0);
-		chunk.setBlockAt(2, 15, 1, (byte) 0);
-		chunk.setBlockAt(0, 0, 0, (byte) 0);
+//		chunk.setBlockAt(0, 15, 0, (byte) 0);
+//		chunk.setBlockAt(1, 15, 0, (byte) 0);
+//		chunk.setBlockAt(2, 15, 0, (byte) 0);
+//		chunk.setBlockAt(2, 15, 1, (byte) 0);
+//		chunk.setBlockAt(0, 0, 0, (byte) 0);
+		Chunk chunk2 = Chunk.random(new Vector3i(1, 0, 0), new Random(1));
+		Chunk chunk3 = Chunk.random(new Vector3i(1, 0, 1), new Random(1));
+		Chunk chunk4 = Chunk.random(new Vector3i(0, 0, 1), new Random(1));
 
 		ChunkRenderer chunkRenderer = new ChunkRenderer();
-		ChunkMesh mesh = new ChunkMesh(chunk);
-		chunkRenderer.addChunkMesh(mesh);
+
+		chunkRenderer.addChunkMesh(new ChunkMesh(chunk2));
+		chunkRenderer.addChunkMesh(new ChunkMesh(chunk3));
+		chunkRenderer.addChunkMesh(new ChunkMesh(chunk4));
+		chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
 
 		while (!glfwWindowShouldClose(windowHandle)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

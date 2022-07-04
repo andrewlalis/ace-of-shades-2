@@ -3,7 +3,6 @@ package nl.andrewl.aos_core.model;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -30,6 +29,10 @@ public class Chunk {
 	public Chunk(Chunk other) {
 		this(other.position);
 		System.arraycopy(other.blocks, 0, this.blocks, 0, TOTAL_SIZE);
+	}
+
+	public Vector3i getPosition() {
+		return position;
 	}
 
 	public byte getBlockAt(int x, int y, int z) {

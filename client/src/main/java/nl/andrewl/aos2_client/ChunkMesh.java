@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client;
 import nl.andrewl.aos_core.Pair;
 import nl.andrewl.aos_core.model.Chunk;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +11,20 @@ import java.util.stream.Stream;
 
 import static org.lwjgl.opengl.GL46.*;
 
+/**
+ * Represents a 3d mesh for a chunk.
+ */
 public class ChunkMesh {
 	private final int vboId;
 	private final int vaoId;
 	private final int eboId;
 
-	private final int indiciesCount;
+	private int indiciesCount;
+
+	private final int[] positionData;
 
 	public ChunkMesh(Chunk chunk) {
+		this.positionData = new int[]{chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z};
 		this.vboId = glGenBuffers();
 		this.vaoId = glGenVertexArrays();
 		this.eboId = glGenBuffers();
@@ -146,6 +153,10 @@ public class ChunkMesh {
 		System.out.printf("Generated chunk mesh: %d vertices, %d indexes%n", vertexList.size(), indexData.length);
 
 		return new Pair<>(vertexData, indexData);
+	}
+
+	public int[] getPositionData() {
+		return positionData;
 	}
 
 	public void draw() {
