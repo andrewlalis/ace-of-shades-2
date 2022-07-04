@@ -13,12 +13,13 @@ import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.MemoryUtil;
 
 import java.io.IOException;
+import java.util.Random;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Aos2Client {
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		System.out.println("LWJGL Version: " + Version.getVersion());
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW");
@@ -34,7 +35,7 @@ public class Aos2Client {
 			}
 		});
 
-		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 		glfwSetWindowPos(windowHandle, 50, 50);
@@ -51,10 +52,15 @@ public class Aos2Client {
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
 
-		Chunk chunk = Chunk.of((byte) 64);
+		Chunk chunk = Chunk.random(new Random(1));
+		Camera cam = new Camera();
+		cam.setPosition(0, 3, 0);
+		float angle = 0;
+		chunk.setBlockAt(0, 15, 0, (byte) 0);
+		chunk.setBlockAt(1, 15, 0, (byte) 0);
+		chunk.setBlockAt(2, 15, 0, (byte) 0);
+		chunk.setBlockAt(2, 15, 1, (byte) 0);
 		Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
-		Matrix4f viewTransform = new Matrix4f()
-				.lookAt(new Vector3f(-5, 50, -10), new Vector3f(8, 0, 8), new Vector3f(0, 1, 0));
 		ChunkMesh mesh = new ChunkMesh(chunk);
 
 		int shaderProgram = createShaderProgram();
@@ -66,12 +72,15 @@ public class Aos2Client {
 		while (!glfwWindowShouldClose(windowHandle)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glUniformMatrix4fv(viewTransformUniform, false, viewTransform.get(new float[16]));
+			glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
 
 			mesh.draw();
 
 			glfwSwapBuffers(windowHandle);
 			glfwPollEvents();
+			angle += Math.PI / 48;
+			Thread.sleep(40);
+			cam.setOrientation((float) (Math.PI), 0);
 		}
 
 		Callbacks.glfwFreeCallbacks(windowHandle);
