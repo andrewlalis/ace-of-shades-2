@@ -7,7 +7,7 @@ in vec3 vertexNormal;
 out vec4 fragmentColor;
 
 void main() {
-    vec3 lightDirection = vec3(0.0, -1.0, -0.5);// TODO: Add this via a uniform.
+    vec3 lightDirection = normalize(vec3(0.1, -1.0, -0.5));// TODO: Add this via a uniform.
     vec3 lightColor = vec3(1.0, 1.0, 0.9); // TODO: Add this via a uniform.
 
     vec3 ambientComponent = vec3(0.1, 0.1, 0.1);

@@ -2,6 +2,7 @@ package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.model.Chunk;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
@@ -35,7 +36,7 @@ public class Aos2Client {
 			}
 		});
 
-//		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 		glfwSetWindowPos(windowHandle, 50, 50);
@@ -54,33 +55,53 @@ public class Aos2Client {
 
 		Chunk chunk = Chunk.random(new Random(1));
 		Camera cam = new Camera();
-		cam.setPosition(0, 3, 0);
-		float angle = 0;
+		glfwSetCursorPosCallback(windowHandle, cam);
+
+		for (int i = 0; i < 16; i++) {
+			chunk.setBlockAt(i, 0, 0, (byte) 8);
+			chunk.setBlockAt(0, i, 0, (byte) 40);
+			chunk.setBlockAt(0, 0, i, (byte) 120);
+		}
 		chunk.setBlockAt(0, 15, 0, (byte) 0);
 		chunk.setBlockAt(1, 15, 0, (byte) 0);
 		chunk.setBlockAt(2, 15, 0, (byte) 0);
 		chunk.setBlockAt(2, 15, 1, (byte) 0);
+		chunk.setBlockAt(0, 0, 0, (byte) 0);
 		Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
 		ChunkMesh mesh = new ChunkMesh(chunk);
 
 		int shaderProgram = createShaderProgram();
 		int projectionTransformUniform = glGetUniformLocation(shaderProgram, "projectionTransform");
 		int viewTransformUniform = glGetUniformLocation(shaderProgram, "viewTransform");
+		int normalTransformUniform = glGetUniformLocation(shaderProgram, "normalTransform");
 
 		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
 
+		long t = 0;
 		while (!glfwWindowShouldClose(windowHandle)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
+			Matrix3f normalTransform = new Matrix3f();
+			glUniformMatrix3fv(normalTransformUniform, false, normalTransform.get(new float[9]));
 
 			mesh.draw();
 
 			glfwSwapBuffers(windowHandle);
 			glfwPollEvents();
-			angle += Math.PI / 48;
-			Thread.sleep(40);
-			cam.setOrientation((float) (Math.PI), 0);
+//			float n = (float) (8 * Math.sin(Math.toRadians(t)) + 8);
+//			cam.setPosition(n, -1, n);
+//			cam.setOrientationDegrees(0, 0);
+//			Thread.sleep(20);
+//			t++;
+//			if (t >= 360) t = 0;
+
+			if (glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS) cam.move(Camera.FORWARD);
+			if (glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS) cam.move(Camera.BACKWARD);
+			if (glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS) cam.move(Camera.LEFT);
+			if (glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS) cam.move(Camera.RIGHT);
+			if (glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS) cam.move(Camera.UP);
+			if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cam.move(Camera.DOWN);
 		}
 
 		Callbacks.glfwFreeCallbacks(windowHandle);
