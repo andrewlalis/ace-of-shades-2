@@ -11,7 +11,7 @@ void main() {
     vec3 lightColor = vec3(1.0, 1.0, 0.9); // TODO: Add this via a uniform.
 
     vec3 ambientComponent = vec3(0.1, 0.1, 0.1);
-    vec3 diffuseComponent = max(dot(vertexNormal, lightDirection), 0.0) * lightColor;
+    vec3 diffuseComponent = max(dot(vertexNormal * -1, lightDirection), 0.0) * lightColor;
     // No specular component.
 
     fragmentColor = vec4((ambientComponent + diffuseComponent) * vertexColor, 1.0);

@@ -6,6 +6,9 @@ import org.joml.Vector3i;
 import java.util.Arrays;
 import java.util.Random;
 
+/**
+ * Holds information about a uniform "chunk" of the voxel world.
+ */
 public class Chunk {
 	/**
 	 * The size of a chunk, in terms of the number of blocks on one axis of the cube.
@@ -14,6 +17,20 @@ public class Chunk {
 	public static final int TOTAL_SIZE = SIZE * SIZE * SIZE;
 
 	private final byte[] blocks = new byte[TOTAL_SIZE];
+	private final Vector3i position;
+
+	public Chunk(int cx, int cy, int cz) {
+		this.position = new Vector3i(cx, cy, cz);
+	}
+
+	public Chunk(Vector3i position) {
+		this.position = new Vector3i(position);
+	}
+
+	public Chunk(Chunk other) {
+		this(other.position);
+		System.arraycopy(other.blocks, 0, this.blocks, 0, TOTAL_SIZE);
+	}
 
 	public byte getBlockAt(int x, int y, int z) {
 		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || z < 0 || z >= SIZE) return 0;
@@ -50,14 +67,8 @@ public class Chunk {
 		return sb.toString();
 	}
 
-	public static Chunk of(byte value) {
-		Chunk c = new Chunk();
-		Arrays.fill(c.blocks, value);
-		return c;
-	}
-
-	public static Chunk random(Random rand) {
-		Chunk c = new Chunk();
+	public static Chunk random(Vector3i position, Random rand) {
+		Chunk c = new Chunk(position);
 		for (int i = 0; i < TOTAL_SIZE; i++) {
 			c.blocks[i] = (byte) rand.nextInt(1, 128);
 		}

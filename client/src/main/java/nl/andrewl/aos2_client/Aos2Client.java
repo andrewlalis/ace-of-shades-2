@@ -1,11 +1,7 @@
 package nl.andrewl.aos2_client;
 
-import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.model.Chunk;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
+import org.joml.Vector3i;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -13,14 +9,59 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GLUtil;
 import org.lwjgl.system.MemoryUtil;
 
-import java.io.IOException;
 import java.util.Random;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Aos2Client {
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) {
+		long windowHandle = initUI();
+
+		Chunk chunk = Chunk.random(new Vector3i(0, 0, 0), new Random(1));
+		Camera cam = new Camera();
+		glfwSetCursorPosCallback(windowHandle, cam);
+
+		for (int i = 0; i < 16; i++) {
+			chunk.setBlockAt(i, 0, 0, (byte) 8);
+			chunk.setBlockAt(0, i, 0, (byte) 40);
+			chunk.setBlockAt(0, 0, i, (byte) 120);
+		}
+		chunk.setBlockAt(0, 15, 0, (byte) 0);
+		chunk.setBlockAt(1, 15, 0, (byte) 0);
+		chunk.setBlockAt(2, 15, 0, (byte) 0);
+		chunk.setBlockAt(2, 15, 1, (byte) 0);
+		chunk.setBlockAt(0, 0, 0, (byte) 0);
+
+		ChunkRenderer chunkRenderer = new ChunkRenderer();
+		ChunkMesh mesh = new ChunkMesh(chunk);
+		chunkRenderer.addChunkMesh(mesh);
+
+		while (!glfwWindowShouldClose(windowHandle)) {
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			chunkRenderer.draw(cam);
+
+			glfwSwapBuffers(windowHandle);
+			glfwPollEvents();
+
+			if (glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS) cam.move(Camera.FORWARD);
+			if (glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS) cam.move(Camera.BACKWARD);
+			if (glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS) cam.move(Camera.LEFT);
+			if (glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS) cam.move(Camera.RIGHT);
+			if (glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS) cam.move(Camera.UP);
+			if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cam.move(Camera.DOWN);
+		}
+
+		chunkRenderer.free();
+
+		Callbacks.glfwFreeCallbacks(windowHandle);
+		glfwDestroyWindow(windowHandle);
+		glfwTerminate();
+		glfwSetErrorCallback(null).free();
+	}
+
+	private static long initUI() {
 		System.out.println("LWJGL Version: " + Version.getVersion());
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW");
@@ -53,77 +94,6 @@ public class Aos2Client {
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
 
-		Chunk chunk = Chunk.random(new Random(1));
-		Camera cam = new Camera();
-		glfwSetCursorPosCallback(windowHandle, cam);
-
-		for (int i = 0; i < 16; i++) {
-			chunk.setBlockAt(i, 0, 0, (byte) 8);
-			chunk.setBlockAt(0, i, 0, (byte) 40);
-			chunk.setBlockAt(0, 0, i, (byte) 120);
-		}
-		chunk.setBlockAt(0, 15, 0, (byte) 0);
-		chunk.setBlockAt(1, 15, 0, (byte) 0);
-		chunk.setBlockAt(2, 15, 0, (byte) 0);
-		chunk.setBlockAt(2, 15, 1, (byte) 0);
-		chunk.setBlockAt(0, 0, 0, (byte) 0);
-		Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
-		ChunkMesh mesh = new ChunkMesh(chunk);
-
-		int shaderProgram = createShaderProgram();
-		int projectionTransformUniform = glGetUniformLocation(shaderProgram, "projectionTransform");
-		int viewTransformUniform = glGetUniformLocation(shaderProgram, "viewTransform");
-		int normalTransformUniform = glGetUniformLocation(shaderProgram, "normalTransform");
-
-		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
-
-		long t = 0;
-		while (!glfwWindowShouldClose(windowHandle)) {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
-			Matrix3f normalTransform = new Matrix3f();
-			glUniformMatrix3fv(normalTransformUniform, false, normalTransform.get(new float[9]));
-
-			mesh.draw();
-
-			glfwSwapBuffers(windowHandle);
-			glfwPollEvents();
-//			float n = (float) (8 * Math.sin(Math.toRadians(t)) + 8);
-//			cam.setPosition(n, -1, n);
-//			cam.setOrientationDegrees(0, 0);
-//			Thread.sleep(20);
-//			t++;
-//			if (t >= 360) t = 0;
-
-			if (glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS) cam.move(Camera.FORWARD);
-			if (glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS) cam.move(Camera.BACKWARD);
-			if (glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS) cam.move(Camera.LEFT);
-			if (glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS) cam.move(Camera.RIGHT);
-			if (glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS) cam.move(Camera.UP);
-			if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cam.move(Camera.DOWN);
-		}
-
-		Callbacks.glfwFreeCallbacks(windowHandle);
-		glfwDestroyWindow(windowHandle);
-		glfwTerminate();
-		glfwSetErrorCallback(null).free();
-	}
-
-	private static int createShaderProgram() throws IOException {
-		int prog = glCreateProgram();
-		int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragShader, FileUtils.readClasspathFile("shader/fragment.glsl"));
-		glCompileShader(fragShader);
-		glAttachShader(prog, fragShader);
-		int vertShader = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource(vertShader, FileUtils.readClasspathFile("shader/vertex.glsl"));
-		glCompileShader(vertShader);
-		glAttachShader(prog, vertShader);
-
-		glValidateProgram(prog);
-		glLinkProgram(prog);
-		glUseProgram(prog);
-		return prog;
+		return windowHandle;
 	}
 }

@@ -156,4 +156,10 @@ public class ChunkMesh {
 
 		glDrawElements(GL_TRIANGLES, indiciesCount, GL_UNSIGNED_INT, 0);
 	}
+
+	public void free() {
+		glDeleteBuffers(vboId);
+		glDeleteBuffers(eboId);
+		glDeleteVertexArrays(vaoId);
+	}
 }
