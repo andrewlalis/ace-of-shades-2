@@ -9,6 +9,11 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL46.*;
 
+/**
+ * The chunk renderer is responsible for managing the shader program, uniforms,
+ * and all currently loaded chunk meshes, so that the set of loaded chunks can
+ * be rendered each frame.
+ */
 public class ChunkRenderer {
 	private final ShaderProgram shaderProgram;
 	private final int projectionTransformUniform;
@@ -17,11 +22,12 @@ public class ChunkRenderer {
 	private final int chunkPositionUniform;
 	private final int chunkSizeUniform;
 
-	private final Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
+	private final Matrix4f projectionTransform;
 
 	private final List<ChunkMesh> chunkMeshes = new ArrayList<>();
 
-	public ChunkRenderer() {
+	public ChunkRenderer(int windowWidth, int windowHeight) {
+		this.projectionTransform = new Matrix4f().perspective(70, (float) windowWidth / (float) windowHeight, 0.01f, 100.0f);
 		this.shaderProgram = new ShaderProgram.Builder()
 				.withShader("shader/chunk/vertex.glsl", GL_VERTEX_SHADER)
 				.withShader("shader/chunk/fragment.glsl", GL_FRAGMENT_SHADER)

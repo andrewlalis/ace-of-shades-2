@@ -2,14 +2,12 @@ package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.render.ChunkMesh;
 import nl.andrewl.aos2_client.render.ChunkRenderer;
+import nl.andrewl.aos2_client.render.WindowInfo;
 import nl.andrewl.aos_core.model.Chunk;
 import org.joml.Vector3i;
-import org.lwjgl.Version;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLUtil;
-import org.lwjgl.system.MemoryUtil;
 
 import java.util.Random;
 
@@ -18,7 +16,8 @@ import static org.lwjgl.opengl.GL46.*;
 
 public class Aos2Client {
 	public static void main(String[] args) {
-		long windowHandle = initUI();
+		var windowInfo = initUI();
+		long windowHandle = windowInfo.windowHandle();
 
 		Camera cam = new Camera();
 		cam.setOrientationDegrees(90, 90);
@@ -30,7 +29,7 @@ public class Aos2Client {
 		Chunk chunk3 = Chunk.random(new Vector3i(1, 0, 1), new Random(1));
 		Chunk chunk4 = Chunk.random(new Vector3i(0, 0, 1), new Random(1));
 
-//		chunk.setBlockAt(0, 0, 0, (byte) 0);
+		chunk.setBlockAt(0, 0, 0, (byte) 0);
 
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int z = 0; z < Chunk.SIZE; z++) {
@@ -38,7 +37,7 @@ public class Aos2Client {
 			}
 		}
 
-		ChunkRenderer chunkRenderer = new ChunkRenderer();
+		ChunkRenderer chunkRenderer = new ChunkRenderer(windowInfo.width(), windowInfo.height());
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk2));
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk3));
@@ -68,16 +67,18 @@ public class Aos2Client {
 		glfwSetErrorCallback(null).free();
 	}
 
-	private static long initUI() {
-		System.out.println("LWJGL Version: " + Version.getVersion());
+	private static WindowInfo initUI() {
 		GLFWErrorCallback.createPrint(System.err).set();
-		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW");
+		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
 		glfwDefaultWindowHints();
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-		long windowHandle = glfwCreateWindow(800, 600, "Ace of Shades 2", MemoryUtil.NULL, MemoryUtil.NULL);
-		if (windowHandle == MemoryUtil.NULL) throw new RuntimeException("Failed to create GLFW window.");
+		var vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		if (vidMode == null) throw new IllegalStateException("Could not get information about the primary monitory.");
+		long windowHandle = glfwCreateWindow(vidMode.width(), vidMode.height(), "Ace of Shades 2", 0, 0);
+		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
+
 		glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 				glfwSetWindowShouldClose(windowHandle, true);
@@ -87,7 +88,7 @@ public class Aos2Client {
 		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-		glfwSetWindowPos(windowHandle, 50, 50);
+		glfwSetWindowPos(windowHandle, 0, 0);
 		glfwSetCursorPos(windowHandle, 0, 0);
 
 		glfwMakeContextCurrent(windowHandle);
@@ -101,6 +102,6 @@ public class Aos2Client {
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
 
-		return windowHandle;
+		return new WindowInfo(windowHandle, vidMode.width(), vidMode.height());
 	}
 }

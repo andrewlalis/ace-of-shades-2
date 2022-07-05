@@ -6,13 +6,19 @@ import org.joml.Vector3i;
 import java.util.Random;
 
 /**
- * Holds information about a uniform "chunk" of the voxel world.
+ * Holds information about a uniform "chunk" of the voxel world, with a cubic
+ * shape. Each chunk contains a flattened 1-dimensional array that holds the
+ * information about each "block" in the chunk.
  */
 public class Chunk {
 	/**
 	 * The size of a chunk, in terms of the number of blocks on one axis of the cube.
 	 */
 	public static final int SIZE = 16;
+
+	/**
+	 * The total size of the chunk's {@link Chunk#blocks} array.
+	 */
 	public static final int TOTAL_SIZE = SIZE * SIZE * SIZE;
 
 	private final byte[] blocks = new byte[TOTAL_SIZE];
