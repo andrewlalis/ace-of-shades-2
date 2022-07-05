@@ -12,7 +12,7 @@ public class Chunk {
 	/**
 	 * The size of a chunk, in terms of the number of blocks on one axis of the cube.
 	 */
-	public static final int SIZE = 4;
+	public static final int SIZE = 16;
 	public static final int TOTAL_SIZE = SIZE * SIZE * SIZE;
 
 	private final byte[] blocks = new byte[TOTAL_SIZE];

@@ -2,7 +2,6 @@ package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos_core.model.Chunk;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ public class ChunkRenderer {
 	public ChunkRenderer() {
 		this.shaderProgram = new ShaderProgram.Builder()
 				.withShader("shader/chunk/vertex.glsl", GL_VERTEX_SHADER)
-				.withShader("shader/chunk/normal_fragment.glsl", GL_FRAGMENT_SHADER)
+				.withShader("shader/chunk/fragment.glsl", GL_FRAGMENT_SHADER)
 				.build();
 		shaderProgram.use();
 		this.projectionTransformUniform = shaderProgram.getUniform("projectionTransform");

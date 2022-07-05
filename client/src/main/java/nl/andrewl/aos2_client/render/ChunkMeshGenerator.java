@@ -13,8 +13,8 @@ public final class ChunkMeshGenerator {
 	private ChunkMeshGenerator() {}
 
 	public static ChunkMeshData generateMesh(Chunk chunk) {
-		FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(20000);
-		IntBuffer indexBuffer = BufferUtils.createIntBuffer(5000);
+		FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(300000);
+		IntBuffer indexBuffer = BufferUtils.createIntBuffer(100000);
 		int idx = 0;
 		for (int i = 0; i < Chunk.TOTAL_SIZE; i++) {
 			var pos = Chunk.idxToXyz(i);

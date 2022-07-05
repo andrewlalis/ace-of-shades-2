@@ -4,6 +4,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public record ChunkMeshData(
-		FloatBuffer vertexData,
-		IntBuffer indices
+		FloatBuffer vertexBuffer,
+		IntBuffer indexBuffer
 ) {}

@@ -2,8 +2,6 @@ package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos_core.model.Chunk;
 
-import java.util.Arrays;
-
 import static org.lwjgl.opengl.GL46.*;
 
 /**
@@ -36,34 +34,23 @@ public class ChunkMesh {
 		return positionData;
 	}
 
+	/**
+	 * Generates and loads this chunk's mesh into the allocated OpenGL buffers.
+	 */
 	private void loadMesh() {
-		long start = System.currentTimeMillis();
 		var meshData = ChunkMeshGenerator.generateMesh(chunk);
-		long dur = System.currentTimeMillis() - start;
-		System.out.printf(
-				"Generated chunk mesh in %d ms with %d vertices and %d indices, and %d faces. Vertex data size: %d%n",
-				dur,
-				meshData.vertexData().limit() / 9,
-				meshData.indices().limit(),
-				meshData.indices().limit() / 4,
-				meshData.vertexData().limit()
-		);
-		this.indiciesCount = meshData.indices().limit();
-		int[] data = new int[indiciesCount];
-		meshData.indices().get(data);
-		meshData.indices().flip();
-		System.out.println(Arrays.toString(data));
+		this.indiciesCount = meshData.indexBuffer().limit();
 
 		glBindBuffer(GL_ARRAY_BUFFER, vboId);
-		glBufferData(GL_ARRAY_BUFFER, meshData.vertexData(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, meshData.vertexBuffer(), GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshData.indices(), GL_STATIC_DRAW);
-
-		int size = glGetBufferParameteri(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE);
-		System.out.println(size);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshData.indexBuffer(), GL_STATIC_DRAW);
 	}
 
+	/**
+	 * Initializes this mesh's vertex array attribute settings.
+	 */
 	private void initVertexArrayAttributes() {
 		glBindVertexArray(vaoId);
 		// Vertex position floats.
@@ -77,10 +64,12 @@ public class ChunkMesh {
 		glVertexAttribPointer(2, 3, GL_FLOAT, false, 9 * Float.BYTES, 6 * Float.BYTES);
 	}
 
+	/**
+	 * Draws the chunk mesh.
+	 */
 	public void draw() {
-		glBindBuffer(GL_ARRAY_BUFFER, vboId);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 		glBindVertexArray(vaoId);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
 		glDrawElements(GL_TRIANGLES, indiciesCount, GL_UNSIGNED_INT, 0);
 	}
 
