@@ -210,7 +210,6 @@
             <artifactId>lwjgl-stb</artifactId>
             <classifier>${lwjgl.natives}</classifier>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -220,7 +219,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>nl.andrewl.aos2_client.Aos2Client</mainClass>
+                            <mainClass>nl.andrewl.aos2_client.Client</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

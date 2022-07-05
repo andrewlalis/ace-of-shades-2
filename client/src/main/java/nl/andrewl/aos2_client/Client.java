@@ -14,7 +14,7 @@ import java.util.Random;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
-public class Aos2Client {
+public class Client {
 	public static void main(String[] args) {
 		var windowInfo = initUI();
 		long windowHandle = windowInfo.windowHandle();
@@ -76,7 +76,7 @@ public class Aos2Client {
 
 		var vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		if (vidMode == null) throw new IllegalStateException("Could not get information about the primary monitory.");
-		long windowHandle = glfwCreateWindow(vidMode.width(), vidMode.height(), "Ace of Shades 2", 0, 0);
+		long windowHandle = glfwCreateWindow(vidMode.width(), vidMode.height(), "Ace of Shades 2", glfwGetPrimaryMonitor(), 0);
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
 
 		glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
