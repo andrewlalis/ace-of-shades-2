@@ -6,4 +6,15 @@ public class MathUtils {
 		final double offsetValue = value - start;
 		return offsetValue - (Math.floor(offsetValue / width) * width) + start;
 	}
+
+	public static float normalize(float value, float start, float end) {
+		final float width = end - start;
+		final float offsetValue = value - start;
+		return offsetValue - ((float) Math.floor(offsetValue / width) * width) + start;
+	}
+
+	public static float clamp(float value, float min, float max) {
+		if (value < min) return min;
+		return Math.min(value, max);
+	}
 }

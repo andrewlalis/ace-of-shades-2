@@ -12,7 +12,7 @@ public class Chunk {
 	/**
 	 * The size of a chunk, in terms of the number of blocks on one axis of the cube.
 	 */
-	public static final int SIZE = 16;
+	public static final int SIZE = 4;
 	public static final int TOTAL_SIZE = SIZE * SIZE * SIZE;
 
 	private final byte[] blocks = new byte[TOTAL_SIZE];
@@ -35,9 +35,37 @@ public class Chunk {
 		return position;
 	}
 
+	/**
+	 * Converts the given 3D coordinate to a 1D index which points to the block
+	 * with that coordinate within the chunk.
+	 * @param x The x coordinate.
+	 * @param y The y coordinate.
+	 * @param z The z coordinate.
+	 * @return The 1D index, or -1 if out of bounds.
+	 */
+	public static int xyzToIdx(int x, int y, int z) {
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || z < 0 || z >= SIZE) return -1;
+		return x * SIZE * SIZE + y * SIZE + z;
+	}
+
+	/**
+	 * Converts the given 1D index to a 3D coordinate that points to the block
+	 * with that index.
+	 * @param idx The index.
+	 * @return The 3D coordinate, or -1, -1, -1 if the index is out of bounds.
+	 */
+	public static Vector3i idxToXyz(int idx) {
+		if (idx < 0 || idx >= TOTAL_SIZE) return new Vector3i(-1, -1, -1);
+		int x = idx / (SIZE * SIZE);
+		int remainder = idx % (SIZE * SIZE);
+		int y = remainder / SIZE;
+		int z = remainder % SIZE;
+		return new Vector3i(x, y, z);
+	}
+
 	public byte getBlockAt(int x, int y, int z) {
-		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || z < 0 || z >= SIZE) return 0;
-		int idx = x * SIZE * SIZE + y * SIZE + z;
+		int idx = xyzToIdx(x, y, z);
+		if (idx < 0) return 0;
 		return blocks[idx];
 	}
 
@@ -46,8 +74,8 @@ public class Chunk {
 	}
 
 	public void setBlockAt(int x, int y, int z, byte value) {
-		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE || z < 0 || z >= SIZE) return;
-		int idx = x * SIZE * SIZE + y * SIZE + z;
+		int idx = xyzToIdx(x, y, z);
+		if (idx < 0) return;
 		blocks[idx] = value;
 	}
 

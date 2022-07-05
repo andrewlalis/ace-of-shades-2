@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_client;
+package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos_core.FileUtils;
 
@@ -10,12 +10,20 @@ import static org.lwjgl.opengl.GL46.*;
  * Represents a shader program with one or more individual shaders.
  */
 public class ShaderProgram {
+	/**
+	 * The id of the generated shader program.
+	 */
 	private final int id;
 
 	public ShaderProgram(int id) {
 		this.id = id;
 	}
 
+	/**
+	 * Called to set this program as the one currently used by the OpenGL
+	 * context. Call this before any other operation which uses the program,
+	 * like {@link ShaderProgram#getUniform(String)} or drawing.
+	 */
 	public void use() {
 		glUseProgram(id);
 	}
@@ -52,6 +60,10 @@ public class ShaderProgram {
 			glValidateProgram(id);
 			glLinkProgram(id);
 			return new ShaderProgram(id);
+		}
+
+		public void discard() {
+			glDeleteProgram(id);
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package nl.andrewl.aos2_client;
 
+import nl.andrewl.aos2_client.render.ChunkMesh;
+import nl.andrewl.aos2_client.render.ChunkRenderer;
 import nl.andrewl.aos_core.model.Chunk;
 import org.joml.Vector3i;
 import org.lwjgl.Version;
@@ -19,29 +21,28 @@ public class Aos2Client {
 		long windowHandle = initUI();
 
 		Camera cam = new Camera();
+		cam.setOrientationDegrees(90, 90);
+		cam.setPosition(-3, 3, 0);
 		glfwSetCursorPosCallback(windowHandle, cam);
 
 		Chunk chunk = Chunk.random(new Vector3i(0, 0, 0), new Random(1));
-		for (int i = 0; i < 16; i++) {
-			chunk.setBlockAt(i, 0, 0, (byte) 8);
-			chunk.setBlockAt(0, i, 0, (byte) 40);
-			chunk.setBlockAt(0, 0, i, (byte) 120);
-		}
-//		chunk.setBlockAt(0, 15, 0, (byte) 0);
-//		chunk.setBlockAt(1, 15, 0, (byte) 0);
-//		chunk.setBlockAt(2, 15, 0, (byte) 0);
-//		chunk.setBlockAt(2, 15, 1, (byte) 0);
-//		chunk.setBlockAt(0, 0, 0, (byte) 0);
 		Chunk chunk2 = Chunk.random(new Vector3i(1, 0, 0), new Random(1));
 		Chunk chunk3 = Chunk.random(new Vector3i(1, 0, 1), new Random(1));
 		Chunk chunk4 = Chunk.random(new Vector3i(0, 0, 1), new Random(1));
 
-		ChunkRenderer chunkRenderer = new ChunkRenderer();
+//		chunk.setBlockAt(0, 0, 0, (byte) 0);
 
+		for (int x = 0; x < Chunk.SIZE; x++) {
+			for (int z = 0; z < Chunk.SIZE; z++) {
+				chunk.setBlockAt(x, Chunk.SIZE - 1, z, (byte) 0);
+			}
+		}
+
+		ChunkRenderer chunkRenderer = new ChunkRenderer();
+		chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk2));
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk3));
 		chunkRenderer.addChunkMesh(new ChunkMesh(chunk4));
-		chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
 
 		while (!glfwWindowShouldClose(windowHandle)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -94,7 +95,7 @@ public class Aos2Client {
 		glfwShowWindow(windowHandle);
 
 		GL.createCapabilities();
-		GLUtil.setupDebugMessageCallback(System.out);
+//		GLUtil.setupDebugMessageCallback(System.out);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);

@@ -15,5 +15,4 @@ void main() {
     // No specular component.
 
     fragmentColor = vec4((ambientComponent + diffuseComponent) * vertexColor, 1.0);
-    //fragmentColor = vec4((vertexNormal + 1) / 2.0, 1.0);
 }

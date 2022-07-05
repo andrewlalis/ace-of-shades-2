@@ -1,5 +1,7 @@
-package nl.andrewl.aos2_client;
+package nl.andrewl.aos2_client.render;
 
+import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos_core.model.Chunk;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -14,6 +16,7 @@ public class ChunkRenderer {
 	private final int viewTransformUniform;
 	private final int normalTransformUniform;
 	private final int chunkPositionUniform;
+	private final int chunkSizeUniform;
 
 	private final Matrix4f projectionTransform = new Matrix4f().perspective(70, 800 / 600.0f, 0.01f, 100.0f);
 
@@ -22,16 +25,18 @@ public class ChunkRenderer {
 	public ChunkRenderer() {
 		this.shaderProgram = new ShaderProgram.Builder()
 				.withShader("shader/chunk/vertex.glsl", GL_VERTEX_SHADER)
-				.withShader("shader/chunk/fragment.glsl", GL_FRAGMENT_SHADER)
+				.withShader("shader/chunk/normal_fragment.glsl", GL_FRAGMENT_SHADER)
 				.build();
 		shaderProgram.use();
 		this.projectionTransformUniform = shaderProgram.getUniform("projectionTransform");
 		this.viewTransformUniform = shaderProgram.getUniform("viewTransform");
 		this.normalTransformUniform = shaderProgram.getUniform("normalTransform");
 		this.chunkPositionUniform = shaderProgram.getUniform("chunkPosition");
+		this.chunkSizeUniform = shaderProgram.getUniform("chunkSize");
 
 		// Preemptively load projection transform, which doesn't change much.
 		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
+		glUniform1i(chunkSizeUniform, Chunk.SIZE);
 	}
 
 	public void addChunkMesh(ChunkMesh mesh) {
@@ -39,13 +44,9 @@ public class ChunkRenderer {
 	}
 
 	public void draw(Camera cam) {
-		glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
-		Matrix3f normalTransform = new Matrix3f();
-		glUniformMatrix3fv(normalTransformUniform, false, normalTransform.get(new float[9]));
 		shaderProgram.use();
-
+		glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
 		for (var mesh : chunkMeshes) {
-			// For each chunk, specify its position so that the shaders can draw it offset.
 			glUniform3iv(chunkPositionUniform, mesh.getPositionData());
 			mesh.draw();
 		}

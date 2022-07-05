@@ -8,6 +8,9 @@ import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 
 import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 
+/**
+ * Represents the player camera in the game world.
+ */
 public class Camera implements GLFWCursorPosCallbackI {
 	public static final Vector3f UP = new Vector3f(0, 1, 0);
 	public static final Vector3f DOWN = new Vector3f(0, -1, 0);
@@ -16,7 +19,23 @@ public class Camera implements GLFWCursorPosCallbackI {
 	public static final Vector3f FORWARD = new Vector3f(0, 0, -1);
 	public static final Vector3f BACKWARD = new Vector3f(0, 0, 1);
 
+	/**
+	 * The x, y, and z position of the camera in the world.
+	 */
 	private final Vector3f position;
+
+	/**
+	 * The camera's angular orientation. X refers to the rotation about the
+	 * vertical axis, while Y refers to the rotation about the horizontal axis.
+	 * <p>
+	 *     The Y axis orientation is limited to between 0 and PI, with 0
+	 *     being looking straight down, and PI looking straight up.
+	 * </p>
+	 * <p>
+	 *     The X axis orientation is limited to between 0 and 2 PI, with 0
+	 *     being looking at the - Z axis.
+	 * </p>
+	 */
 	private final Vector2f orientation;
 	private final Matrix4f viewTransform;
 	private final float[] viewTransformData = new float[16];
@@ -50,7 +69,10 @@ public class Camera implements GLFWCursorPosCallbackI {
 	}
 
 	public void setOrientation(float x, float y) {
-		orientation.set(MathUtils.normalize(x, 0, Math.PI * 2), MathUtils.normalize(y, 0, Math.PI * 2));
+		orientation.set(
+				MathUtils.normalize(x, 0, Math.PI * 2),
+				MathUtils.clamp(y, 0, (float) (Math.PI))
+		);
 		updateViewTransform();
 	}
 
@@ -60,7 +82,7 @@ public class Camera implements GLFWCursorPosCallbackI {
 
 	private void updateViewTransform() {
 		viewTransform.identity();
-		viewTransform.rotate(-orientation.y, RIGHT);
+		viewTransform.rotate(-orientation.y + ((float) Math.PI / 2), RIGHT);
 		viewTransform.rotate(-orientation.x, UP);
 		viewTransform.translate(-position.x, -position.y, -position.z);
 		viewTransform.get(viewTransformData);

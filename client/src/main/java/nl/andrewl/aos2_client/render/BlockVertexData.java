@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_client;
+package nl.andrewl.aos2_client.render;
 
 import org.joml.Vector3f;
 
