@@ -1,6 +1,6 @@
 package nl.andrewl.aos_core;
 
-import nl.andrewl.aos_core.net.PlayerConnectRequestMessage;
+import nl.andrewl.aos_core.net.ConnectRequestMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.Serializer;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
@@ -19,7 +19,7 @@ public final class Net {
 
 	private static final Serializer serializer = new Serializer();
 	static {
-		serializer.registerType(1, PlayerConnectRequestMessage.class);
+		serializer.registerType(1, ConnectRequestMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

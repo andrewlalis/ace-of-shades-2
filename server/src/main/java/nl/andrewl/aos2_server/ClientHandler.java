@@ -1,8 +1,8 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
-import nl.andrewl.aos_core.net.PlayerConnectRejectMessage;
-import nl.andrewl.aos_core.net.PlayerConnectRequestMessage;
+import nl.andrewl.aos_core.net.ConnectRejectMessage;
+import nl.andrewl.aos_core.net.ConnectRequestMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -60,16 +60,26 @@ public class ClientHandler extends Thread {
 	}
 
 	private void establishConnection() {
+		try {
+			socket.setSoTimeout(1000);
+		} catch (SocketException e) {
+			throw new RuntimeException(e);
+		}
 		boolean connectionEstablished = false;
 		int attempts = 0;
 		while (!connectionEstablished && attempts < 100) {
 			try {
 				Message msg = Net.read(in);
-				if (msg instanceof PlayerConnectRequestMessage connectMsg) {
+				if (msg instanceof ConnectRequestMessage connectMsg) {
 					this.clientAddress = socket.getInetAddress();
 					this.clientUdpPort = connectMsg.udpPort();
 					System.out.println("Player connected: " + connectMsg.username());
 					connectionEstablished = true;
+					try {
+						socket.setSoTimeout(0);
+					} catch (SocketException e) {
+						throw new RuntimeException(e);
+					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -78,7 +88,7 @@ public class ClientHandler extends Thread {
 		}
 		if (!connectionEstablished) {
 			try {
-				Net.write(new PlayerConnectRejectMessage("Too many connect attempts failed."), out);
+				Net.write(new ConnectRejectMessage("Too many connect attempts failed."), out);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
