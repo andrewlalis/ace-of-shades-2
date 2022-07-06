@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.net;
 
+import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.record_net.Message;
 
 /**
@@ -14,4 +15,8 @@ import nl.andrewl.record_net.Message;
 public record ChunkHashMessage(
 		int cx, int cy, int cz,
 		long hash
-) implements Message {}
+) implements Message {
+	public ChunkHashMessage(Chunk chunk) {
+		this(chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z, chunk.blockHash());
+	}
+}

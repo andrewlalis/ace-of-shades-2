@@ -2,10 +2,7 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.net.ConnectAcceptMessage;
-import nl.andrewl.aos_core.net.ConnectRejectMessage;
-import nl.andrewl.aos_core.net.ConnectRequestMessage;
-import nl.andrewl.aos_core.net.TcpReceiver;
+import nl.andrewl.aos_core.net.*;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -16,6 +13,14 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 
+/**
+ * Component which manages the establishing and maintenance of a connection
+ * to a single client. This involves waiting for the client to send their
+ * first {@link ConnectRequestMessage}, so that we can respond with either a
+ * {@link ConnectRejectMessage} or {@link ConnectAcceptMessage}. If the player
+ * is accepted, we proceed to register the player and begin receiving messages
+ * from them.
+ */
 public class ClientCommunicationHandler {
 	private final Server server;
 	private final Socket socket;
@@ -33,18 +38,22 @@ public class ClientCommunicationHandler {
 		this.datagramSocket = datagramSocket;
 		this.in = Net.getInputStream(socket.getInputStream());
 		this.out = Net.getOutputStream(socket.getOutputStream());
-		establishConnection();
-		new Thread(new TcpReceiver(in, this::handleTcpMessage)).start();
 	}
 
 	public void shutdown() {
 		try {
-			socket.close();
+			if (!socket.isClosed()) socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * Used to set UDP port once we know it, since the client first sends their
+	 * connection request, then we accept, and <em>then</em> the client begins
+	 * the UDP communication.
+	 * @param port The client's port.
+	 */
 	public void setClientUdpPort(int port) {
 		this.clientUdpPort = port;
 	}
@@ -53,7 +62,7 @@ public class ClientCommunicationHandler {
 		System.out.println("Message received from client " + player.getUsername() + ": " + msg);
 	}
 
-	private void establishConnection() throws IOException {
+	public void establishConnection() throws IOException {
 		socket.setSoTimeout(1000);
 		boolean connectionEstablished = false;
 		int attempts = 0;
@@ -64,10 +73,21 @@ public class ClientCommunicationHandler {
 					// Try to set the TCP timeout back to 0 now that we've got the correct request.
 					socket.setSoTimeout(0);
 					this.clientAddress = socket.getInetAddress();
-					System.out.println("Player connected: " + connectMsg.username());
 					connectionEstablished = true;
 					this.player = server.registerPlayer(this, connectMsg.username());
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
+					System.out.println("Sent connect accept message.");
+
+					System.out.println("Sending world data...");
+					for (var chunk : server.getWorld().getChunkMap().values()) {
+						sendTcpMessage(new ChunkDataMessage(chunk));
+					}
+					System.out.println("Sent all world data.");
+
+					// Initiate a TCP receiver thread to accept incoming messages from the client.
+					TcpReceiver tcpReceiver = new TcpReceiver(in, this::handleTcpMessage)
+							.withShutdownHook(() -> server.deregisterPlayer(this.player));
+					new Thread(tcpReceiver).start();
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -82,6 +102,14 @@ public class ClientCommunicationHandler {
 			}
 			System.out.println("Player couldn't connect after " + attempts + " attempts. Aborting.");
 			socket.close();
+		}
+	}
+
+	public void sendTcpMessage(Message msg) {
+		try {
+			Net.write(msg, out);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -12,28 +12,37 @@ import java.util.function.Consumer;
 public class TcpReceiver implements Runnable {
 	private final ExtendedDataInputStream in;
 	private final Consumer<Message> messageConsumer;
+	private Runnable shutdownHook;
 
 	public TcpReceiver(ExtendedDataInputStream in, Consumer<Message> messageConsumer) {
 		this.in = in;
 		this.messageConsumer = messageConsumer;
 	}
 
+	public TcpReceiver withShutdownHook(Runnable shutdownHook) {
+		this.shutdownHook = shutdownHook;
+		return this;
+	}
+
 	@Override
 	public void run() {
-		while (true) {
+		boolean running = true;
+		while (running) {
 			try {
 				Message msg = Net.read(in);
 				messageConsumer.accept(msg);
 			} catch (SocketException e) {
 				if (e.getMessage().equals("Socket closed")) {
-					return;
+					running = false;
+				} else {
+					e.printStackTrace();
 				}
-				e.printStackTrace();
 			} catch (EOFException e) {
-				return;
+				running = false;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		if (shutdownHook != null) shutdownHook.run();
 	}
 }

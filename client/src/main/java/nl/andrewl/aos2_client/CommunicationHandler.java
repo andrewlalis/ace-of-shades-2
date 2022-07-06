@@ -13,6 +13,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 
+/**
+ * Class which handles the client's communication with the server. This
+ * involves establishing a TCP and UDP connection, and providing generic
+ * methods for sending messages and processing those we receive.
+ */
 public class CommunicationHandler {
 	private Socket socket;
 	private DatagramSocket datagramSocket;
@@ -46,6 +51,15 @@ public class CommunicationHandler {
 		}
 	}
 
+	public void shutdown() {
+		try {
+			socket.close();
+			datagramSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void sendMessage(Message msg) {
 		try {
 			Net.write(msg, out);
@@ -64,6 +78,13 @@ public class CommunicationHandler {
 		}
 	}
 
+	/**
+	 * Establishes a UDP "connection" to the server, after we've already
+	 * obtained our {@link CommunicationHandler#clientId} from our TCP
+	 * connection. This continuously sends {@link DatagramInit} packets until
+	 * the server responds with an echo of that packet.
+	 * @throws IOException If an error occurs.
+	 */
 	private void establishDatagramConnection() throws IOException {
 		datagramSocket = new DatagramSocket();
 		boolean connectionEstablished = false;

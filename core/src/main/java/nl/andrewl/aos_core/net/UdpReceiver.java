@@ -9,6 +9,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+/**
+ * A runnable that receives UDP packets from a datagram socket and relays the
+ * messages to a {@link UdpMessageHandler}.
+ */
 public class UdpReceiver implements Runnable {
 	public static final short MAX_PACKET_SIZE = 1400;
 
@@ -31,14 +35,17 @@ public class UdpReceiver implements Runnable {
 				handler.handle(msg, packet);
 			} catch (SocketException e) {
 				if (e.getMessage().equals("Socket closed")) {
-					return;
+					System.out.println("Socket closed!");
+					break;
 				}
 				e.printStackTrace();
 			} catch (EOFException e) {
-				return;
+				System.out.println("EOF!");
+				break;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		System.out.println("UDP receiver shut down.");
 	}
 }

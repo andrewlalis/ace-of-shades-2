@@ -1,9 +1,6 @@
 package nl.andrewl.aos_core;
 
-import nl.andrewl.aos_core.net.ChunkHashMessage;
-import nl.andrewl.aos_core.net.ConnectAcceptMessage;
-import nl.andrewl.aos_core.net.ConnectRejectMessage;
-import nl.andrewl.aos_core.net.ConnectRequestMessage;
+import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.Serializer;
@@ -28,6 +25,7 @@ public final class Net {
 		serializer.registerType(3, ConnectRejectMessage.class);
 		serializer.registerType(4, DatagramInit.class);
 		serializer.registerType(5, ChunkHashMessage.class);
+		serializer.registerType(6, ChunkDataMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

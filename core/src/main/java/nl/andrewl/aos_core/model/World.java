@@ -1,15 +1,21 @@
 package nl.andrewl.aos_core.model;
 
 import org.joml.Vector3i;
+import org.joml.Vector3ic;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class World {
-	private final Map<Vector3i, Chunk> chunkMap = new HashMap<>();
-	private final Set<Player> players = new HashSet<>();
+	private final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
+
+	public void addChunk(Chunk chunk) {
+		chunkMap.put(chunk.getPosition(), chunk);
+	}
+
+	public Map<Vector3ic, Chunk> getChunkMap() {
+		return chunkMap;
+	}
 
 	public byte getBlockAt(int x, int y, int z) {
 		int chunkX = x / Chunk.SIZE;
