@@ -35,6 +35,12 @@
             <artifactId>record-net</artifactId>
             <version>v1.2.1</version>
         </dependency>
+        <!-- https://github.com/OpenHFT/Zero-Allocation-Hashing -->
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>zero-allocation-hashing</artifactId>
+            <version>0.15</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
         <dependency>

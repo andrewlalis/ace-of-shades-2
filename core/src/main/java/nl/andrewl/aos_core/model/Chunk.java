@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model;
 
+import net.openhft.hashing.LongHashFunction;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
@@ -102,6 +103,10 @@ public class Chunk {
 			}
 		}
 		return sb.toString();
+	}
+
+	public long blockHash() {
+		return LongHashFunction.xx3(0).hashBytes(blocks);
 	}
 
 	public static Chunk random(Vector3i position, Random rand) {

@@ -12,7 +12,7 @@ public class ChunkMesh {
 	private final int vaoId;
 	private final int eboId;
 
-	private int indiciesCount;
+	private int indexCount;
 
 	private final int[] positionData;
 	private final Chunk chunk;
@@ -41,14 +41,14 @@ public class ChunkMesh {
 		long start = System.nanoTime();
 		var meshData = ChunkMeshGenerator.generateMesh(chunk);
 		double dur = (System.nanoTime() - start) / 1_000_000.0;
-		this.indiciesCount = meshData.indexBuffer().limit();
+		this.indexCount = meshData.indexBuffer().limit();
 		// Print some debug information.
 		System.out.printf(
 				"Generated mesh for chunk (%d, %d, %d) in %.3f ms. %d vertices, %d indices.%n",
 				chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z,
 				dur,
 				meshData.vertexBuffer().limit() / 9,
-				indiciesCount
+				indexCount
 		);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vboId);
@@ -80,7 +80,7 @@ public class ChunkMesh {
 	public void draw() {
 		glBindVertexArray(vaoId);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-		glDrawElements(GL_TRIANGLES, indiciesCount, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 	}
 
 	public void free() {
