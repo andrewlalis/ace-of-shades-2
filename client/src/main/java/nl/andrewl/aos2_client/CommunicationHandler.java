@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
 import nl.andrewl.record_net.Message;
@@ -19,11 +20,15 @@ import java.net.Socket;
  * methods for sending messages and processing those we receive.
  */
 public class CommunicationHandler {
+	private final Client client;
 	private Socket socket;
 	private DatagramSocket datagramSocket;
-	private ExtendedDataInputStream in;
 	private ExtendedDataOutputStream out;
 	private int clientId;
+
+	public CommunicationHandler(Client client) {
+		this.client = client;
+	}
 
 	public int establishConnection(InetAddress address, int port, String username) throws IOException {
 		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, port, username);
@@ -32,7 +37,7 @@ public class CommunicationHandler {
 		}
 		socket = new Socket(address, port);
 		socket.setSoTimeout(1000);
-		in = Net.getInputStream(socket.getInputStream());
+		ExtendedDataInputStream in = Net.getInputStream(socket.getInputStream());
 		out = Net.getOutputStream(socket.getOutputStream());
 		Net.write(new ConnectRequestMessage(username), out);
 		Message response = Net.read(in);
@@ -42,8 +47,8 @@ public class CommunicationHandler {
 		}
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
-			new Thread(new TcpReceiver(in, this::handleMessage)).start();
 			establishDatagramConnection();
+			new Thread(new TcpReceiver(in, this::handleMessage)).start();
 			new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
 			return acceptMessage.clientId();
 		} else {
@@ -109,6 +114,10 @@ public class CommunicationHandler {
 
 	private void handleMessage(Message msg) {
 		System.out.println("Received message: " + msg);
+		if (msg instanceof ChunkDataMessage chunkDataMessage) {
+			Chunk chunk = chunkDataMessage.toChunk();
+			client.getWorld().addChunk(chunk);
+		}
 	}
 
 	private void handleUdpMessage(Message msg, DatagramPacket packet) {

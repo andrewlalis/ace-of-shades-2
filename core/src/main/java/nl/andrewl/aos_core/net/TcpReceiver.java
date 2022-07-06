@@ -32,7 +32,7 @@ public class TcpReceiver implements Runnable {
 				Message msg = Net.read(in);
 				messageConsumer.accept(msg);
 			} catch (SocketException e) {
-				if (e.getMessage().equals("Socket closed")) {
+				if (e.getMessage().equals("Socket closed") || e.getMessage().equals("Connection reset")) {
 					running = false;
 				} else {
 					e.printStackTrace();

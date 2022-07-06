@@ -29,6 +29,11 @@ public class Chunk {
 		this.position = new Vector3i(cx, cy, cz);
 	}
 
+	public Chunk(int cx, int cy, int cz, byte[] blocks) {
+		this(cx, cy, cz);
+		System.arraycopy(blocks, 0, this.blocks, 0, TOTAL_SIZE);
+	}
+
 	public Chunk(Vector3i position) {
 		this.position = new Vector3i(position);
 	}

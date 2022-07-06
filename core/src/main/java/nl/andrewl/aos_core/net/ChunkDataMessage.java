@@ -13,4 +13,8 @@ public record ChunkDataMessage(
 	public ChunkDataMessage(Chunk chunk) {
 		this(chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z, chunk.getBlocks());
 	}
+
+	public Chunk toChunk() {
+		return new Chunk(cx, cy, cz, blocks);
+	}
 }

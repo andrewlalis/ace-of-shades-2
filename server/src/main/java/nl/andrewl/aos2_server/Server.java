@@ -12,6 +12,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
@@ -33,12 +34,15 @@ public class Server implements Runnable {
 		this.playerClientHandlers = new HashMap<>();
 
 		// Generate world. TODO: do this elsewhere.
+		Random rand = new Random(1);
 		this.world = new World();
 		for (int x = -5; x <= 5; x++) {
 			for (int y = 0; y <= 3; y++) {
 				for (int z = -3; z <= 3; z++) {
 					Chunk chunk = new Chunk(x, y, z);
-					Arrays.fill(chunk.getBlocks(), (byte) 40);
+					for (int i = 0; i < Chunk.TOTAL_SIZE; i++) {
+						chunk.getBlocks()[i] = (byte) rand.nextInt(20, 40);
+					}
 					world.addChunk(chunk);
 				}
 			}
