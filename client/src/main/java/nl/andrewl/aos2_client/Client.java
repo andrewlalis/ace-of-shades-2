@@ -83,6 +83,8 @@ public class Client implements Runnable {
 			if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cam.move(Camera.DOWN);
 		}
 
+		communicationHandler.shutdown();
+
 		chunkRenderer.free();
 		WindowUtils.clearUI(windowHandle);
 	}

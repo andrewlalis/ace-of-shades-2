@@ -27,7 +27,7 @@ public class ChunkRenderer {
 	private final List<ChunkMesh> chunkMeshes = new ArrayList<>();
 
 	public ChunkRenderer(int windowWidth, int windowHeight) {
-		this.projectionTransform = new Matrix4f().perspective(70, (float) windowWidth / (float) windowHeight, 0.01f, 100.0f);
+		this.projectionTransform = new Matrix4f().perspective(70, (float) windowWidth / (float) windowHeight, 0.01f, 500.0f);
 		this.shaderProgram = new ShaderProgram.Builder()
 				.withShader("shader/chunk/vertex.glsl", GL_VERTEX_SHADER)
 				.withShader("shader/chunk/fragment.glsl", GL_FRAGMENT_SHADER)
