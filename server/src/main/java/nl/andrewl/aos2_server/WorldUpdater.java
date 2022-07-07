@@ -89,7 +89,7 @@ public class WorldUpdater implements Runnable {
 		}
 
 		// Apply horizontal deceleration to the player before computing any input-derived acceleration.
-		if (hv.length() > 0) {
+		if (grounded && hv.length() > 0) {
 			Vector3f deceleration = new Vector3f(hv).negate().normalize().mul(0.1f);
 			hv.add(deceleration);
 			if (hv.length() < 0.1f) {
@@ -107,29 +107,28 @@ public class WorldUpdater implements Runnable {
 		}
 
 		// Compute horizontal motion separately.
-		if (inputState.forward()) a.z -= 1;
-		if (inputState.backward()) a.z += 1;
-		if (inputState.left()) a.x -= 1;
-		if (inputState.right()) a.x += 1;
-//		if (inputState.crouching()) a.y -= 1; // TODO: do crouching instead of down.
-		if (a.lengthSquared() > 0) {
-			a.normalize();
-			Matrix4f moveTransform = new Matrix4f();
-			moveTransform.rotate(player.getOrientation().x, new Vector3f(0, 1, 0));
-			moveTransform.transformDirection(a);
-			hv.add(a);
+		if (grounded) {
+			if (inputState.forward()) a.z -= 1;
+			if (inputState.backward()) a.z += 1;
+			if (inputState.left()) a.x -= 1;
+			if (inputState.right()) a.x += 1;
+//			if (inputState.crouching()) a.y -= 1; // TODO: do crouching instead of down.
+			if (a.lengthSquared() > 0) {
+				a.normalize();
+				Matrix4f moveTransform = new Matrix4f();
+				moveTransform.rotate(player.getOrientation().x, new Vector3f(0, 1, 0));
+				moveTransform.transformDirection(a);
+				hv.add(a);
 
-			final float maxSpeed = 0.25f; // Blocks per tick.
-			if (hv.length() > maxSpeed) {
-				hv.normalize(maxSpeed);
+				final float maxSpeed = 0.25f; // Blocks per tick.
+				if (hv.length() > maxSpeed) {
+					hv.normalize(maxSpeed);
+				}
+				v.x = hv.x;
+				v.z = hv.z;
+				updated = true;
 			}
-			v.x = hv.x;
-			v.z = hv.z;
-			updated = true;
 		}
-
-		// Check if the player is colliding with the world.
-
 
 		// Apply velocity to the player's position.
 		if (v.lengthSquared() > 0) {

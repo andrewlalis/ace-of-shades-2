@@ -8,6 +8,10 @@ import org.joml.Vector3ic;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A world is just a collection of chunks that together form the environment
+ * that players can interact in.
+ */
 public class World {
 	private final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 
