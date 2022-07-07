@@ -17,7 +17,7 @@ public class ChunkMesh {
 	private final int[] positionData;
 	private final Chunk chunk;
 
-	public ChunkMesh(Chunk chunk) {
+	public ChunkMesh(Chunk chunk, ChunkMeshGenerator meshGenerator) {
 		this.chunk = chunk;
 		this.positionData = new int[]{chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z};
 
@@ -25,7 +25,7 @@ public class ChunkMesh {
 		this.eboId = glGenBuffers();
 		this.vaoId = glGenVertexArrays();
 
-		loadMesh();
+		loadMesh(meshGenerator);
 
 		initVertexArrayAttributes();
 	}
@@ -37,9 +37,9 @@ public class ChunkMesh {
 	/**
 	 * Generates and loads this chunk's mesh into the allocated OpenGL buffers.
 	 */
-	private void loadMesh() {
+	private void loadMesh(ChunkMeshGenerator meshGenerator) {
 		long start = System.nanoTime();
-		var meshData = ChunkMeshGenerator.generateMesh(chunk);
+		var meshData = meshGenerator.generateMesh(chunk);
 		double dur = (System.nanoTime() - start) / 1_000_000.0;
 		this.indexCount = meshData.indexBuffer().limit();
 		// Print some debug information.

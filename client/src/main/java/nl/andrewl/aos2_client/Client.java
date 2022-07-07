@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.render.ChunkMesh;
+import nl.andrewl.aos2_client.render.ChunkMeshGenerator;
 import nl.andrewl.aos2_client.render.ChunkRenderer;
 import nl.andrewl.aos2_client.render.WindowUtils;
 import nl.andrewl.aos_core.model.World;
@@ -22,10 +23,10 @@ public class Client implements Runnable {
 		client.run();
 	}
 
-	private InetAddress serverAddress;
-	private int serverPort;
-	private String username;
-	private CommunicationHandler communicationHandler;
+	private final InetAddress serverAddress;
+	private final int serverPort;
+	private final String username;
+	private final CommunicationHandler communicationHandler;
 	private ChunkRenderer chunkRenderer;
 	private int clientId;
 
@@ -46,6 +47,7 @@ public class Client implements Runnable {
 		var windowInfo = WindowUtils.initUI();
 		long windowHandle = windowInfo.windowHandle();
 		chunkRenderer = new ChunkRenderer(windowInfo.width(), windowInfo.height());
+		ChunkMeshGenerator meshGenerator = new ChunkMeshGenerator();
 
 		try {
 			this.clientId = communicationHandler.establishConnection(serverAddress, serverPort, username);
@@ -62,7 +64,7 @@ public class Client implements Runnable {
 			e.printStackTrace();
 		}
 		for (var chunk : world.getChunkMap().values()) {
-			chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
+			chunkRenderer.addChunkMesh(new ChunkMesh(chunk, meshGenerator));
 		}
 
 		glfwSetCursorPosCallback(windowHandle, cam);

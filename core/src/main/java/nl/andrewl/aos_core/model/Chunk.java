@@ -67,12 +67,17 @@ public class Chunk {
 	 * @return The 3D coordinate, or -1, -1, -1 if the index is out of bounds.
 	 */
 	public static Vector3i idxToXyz(int idx) {
-		if (idx < 0 || idx >= TOTAL_SIZE) return new Vector3i(-1, -1, -1);
-		int x = idx / (SIZE * SIZE);
+		Vector3i vec = new Vector3i(-1, -1, -1);
+		idxToXyz(idx, vec);
+		return vec;
+	}
+
+	public static void idxToXyz(int idx, Vector3i vec) {
+		if (idx < 0 || idx >= TOTAL_SIZE) return;
+		vec.x = idx / (SIZE * SIZE);
 		int remainder = idx % (SIZE * SIZE);
-		int y = remainder / SIZE;
-		int z = remainder % SIZE;
-		return new Vector3i(x, y, z);
+		vec.y = remainder / SIZE;
+		vec.z = remainder % SIZE;
 	}
 
 	public byte getBlockAt(int x, int y, int z) {
@@ -125,5 +130,10 @@ public class Chunk {
 	public static Vector3f getColor(byte blockValue) {
 		float v = blockValue / 127.0f;
 		return new Vector3f(v);
+	}
+
+	public static void getColor(byte blockValue, Vector3f vec) {
+		float v = blockValue / 127.0f;
+		vec.set(v);
 	}
 }

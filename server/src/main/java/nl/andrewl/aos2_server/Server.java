@@ -8,6 +8,7 @@ import nl.andrewl.aos_core.net.udp.ClientOrientationState;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,16 +40,21 @@ public class Server implements Runnable {
 		Random rand = new Random(1);
 		this.world = new World();
 		for (int x = -5; x <= 5; x++) {
-			for (int y = 0; y <= 3; y++) {
+			for (int y = 0; y <= 5; y++) {
 				for (int z = -3; z <= 3; z++) {
 					Chunk chunk = new Chunk(x, y, z);
-					for (int i = 0; i < Chunk.TOTAL_SIZE; i++) {
-						chunk.getBlocks()[i] = (byte) rand.nextInt(20, 40);
+					if (y <= 3) {
+						for (int i = 0; i < Chunk.TOTAL_SIZE; i++) {
+							chunk.getBlocks()[i] = (byte) rand.nextInt(20, 40);
+						}
 					}
 					world.addChunk(chunk);
 				}
 			}
 		}
+		world.setBlockAt(new Vector3f(5, 64, 5), (byte) 50);
+		world.setBlockAt(new Vector3f(5, 65, 6), (byte) 50);
+		world.setBlockAt(new Vector3f(5, 66, 7), (byte) 50);
 	}
 
 	@Override
