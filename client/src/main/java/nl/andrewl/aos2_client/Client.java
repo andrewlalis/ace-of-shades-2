@@ -4,6 +4,7 @@ import nl.andrewl.aos2_client.render.ChunkMesh;
 import nl.andrewl.aos2_client.render.ChunkRenderer;
 import nl.andrewl.aos2_client.render.WindowUtils;
 import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.net.udp.ClientInputState;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -26,8 +27,10 @@ public class Client implements Runnable {
 	private String username;
 	private CommunicationHandler communicationHandler;
 	private ChunkRenderer chunkRenderer;
+	private int clientId;
 
 	private World world;
+	private Camera cam;
 
 	public Client(InetAddress serverAddress, int serverPort, String username) {
 		this.serverAddress = serverAddress;
@@ -35,6 +38,7 @@ public class Client implements Runnable {
 		this.username = username;
 		this.communicationHandler = new CommunicationHandler(this);
 		this.world = new World();
+		this.cam = new Camera(this);
 	}
 
 	@Override
@@ -44,7 +48,7 @@ public class Client implements Runnable {
 		chunkRenderer = new ChunkRenderer(windowInfo.width(), windowInfo.height());
 
 		try {
-			communicationHandler.establishConnection(serverAddress, serverPort, username);
+			this.clientId = communicationHandler.establishConnection(serverAddress, serverPort, username);
 			System.out.println("Established connection to the server.");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -61,11 +65,9 @@ public class Client implements Runnable {
 			chunkRenderer.addChunkMesh(new ChunkMesh(chunk));
 		}
 
-		Camera cam = new Camera();
-		cam.setOrientationDegrees(90, 90);
-		cam.setPosition(0, 48, 0);
 		glfwSetCursorPosCallback(windowHandle, cam);
 
+		ClientInputState lastInputState = null;
 
 		while (!glfwWindowShouldClose(windowHandle)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -75,12 +77,20 @@ public class Client implements Runnable {
 			glfwSwapBuffers(windowHandle);
 			glfwPollEvents();
 
-			if (glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS) cam.move(Camera.FORWARD);
-			if (glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS) cam.move(Camera.BACKWARD);
-			if (glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS) cam.move(Camera.LEFT);
-			if (glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS) cam.move(Camera.RIGHT);
-			if (glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS) cam.move(Camera.UP);
-			if (glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cam.move(Camera.DOWN);
+			ClientInputState inputState = new ClientInputState(
+					clientId,
+					glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS,
+					glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS,
+					glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS,
+					glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS,
+					glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS,
+					glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS,
+					false
+			);
+			if (!inputState.equals(lastInputState)) {
+				communicationHandler.sendDatagramPacket(inputState);
+				lastInputState = inputState;
+			}
 		}
 
 		communicationHandler.shutdown();
@@ -89,8 +99,20 @@ public class Client implements Runnable {
 		WindowUtils.clearUI(windowHandle);
 	}
 
+	public int getClientId() {
+		return clientId;
+	}
+
 	public World getWorld() {
 		return world;
+	}
+
+	public Camera getCam() {
+		return cam;
+	}
+
+	public CommunicationHandler getCommunicationHandler() {
+		return communicationHandler;
 	}
 
 	public ChunkRenderer getChunkRenderer() {

@@ -4,9 +4,12 @@ import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -20,6 +23,8 @@ import java.net.Socket;
  * methods for sending messages and processing those we receive.
  */
 public class CommunicationHandler {
+	private static final Logger log = LoggerFactory.getLogger(CommunicationHandler.class);
+
 	private final Client client;
 	private Socket socket;
 	private DatagramSocket datagramSocket;
@@ -29,9 +34,9 @@ public class CommunicationHandler {
 	public CommunicationHandler(Client client) {
 		this.client = client;
 	}
-
+	
 	public int establishConnection(InetAddress address, int port, String username) throws IOException {
-		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, port, username);
+		log.debug("Connecting to server at {}, port {}, with username \"{}\"...", address, port, username);
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
@@ -109,11 +114,10 @@ public class CommunicationHandler {
 		if (!connectionEstablished) {
 			throw new IOException("Could not establish a datagram connection to the server after " + attempts + " attempts.");
 		}
-		System.out.println("Established datagram communication with the server.");
+		log.debug("Established datagram communication with the server.");
 	}
 
 	private void handleMessage(Message msg) {
-		System.out.println("Received message: " + msg);
 		if (msg instanceof ChunkDataMessage chunkDataMessage) {
 			Chunk chunk = chunkDataMessage.toChunk();
 			client.getWorld().addChunk(chunk);
@@ -121,6 +125,11 @@ public class CommunicationHandler {
 	}
 
 	private void handleUdpMessage(Message msg, DatagramPacket packet) {
-		System.out.println("Received udp message: " + msg);
+		if (msg instanceof PlayerUpdateMessage playerUpdate) {
+//			log.debug("Received player update: {}", playerUpdate);
+			if (playerUpdate.clientId() == client.getClientId()) {
+				client.getCam().setPosition(playerUpdate.px(), playerUpdate.py() + 1.8f, playerUpdate.pz());
+			}
+		}
 	}
 }

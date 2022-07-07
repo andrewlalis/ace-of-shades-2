@@ -17,7 +17,10 @@ public class WindowUtils {
 
 		var vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		if (vidMode == null) throw new IllegalStateException("Could not get information about the primary monitory.");
-		long windowHandle = glfwCreateWindow(vidMode.width(), vidMode.height(), "Ace of Shades 2", glfwGetPrimaryMonitor(), 0);
+		int width = vidMode.width();
+		int height = vidMode.height();
+		width = 800; height = 600;
+		long windowHandle = glfwCreateWindow(width, height, "Ace of Shades 2", 0, 0);
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
 
 		glfwSetKeyCallback(windowHandle, (window, key, scancode, action, mods) -> {
@@ -43,7 +46,7 @@ public class WindowUtils {
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
 
-		return new WindowInfo(windowHandle, vidMode.width(), vidMode.height());
+		return new WindowInfo(windowHandle, width, height);
 	}
 
 	public static void clearUI(long windowHandle) {

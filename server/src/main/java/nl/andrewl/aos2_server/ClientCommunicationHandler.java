@@ -1,11 +1,15 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
-import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.net.*;
+import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
+import org.joml.Vector3i;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -22,6 +26,8 @@ import java.net.Socket;
  * from them.
  */
 public class ClientCommunicationHandler {
+	private static final Logger log = LoggerFactory.getLogger(ClientCommunicationHandler.class);
+
 	private final Server server;
 	private final Socket socket;
 	private final DatagramSocket datagramSocket;
@@ -29,8 +35,8 @@ public class ClientCommunicationHandler {
 	private final ExtendedDataOutputStream out;
 
 	private InetAddress clientAddress;
-	private int clientUdpPort;
-	private Player player;
+	private int clientUdpPort = -1;
+	private ServerPlayer player;
 
 	public ClientCommunicationHandler(Server server, Socket socket, DatagramSocket datagramSocket) throws IOException {
 		this.server = server;
@@ -59,7 +65,13 @@ public class ClientCommunicationHandler {
 	}
 
 	private void handleTcpMessage(Message msg) {
-		System.out.println("Message received from client " + player.getUsername() + ": " + msg);
+		log.debug("Received TCP message from client \"{}\": {}", player.getUsername(), msg.toString());
+		if (msg instanceof ChunkHashMessage hashMessage) {
+			Chunk chunk = server.getWorld().getChunkAt(new Vector3i(hashMessage.cx(), hashMessage.cy(), hashMessage.cz()));
+			if (chunk != null && hashMessage.hash() != chunk.blockHash()) {
+				sendTcpMessage(new ChunkDataMessage(chunk));
+			}
+		}
 	}
 
 	public void establishConnection() throws IOException {
@@ -74,19 +86,17 @@ public class ClientCommunicationHandler {
 					socket.setSoTimeout(0);
 					this.clientAddress = socket.getInetAddress();
 					connectionEstablished = true;
-					this.player = server.registerPlayer(this, connectMsg.username());
+					this.player = server.getPlayerManager().register(this, connectMsg.username());
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
-					System.out.println("Sent connect accept message.");
+					log.debug("Sent connect accept message.");
 
-					System.out.println("Sending world data...");
 					for (var chunk : server.getWorld().getChunkMap().values()) {
 						sendTcpMessage(new ChunkDataMessage(chunk));
 					}
-					System.out.println("Sent all world data.");
 
 					// Initiate a TCP receiver thread to accept incoming messages from the client.
 					TcpReceiver tcpReceiver = new TcpReceiver(in, this::handleTcpMessage)
-							.withShutdownHook(() -> server.deregisterPlayer(this.player));
+							.withShutdownHook(() -> server.getPlayerManager().deregister(this.player));
 					new Thread(tcpReceiver).start();
 				}
 			} catch (IOException e) {
@@ -100,7 +110,7 @@ public class ClientCommunicationHandler {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			System.out.println("Player couldn't connect after " + attempts + " attempts. Aborting.");
+			log.warn("Player couldn't connect after {} attempts. Aborting connection.", attempts);
 			socket.close();
 		}
 	}
@@ -128,9 +138,11 @@ public class ClientCommunicationHandler {
 
 	public void sendDatagramPacket(DatagramPacket packet) {
 		try {
-			packet.setAddress(clientAddress);
-			packet.setPort(clientUdpPort);
-			datagramSocket.send(packet);
+			if (clientUdpPort != -1) {
+				packet.setAddress(clientAddress);
+				packet.setPort(clientUdpPort);
+				datagramSocket.send(packet);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

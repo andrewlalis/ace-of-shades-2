@@ -18,7 +18,6 @@ public class ChunkRenderer {
 	private final ShaderProgram shaderProgram;
 	private final int projectionTransformUniform;
 	private final int viewTransformUniform;
-	private final int normalTransformUniform;
 	private final int chunkPositionUniform;
 	private final int chunkSizeUniform;
 
@@ -35,7 +34,6 @@ public class ChunkRenderer {
 		shaderProgram.use();
 		this.projectionTransformUniform = shaderProgram.getUniform("projectionTransform");
 		this.viewTransformUniform = shaderProgram.getUniform("viewTransform");
-		this.normalTransformUniform = shaderProgram.getUniform("normalTransform");
 		this.chunkPositionUniform = shaderProgram.getUniform("chunkPosition");
 		this.chunkSizeUniform = shaderProgram.getUniform("chunkSize");
 

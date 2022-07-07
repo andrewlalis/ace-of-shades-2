@@ -1,7 +1,7 @@
 package nl.andrewl.aos_core;
 
 import nl.andrewl.aos_core.net.*;
-import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.udp.*;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.Serializer;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
@@ -26,6 +26,10 @@ public final class Net {
 		serializer.registerType(4, DatagramInit.class);
 		serializer.registerType(5, ChunkHashMessage.class);
 		serializer.registerType(6, ChunkDataMessage.class);
+		serializer.registerType(7, ChunkUpdateMessage.class);
+		serializer.registerType(8, ClientInputState.class);
+		serializer.registerType(9, ClientOrientationState.class);
+		serializer.registerType(10, PlayerUpdateMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

@@ -1,37 +1,39 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.model.Chunk;
-import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.UdpReceiver;
+import nl.andrewl.aos_core.net.udp.ClientInputState;
+import nl.andrewl.aos_core.net.udp.ClientOrientationState;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
+	private static final Logger log = LoggerFactory.getLogger(Server.class);
+
 	private final ServerSocket serverSocket;
 	private final DatagramSocket datagramSocket;
 	private volatile boolean running;
 
-	private int nextClientId = 1;
-	private final Map<Integer, Player> players;
-	private final Map<Integer, ClientCommunicationHandler> playerClientHandlers;
+	private final PlayerManager playerManager;
 	private final World world;
+	private final WorldUpdater worldUpdater;
 
 	public Server() throws IOException {
 		this.serverSocket = new ServerSocket(24464, 5);
 		this.serverSocket.setReuseAddress(true);
 		this.datagramSocket = new DatagramSocket(24464);
 		this.datagramSocket.setReuseAddress(true);
-		this.players = new HashMap<>();
-		this.playerClientHandlers = new HashMap<>();
+		this.playerManager = new PlayerManager();
+		this.worldUpdater = new WorldUpdater(this, 20);
 
 		// Generate world. TODO: do this elsewhere.
 		Random rand = new Random(1);
@@ -53,14 +55,14 @@ public class Server implements Runnable {
 	public void run() {
 		running = true;
 		new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
-		System.out.println("Started AOS2-Server on TCP/UDP port " + serverSocket.getLocalPort() + "; now accepting connections.");
+		new Thread(worldUpdater).start();
+		log.info("Started AoS2 Server on TCP/UDP port {}; now accepting connections.", serverSocket.getLocalPort());
 		while (running) {
 			acceptClientConnection();
 		}
-		for (var player : players.values()) {
-			deregisterPlayer(player);
-		}
-		datagramSocket.close();
+		playerManager.deregisterAll();
+		worldUpdater.shutdown();
+		datagramSocket.close(); // Shuts down the UdpReceiver.
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
@@ -69,44 +71,27 @@ public class Server implements Runnable {
 	}
 
 	public void handleUdpMessage(Message msg, DatagramPacket packet) {
-		// Echo any init message from known clients.
 		if (msg instanceof DatagramInit init) {
-			var handler = getHandler(init.clientId());
-			if (handler != null) {
-				handler.setClientUdpPort(packet.getPort());
-				handler.sendDatagramPacket(msg);
+			playerManager.handleUdpInit(init, packet);
+		} else if (msg instanceof ClientInputState inputState) {
+			ServerPlayer player = playerManager.getPlayer(inputState.clientId());
+			if (player != null) {
+				player.setLastInputState(inputState);
+			}
+		} else if (msg instanceof ClientOrientationState orientationState) {
+			ServerPlayer player = playerManager.getPlayer(orientationState.clientId());
+			if (player != null) {
+				player.setOrientation(orientationState.x(), orientationState.y());
+				playerManager.broadcastUdpMessage(new PlayerUpdateMessage(player));
 			}
 		}
-	}
-
-	public synchronized Player registerPlayer(ClientCommunicationHandler handler, String username) {
-		Player player = new Player(nextClientId++, username);
-		players.put(player.getId(), player);
-		playerClientHandlers.put(player.getId(), handler);
-		System.out.println("Registered player " + username + " with id " + player.getId());
-		return player;
-	}
-
-	public synchronized void deregisterPlayer(Player player) {
-		ClientCommunicationHandler handler = playerClientHandlers.get(player.getId());
-		handler.shutdown();
-		players.remove(player.getId());
-		playerClientHandlers.remove(player.getId());
-		System.out.println("Deregistered player " + player.getUsername() + " with id " + player.getId());
-	}
-
-	public ClientCommunicationHandler getHandler(int id) {
-		return playerClientHandlers.get(id);
-	}
-
-	public World getWorld() {
-		return world;
 	}
 
 	private void acceptClientConnection() {
 		try {
 			Socket clientSocket = serverSocket.accept();
 			var handler = new ClientCommunicationHandler(this, clientSocket, datagramSocket);
+			// Establish the connection in a separate thread so that we can continue accepting clients.
 			ForkJoinPool.commonPool().submit(() -> {
 				try {
 					handler.establishConnection();
@@ -120,6 +105,14 @@ public class Server implements Runnable {
 			}
 			e.printStackTrace();
 		}
+	}
+
+	public World getWorld() {
+		return world;
+	}
+
+	public PlayerManager getPlayerManager() {
+		return playerManager;
 	}
 
 	public static void main(String[] args) throws IOException {
