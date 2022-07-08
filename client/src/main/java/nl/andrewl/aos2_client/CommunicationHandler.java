@@ -1,10 +1,8 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos_core.Net;
-import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -36,7 +34,6 @@ public class CommunicationHandler {
 	}
 	
 	public int establishConnection(InetAddress address, int port, String username) throws IOException {
-		log.debug("Connecting to server at {}, port {}, with username \"{}\"...", address, port, username);
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
@@ -53,8 +50,8 @@ public class CommunicationHandler {
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
 			establishDatagramConnection();
-			new Thread(new TcpReceiver(in, this::handleMessage)).start();
-			new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
+			new Thread(new TcpReceiver(in, client::onMessageReceived)).start();
+			new Thread(new UdpReceiver(datagramSocket, (msg, packet) -> client.onMessageReceived(msg))).start();
 			return acceptMessage.clientId();
 		} else {
 			throw new IOException("Server returned an unexpected message: " + response);
@@ -117,19 +114,7 @@ public class CommunicationHandler {
 		log.debug("Established datagram communication with the server.");
 	}
 
-	private void handleMessage(Message msg) {
-		if (msg instanceof ChunkDataMessage chunkDataMessage) {
-			Chunk chunk = chunkDataMessage.toChunk();
-			client.getWorld().addChunk(chunk);
-		}
-	}
-
-	private void handleUdpMessage(Message msg, DatagramPacket packet) {
-		if (msg instanceof PlayerUpdateMessage playerUpdate) {
-//			log.debug("Received player update: {}", playerUpdate);
-			if (playerUpdate.clientId() == client.getClientId()) {
-				client.getCam().setPosition(playerUpdate.px(), playerUpdate.py() + 1.8f, playerUpdate.pz());
-			}
-		}
+	public int getClientId() {
+		return clientId;
 	}
 }

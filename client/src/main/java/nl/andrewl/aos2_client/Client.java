@@ -1,104 +1,71 @@
 package nl.andrewl.aos2_client;
 
-import nl.andrewl.aos2_client.render.ChunkMesh;
-import nl.andrewl.aos2_client.render.ChunkMeshGenerator;
-import nl.andrewl.aos2_client.render.ChunkRenderer;
-import nl.andrewl.aos2_client.render.WindowUtils;
+import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
+import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
+import nl.andrewl.aos2_client.render.GameRenderer;
+import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.World;
-import nl.andrewl.aos_core.net.udp.ClientInputState;
+import nl.andrewl.aos_core.net.ChunkDataMessage;
+import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
+import nl.andrewl.record_net.Message;
+import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL46.*;
-
 public class Client implements Runnable {
-	public static void main(String[] args) throws IOException {
-		InetAddress serverAddress = InetAddress.getByName(args[0]);
-		int serverPort = Integer.parseInt(args[1]);
-		String username = args[2].trim();
-
-		Client client = new Client(serverAddress, serverPort, username);
-		client.run();
-	}
+	private static final Logger log = LoggerFactory.getLogger(Client.class);
+	public static final double FPS = 60;
 
 	private final InetAddress serverAddress;
 	private final int serverPort;
 	private final String username;
-	private final CommunicationHandler communicationHandler;
-	private ChunkRenderer chunkRenderer;
-	private int clientId;
 
-	private World world;
-	private Camera cam;
+	private final CommunicationHandler communicationHandler;
+	private final GameRenderer gameRenderer;
+
+	private int clientId;
+	private final World world;
 
 	public Client(InetAddress serverAddress, int serverPort, String username) {
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.username = username;
 		this.communicationHandler = new CommunicationHandler(this);
+		this.gameRenderer = new GameRenderer();
 		this.world = new World();
-		this.cam = new Camera(this);
 	}
 
 	@Override
 	public void run() {
-		var windowInfo = WindowUtils.initUI();
-		long windowHandle = windowInfo.windowHandle();
-		chunkRenderer = new ChunkRenderer(windowInfo.width(), windowInfo.height());
-		ChunkMeshGenerator meshGenerator = new ChunkMeshGenerator();
-
 		try {
+			log.debug("Connecting to server at {}, port {}, with username \"{}\"...", serverAddress, serverPort, username);
 			this.clientId = communicationHandler.establishConnection(serverAddress, serverPort, username);
-			System.out.println("Established connection to the server.");
+			log.info("Established a connection to the server.");
 		} catch (IOException e) {
-			e.printStackTrace();
-			return; // Exit without starting the game.
+			log.error("Couldn't connect to the server: {}", e.getMessage());
+			return;
 		}
 
-		System.out.println("Waiting for all world data to arrive...");
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		gameRenderer.setupWindow(
+				new PlayerViewCursorCallback(gameRenderer.getCamera(), communicationHandler),
+				new PlayerInputKeyCallback(communicationHandler)
+		);
+
+		long lastFrameAt = System.currentTimeMillis();
+		while (!gameRenderer.windowShouldClose()) {
+			long now = System.currentTimeMillis();
+			float dt = (now - lastFrameAt) / 1000f;
+			gameRenderer.draw();
+			// Interpolate camera movement to make the game feel smooth.
+			Vector3f camMovement = new Vector3f(gameRenderer.getCamera().getVelocity()).mul(dt);
+			gameRenderer.getCamera().getPosition().add(camMovement);
+			lastFrameAt = now;
 		}
-		for (var chunk : world.getChunkMap().values()) {
-			chunkRenderer.addChunkMesh(new ChunkMesh(chunk, meshGenerator));
-		}
-
-		glfwSetCursorPosCallback(windowHandle, cam);
-
-		ClientInputState lastInputState = null;
-
-		while (!glfwWindowShouldClose(windowHandle)) {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			chunkRenderer.draw(cam);
-
-			glfwSwapBuffers(windowHandle);
-			glfwPollEvents();
-
-			ClientInputState inputState = new ClientInputState(
-					clientId,
-					glfwGetKey(windowHandle, GLFW_KEY_W) == GLFW_PRESS,
-					glfwGetKey(windowHandle, GLFW_KEY_S) == GLFW_PRESS,
-					glfwGetKey(windowHandle, GLFW_KEY_A) == GLFW_PRESS,
-					glfwGetKey(windowHandle, GLFW_KEY_D) == GLFW_PRESS,
-					glfwGetKey(windowHandle, GLFW_KEY_SPACE) == GLFW_PRESS,
-					glfwGetKey(windowHandle, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS,
-					false
-			);
-			if (!inputState.equals(lastInputState)) {
-				communicationHandler.sendDatagramPacket(inputState);
-				lastInputState = inputState;
-			}
-		}
-
+		gameRenderer.freeWindow();
 		communicationHandler.shutdown();
-
-		chunkRenderer.free();
-		WindowUtils.clearUI(windowHandle);
 	}
 
 	public int getClientId() {
@@ -109,15 +76,27 @@ public class Client implements Runnable {
 		return world;
 	}
 
-	public Camera getCam() {
-		return cam;
+	public void onMessageReceived(Message msg) {
+		if (msg instanceof ChunkDataMessage chunkDataMessage) {
+			Chunk chunk = chunkDataMessage.toChunk();
+			world.addChunk(chunk);
+			gameRenderer.getChunkRenderer().addChunkMesh(chunk);
+		}
+		if (msg instanceof PlayerUpdateMessage playerUpdate) {
+			if (playerUpdate.clientId() == clientId) {
+				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + 1.8f, playerUpdate.pz());
+				gameRenderer.getCamera().setVelocity(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
+			}
+		}
 	}
 
-	public CommunicationHandler getCommunicationHandler() {
-		return communicationHandler;
-	}
 
-	public ChunkRenderer getChunkRenderer() {
-		return chunkRenderer;
+	public static void main(String[] args) throws IOException {
+		InetAddress serverAddress = InetAddress.getByName(args[0]);
+		int serverPort = Integer.parseInt(args[1]);
+		String username = args[2].trim();
+
+		Client client = new Client(serverAddress, serverPort, username);
+		client.run();
 	}
 }

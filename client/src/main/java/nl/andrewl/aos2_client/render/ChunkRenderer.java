@@ -6,6 +6,8 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -15,18 +17,17 @@ import static org.lwjgl.opengl.GL46.*;
  * be rendered each frame.
  */
 public class ChunkRenderer {
-	private final ShaderProgram shaderProgram;
-	private final int projectionTransformUniform;
-	private final int viewTransformUniform;
-	private final int chunkPositionUniform;
-	private final int chunkSizeUniform;
+	private final ChunkMeshGenerator chunkMeshGenerator = new ChunkMeshGenerator();
+	private final Queue<Chunk> meshGenerationQueue = new ConcurrentLinkedQueue<>();
 
-	private final Matrix4f projectionTransform;
+	private ShaderProgram shaderProgram;
+	private int projectionTransformUniform;
+	private int viewTransformUniform;
+	private int chunkPositionUniform;
 
 	private final List<ChunkMesh> chunkMeshes = new ArrayList<>();
 
-	public ChunkRenderer(int windowWidth, int windowHeight) {
-		this.projectionTransform = new Matrix4f().perspective(70, (float) windowWidth / (float) windowHeight, 0.01f, 500.0f);
+	public void setupShaderProgram() {
 		this.shaderProgram = new ShaderProgram.Builder()
 				.withShader("shader/chunk/vertex.glsl", GL_VERTEX_SHADER)
 				.withShader("shader/chunk/fragment.glsl", GL_FRAGMENT_SHADER)
@@ -35,18 +36,24 @@ public class ChunkRenderer {
 		this.projectionTransformUniform = shaderProgram.getUniform("projectionTransform");
 		this.viewTransformUniform = shaderProgram.getUniform("viewTransform");
 		this.chunkPositionUniform = shaderProgram.getUniform("chunkPosition");
-		this.chunkSizeUniform = shaderProgram.getUniform("chunkSize");
+		int chunkSizeUniform = shaderProgram.getUniform("chunkSize");
 
-		// Preemptively load projection transform, which doesn't change much.
-		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
+		// Set constant uniforms that don't change during runtime.
 		glUniform1i(chunkSizeUniform, Chunk.SIZE);
 	}
 
-	public void addChunkMesh(ChunkMesh mesh) {
-		this.chunkMeshes.add(mesh);
+	public void addChunkMesh(Chunk chunk) {
+		meshGenerationQueue.add(chunk);
+	}
+
+	public void setPerspective(Matrix4f projectionTransform) {
+		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
 	}
 
 	public void draw(Camera cam) {
+		while (!meshGenerationQueue.isEmpty()) {
+			chunkMeshes.add(new ChunkMesh(meshGenerationQueue.remove(), chunkMeshGenerator));
+		}
 		shaderProgram.use();
 		glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
 		for (var mesh : chunkMeshes) {

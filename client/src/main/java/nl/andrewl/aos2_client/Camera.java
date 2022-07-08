@@ -1,18 +1,14 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos_core.MathUtils;
-import nl.andrewl.aos_core.net.udp.ClientOrientationState;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFWCursorPosCallbackI;
-
-import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 
 /**
  * Represents the player camera in the game world.
  */
-public class Camera implements GLFWCursorPosCallbackI {
+public class Camera {
 	public static final Vector3f UP = new Vector3f(0, 1, 0);
 	public static final Vector3f DOWN = new Vector3f(0, -1, 0);
 	public static final Vector3f RIGHT = new Vector3f(1, 0, 0);
@@ -20,12 +16,12 @@ public class Camera implements GLFWCursorPosCallbackI {
 	public static final Vector3f FORWARD = new Vector3f(0, 0, -1);
 	public static final Vector3f BACKWARD = new Vector3f(0, 0, 1);
 
-	private final Client client;
-
 	/**
 	 * The x, y, and z position of the camera in the world.
 	 */
 	private final Vector3f position;
+
+	private final Vector3f velocity;
 
 	/**
 	 * The camera's angular orientation. X refers to the rotation about the
@@ -43,13 +39,9 @@ public class Camera implements GLFWCursorPosCallbackI {
 	private final Matrix4f viewTransform;
 	private final float[] viewTransformData = new float[16];
 
-	private float lastMouseCursorX;
-	private float lastMouseCursorY;
-	private float mouseCursorSensitivity = 0.005f;
-
-	public Camera(Client client) {
-		this.client = client;
+	public Camera() {
 		this.position = new Vector3f();
+		this.velocity = new Vector3f();
 		this.orientation = new Vector2f(0, (float) (Math.PI / 2));
 		this.viewTransform = new Matrix4f();
 	}
@@ -66,12 +58,23 @@ public class Camera implements GLFWCursorPosCallbackI {
 		return orientation;
 	}
 
+	public Vector3f getPosition() {
+		return position;
+	}
+
+	public Vector3f getVelocity() {
+		return velocity;
+	}
+
 	public void setPosition(float x, float y, float z) {
 		if (position.x != x || position.y != y || position.z != z) {
 			position.set(x, y, z);
 			updateViewTransform();
-			System.out.printf("Position: x=%.2f, y=%.2f, z=%.2f%n", position.x, position.y, position.z);
 		}
+	}
+
+	public void setVelocity(float x, float y, float z) {
+		velocity.set(x, y, z);
 	}
 
 	public void setOrientation(float x, float y) {
@@ -92,24 +95,6 @@ public class Camera implements GLFWCursorPosCallbackI {
 		viewTransform.rotate(-orientation.x, UP);
 		viewTransform.translate(-position.x, -position.y, -position.z);
 		viewTransform.get(viewTransformData);
-	}
-
-	@Override
-	public void invoke(long windowHandle, double xPos, double yPos) {
-		double[] xb = new double[1];
-		double[] yb = new double[1];
-		glfwGetCursorPos(windowHandle, xb, yb);
-		float x = (float) xb[0];
-		float y = (float) yb[0];
-		float dx = x - lastMouseCursorX;
-		float dy = y - lastMouseCursorY;
-		lastMouseCursorX = x;
-		lastMouseCursorY = y;
-		setOrientation(orientation.x - dx * mouseCursorSensitivity, orientation.y - dy * mouseCursorSensitivity);
-		client.getCommunicationHandler().sendDatagramPacket(new ClientOrientationState(client.getClientId(), orientation.x, orientation.y));
-//		System.out.printf("rX=%.0f deg about the Y axis, rY=%.0f deg about the X axis%n", Math.toDegrees(orientation.x), Math.toDegrees(orientation.y));
-		var vv = getViewVector();
-//		System.out.printf("View vector: [%.2f, %.2f, %.2f]%n", vv.x, vv.y, vv.z);
 	}
 
 	public Vector3f getViewVector() {

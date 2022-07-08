@@ -13,7 +13,7 @@ import java.util.Map;
  * that players can interact in.
  */
 public class World {
-	private final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
+	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 
 	public void addChunk(Chunk chunk) {
 		chunkMap.put(chunk.getPosition(), chunk);

@@ -1,6 +1,5 @@
 package nl.andrewl.aos2_server;
 
-import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import org.joml.Math;
 import org.joml.Matrix4f;
@@ -18,11 +17,13 @@ public class WorldUpdater implements Runnable {
 
 	private final Server server;
 	private final float ticksPerSecond;
+	private final float secondsPerTick;
 	private volatile boolean running;
 
 	public WorldUpdater(Server server, float ticksPerSecond) {
 		this.server = server;
 		this.ticksPerSecond = ticksPerSecond;
+		this.secondsPerTick = 1.0f / ticksPerSecond;
 	}
 
 	public void shutdown() {
@@ -66,7 +67,7 @@ public class WorldUpdater implements Runnable {
 		var p = player.getPosition();
 
 		// Check if we have a negative velocity that will cause us to fall through a block next tick.
-		float nextTickY = p.y + v.y;
+		float nextTickY = p.y + v.y * secondsPerTick;
 		if (server.getWorld().getBlockAt(new Vector3f(p.x, nextTickY, p.z)) != 0) {
 			// Find the first block we'll hit and set the player down on that.
 			int floorY = (int) Math.floor(p.y) - 1;
@@ -85,12 +86,12 @@ public class WorldUpdater implements Runnable {
 		boolean grounded = (Math.floor(p.y) == p.y && server.getWorld().getBlockAt(new Vector3f(p.x, p.y - 0.0001f, p.z)) != 0);
 
 		if (!grounded) {
-			v.y -= 0.1f;
+			v.y -= 3f;
 		}
 
 		// Apply horizontal deceleration to the player before computing any input-derived acceleration.
 		if (grounded && hv.length() > 0) {
-			Vector3f deceleration = new Vector3f(hv).negate().normalize().mul(0.1f);
+			Vector3f deceleration = new Vector3f(hv).negate().normalize().mul(Math.min(hv.length(), 2f));
 			hv.add(deceleration);
 			if (hv.length() < 0.1f) {
 				hv.set(0);
@@ -103,9 +104,10 @@ public class WorldUpdater implements Runnable {
 		Vector3f a = new Vector3f();
 		var inputState = player.getLastInputState();
 		if (inputState.jumping() && grounded) {
-			v.y = 0.6f;
+			v.y = 15f;
 		}
 
+		final float horizontalAcceleration = 5;
 		// Compute horizontal motion separately.
 		if (grounded) {
 			if (inputState.forward()) a.z -= 1;
@@ -118,9 +120,17 @@ public class WorldUpdater implements Runnable {
 				Matrix4f moveTransform = new Matrix4f();
 				moveTransform.rotate(player.getOrientation().x, new Vector3f(0, 1, 0));
 				moveTransform.transformDirection(a);
+				a.mul(horizontalAcceleration);
 				hv.add(a);
 
-				final float maxSpeed = 0.25f; // Blocks per tick.
+				final float maxSpeed;
+				if (inputState.crouching()) {
+					maxSpeed = 2.5f;
+				} else if (inputState.sprinting()) {
+					maxSpeed = 10f;
+				} else {
+					maxSpeed = 6f;
+				}
 				if (hv.length() > maxSpeed) {
 					hv.normalize(maxSpeed);
 				}
@@ -132,7 +142,9 @@ public class WorldUpdater implements Runnable {
 
 		// Apply velocity to the player's position.
 		if (v.lengthSquared() > 0) {
-			p.add(v);
+			Vector3f scaledVelocity = new Vector3f(v);
+			scaledVelocity.mul(secondsPerTick);
+			p.add(scaledVelocity);
 			updated = true;
 		}
 
