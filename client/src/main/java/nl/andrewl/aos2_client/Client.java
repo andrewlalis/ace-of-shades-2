@@ -8,7 +8,6 @@ import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.ChunkDataMessage;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,15 +26,15 @@ public class Client implements Runnable {
 	private final GameRenderer gameRenderer;
 
 	private int clientId;
-	private final World world;
+	private final ClientWorld world;
 
 	public Client(InetAddress serverAddress, int serverPort, String username) {
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.username = username;
 		this.communicationHandler = new CommunicationHandler(this);
-		this.gameRenderer = new GameRenderer();
-		this.world = new World();
+		this.world = new ClientWorld();
+		this.gameRenderer = new GameRenderer(world);
 	}
 
 	@Override
@@ -58,10 +57,8 @@ public class Client implements Runnable {
 		while (!gameRenderer.windowShouldClose()) {
 			long now = System.currentTimeMillis();
 			float dt = (now - lastFrameAt) / 1000f;
+			gameRenderer.getCamera().interpolatePosition(dt);
 			gameRenderer.draw();
-			// Interpolate camera movement to make the game feel smooth.
-			Vector3f camMovement = new Vector3f(gameRenderer.getCamera().getVelocity()).mul(dt);
-			gameRenderer.getCamera().getPosition().add(camMovement);
 			lastFrameAt = now;
 		}
 		gameRenderer.freeWindow();
@@ -86,6 +83,7 @@ public class Client implements Runnable {
 			if (playerUpdate.clientId() == clientId) {
 				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + 1.8f, playerUpdate.pz());
 				gameRenderer.getCamera().setVelocity(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
+				// TODO: Unload far away chunks and request close chunks we don't have.
 			}
 		}
 	}

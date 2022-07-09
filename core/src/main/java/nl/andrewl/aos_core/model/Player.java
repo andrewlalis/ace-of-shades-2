@@ -17,12 +17,12 @@ public class Player {
 	 * then the player's y coordinate is y=6.0. The x and z coordinates are
 	 * simply the center of the player.
 	 */
-	private final Vector3f position;
+	protected final Vector3f position;
 
 	/**
 	 * The player's velocity in each of the coordinate axes.
 	 */
-	private final Vector3f velocity;
+	protected final Vector3f velocity;
 
 	/**
 	 * The player's orientation. The x component refers to rotation about the
@@ -33,17 +33,17 @@ public class Player {
 	 * The y component is limited to between 0 and PI, with y=0 looking
 	 * straight down, and y=PI looking straight up.
 	 */
-	private final Vector2f orientation;
+	protected final Vector2f orientation;
 
 	/**
 	 * A vector that's internally re-computed each time the player's
 	 * orientation changes, and represents unit vector pointing in the
 	 * direction the player is looking.
 	 */
-	private final Vector3f viewVector;
+	protected final Vector3f viewVector;
 
-	private final String username;
-	private final int id;
+	protected final String username;
+	protected final int id;
 
 	public Player(int id, String username) {
 		this.position = new Vector3f();

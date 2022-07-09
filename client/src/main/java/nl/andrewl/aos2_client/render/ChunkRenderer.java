@@ -2,6 +2,7 @@ package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -50,9 +51,9 @@ public class ChunkRenderer {
 		glUniformMatrix4fv(projectionTransformUniform, false, projectionTransform.get(new float[16]));
 	}
 
-	public void draw(Camera cam) {
+	public void draw(Camera cam, World world) {
 		while (!meshGenerationQueue.isEmpty()) {
-			chunkMeshes.add(new ChunkMesh(meshGenerationQueue.remove(), chunkMeshGenerator));
+			chunkMeshes.add(new ChunkMesh(meshGenerationQueue.remove(), world, chunkMeshGenerator));
 		}
 		shaderProgram.use();
 		glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());

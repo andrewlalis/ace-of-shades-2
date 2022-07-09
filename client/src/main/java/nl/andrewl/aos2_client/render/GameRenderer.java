@@ -4,6 +4,7 @@ import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -28,6 +29,7 @@ public class GameRenderer {
 
 	private final ChunkRenderer chunkRenderer;
 	private final Camera camera;
+	private final World world;
 
 	private long windowHandle;
 	private GLFWVidMode primaryMonitorSettings;
@@ -38,7 +40,8 @@ public class GameRenderer {
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer() {
+	public GameRenderer(World world) {
+		this.world = world;
 		this.chunkRenderer = new ChunkRenderer();
 		this.camera = new Camera();
 		this.perspectiveTransform = new Matrix4f();
@@ -140,7 +143,7 @@ public class GameRenderer {
 	public void draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		chunkRenderer.draw(camera);
+		chunkRenderer.draw(camera, world);
 
 		glfwSwapBuffers(windowHandle);
 		glfwPollEvents();

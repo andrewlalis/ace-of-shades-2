@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.World;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -16,9 +17,11 @@ public class ChunkMesh {
 
 	private final int[] positionData;
 	private final Chunk chunk;
+	private final World world;
 
-	public ChunkMesh(Chunk chunk, ChunkMeshGenerator meshGenerator) {
+	public ChunkMesh(Chunk chunk, World world, ChunkMeshGenerator meshGenerator) {
 		this.chunk = chunk;
+		this.world = world;
 		this.positionData = new int[]{chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z};
 
 		this.vboId = glGenBuffers();
@@ -39,7 +42,7 @@ public class ChunkMesh {
 	 */
 	private void loadMesh(ChunkMeshGenerator meshGenerator) {
 		long start = System.nanoTime();
-		var meshData = meshGenerator.generateMesh(chunk);
+		var meshData = meshGenerator.generateMesh(chunk, world);
 		double dur = (System.nanoTime() - start) / 1_000_000.0;
 		this.indexCount = meshData.indexBuffer().limit();
 		// Print some debug information.

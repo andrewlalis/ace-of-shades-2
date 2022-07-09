@@ -16,6 +16,7 @@ public class WorldTest {
 		assertEquals(1, world.getBlockAt(new Vector3f(1, 0, 0)));
 		assertEquals(1, world.getBlockAt(new Vector3f(1.9f, 0, 0)));
 		assertEquals(1, world.getBlockAt(new Vector3f(1.5f, 0.7f, 0.3f)));
+		assertEquals(0, world.getBlockAt(new Vector3f(2f, 0.7f, 0.3f)));
 	}
 
 	@Test

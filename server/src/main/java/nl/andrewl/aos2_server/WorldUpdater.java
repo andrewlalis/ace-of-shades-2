@@ -56,7 +56,8 @@ public class WorldUpdater implements Runnable {
 
 	private void tick() {
 		for (var player : server.getPlayerManager().getPlayers()) {
-			updatePlayerMovement(player);
+			player.tick(secondsPerTick, server.getWorld());
+			if (player.isUpdated()) server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(player));
 		}
 	}
 
@@ -86,7 +87,7 @@ public class WorldUpdater implements Runnable {
 		boolean grounded = (Math.floor(p.y) == p.y && server.getWorld().getBlockAt(new Vector3f(p.x, p.y - 0.0001f, p.z)) != 0);
 
 		if (!grounded) {
-			v.y -= 3f;
+			v.y -= 9.81f * secondsPerTick;
 		}
 
 		// Apply horizontal deceleration to the player before computing any input-derived acceleration.

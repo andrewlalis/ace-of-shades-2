@@ -89,7 +89,13 @@ public class Camera {
 		setOrientation((float) Math.toRadians(x), (float) Math.toRadians(y));
 	}
 
-	private void updateViewTransform() {
+	public void interpolatePosition(float dt) {
+		Vector3f movement = new Vector3f(velocity).mul(dt);
+		position.add(movement);
+		updateViewTransform();
+	}
+
+	public void updateViewTransform() {
 		viewTransform.identity();
 		viewTransform.rotate(-orientation.y + ((float) Math.PI / 2), RIGHT);
 		viewTransform.rotate(-orientation.x, UP);

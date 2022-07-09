@@ -30,6 +30,8 @@ public final class Net {
 		serializer.registerType(8, ClientInputState.class);
 		serializer.registerType(9, ClientOrientationState.class);
 		serializer.registerType(10, PlayerUpdateMessage.class);
+		serializer.registerType(11, PlayerJoinMessage.class);
+		serializer.registerType(12, PlayerLeaveMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

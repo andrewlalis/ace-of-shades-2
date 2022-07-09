@@ -84,4 +84,18 @@ public class PlayerManager {
 			log.warn("An error occurred while broadcasting a UDP message.", e);
 		}
 	}
+
+	public void broadcastUdpMessageToAllBut(Message msg, ServerPlayer player) {
+		try {
+			byte[] data = Net.write(msg);
+			DatagramPacket packet = new DatagramPacket(data, data.length);
+			for (var entry : clientHandlers.entrySet()) {
+				if (entry.getKey() != player.getId()) {
+					entry.getValue().sendDatagramPacket(packet);
+				}
+			}
+		} catch (IOException e) {
+			log.warn("An error occurred while broadcasting a UDP message.", e);
+		}
+	}
 }

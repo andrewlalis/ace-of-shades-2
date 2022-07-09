@@ -5,6 +5,8 @@ import nl.andrewl.aos2_client.CommunicationHandler;
 import nl.andrewl.aos_core.net.udp.ClientOrientationState;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 
+import java.util.concurrent.ForkJoinPool;
+
 import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 
 public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
@@ -40,7 +42,7 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 		camera.setOrientation(camera.getOrientation().x - dx * mouseCursorSensitivity, camera.getOrientation().y - dy * mouseCursorSensitivity);
 		long now = System.currentTimeMillis();
 		if (lastOrientationUpdateSentAt + ORIENTATION_UPDATE_LIMIT < now) {
-			comm.sendDatagramPacket(new ClientOrientationState(comm.getClientId(), camera.getOrientation().x, camera.getOrientation().y));
+			ForkJoinPool.commonPool().submit(() -> comm.sendDatagramPacket(new ClientOrientationState(comm.getClientId(), camera.getOrientation().x, camera.getOrientation().y)));
 			lastOrientationUpdateSentAt = now;
 		}
 	}
