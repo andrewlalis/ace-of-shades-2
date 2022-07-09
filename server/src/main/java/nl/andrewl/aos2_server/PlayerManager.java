@@ -1,6 +1,8 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.net.PlayerJoinMessage;
+import nl.andrewl.aos_core.net.PlayerLeaveMessage;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
@@ -29,6 +31,7 @@ public class PlayerManager {
 		clientHandlers.put(player.getId(), handler);
 		log.info("Registered player \"{}\" with id {}", player.getUsername(), player.getId());
 		player.setPosition(new Vector3f(0, 64, 0));
+		broadcastTcpMessage(new PlayerJoinMessage(player));
 		broadcastUdpMessage(new PlayerUpdateMessage(player));
 		return player;
 	}
@@ -38,6 +41,7 @@ public class PlayerManager {
 		if (handler != null) handler.shutdown();
 		players.remove(player.getId());
 		clientHandlers.remove(player.getId());
+		broadcastTcpMessage(new PlayerLeaveMessage(player.getId()));
 		log.info("Deregistered player \"{}\" with id {}", player.getUsername(), player.getId());
 	}
 
@@ -70,6 +74,12 @@ public class PlayerManager {
 			handler.setClientUdpPort(packet.getPort());
 			handler.sendDatagramPacket(init);
 			log.debug("Echoed player \"{}\"'s UDP init packet.", getPlayer(init.clientId()).getUsername());
+		}
+	}
+
+	public void broadcastTcpMessage(Message msg) {
+		for (var handler : getHandlers()) {
+			handler.sendTcpMessage(msg);
 		}
 	}
 
