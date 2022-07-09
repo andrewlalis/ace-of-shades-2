@@ -10,6 +10,7 @@ module setversion;
 
 import std.stdio;
 import std.file : write, readText;
+import std.process;
 
 void main() {
     string newVersion = getMainVersion();
@@ -20,6 +21,9 @@ void main() {
         write(pomFile, xml);
         writefln!"Updated %s to version %s"(pomFile, newVersion);
     }
+    writeln("Running mvn clean test on updated projects.");
+    auto pid = spawnShell("mvn clean test", stdin, stdout, stderr);
+    wait(pid);
 }
 
 string getMainVersion() {
