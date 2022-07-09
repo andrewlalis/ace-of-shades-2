@@ -6,7 +6,6 @@ import nl.andrewl.aos_core.net.udp.ClientInputState;
 import org.joml.Math;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +52,6 @@ public class ServerPlayer extends Player {
 	public void tick(float dt, World world) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
 
-		checkBlockCollisions(dt, world);
-
 		if (isGrounded(world)) {
 			tickHorizontalVelocity();
 			if (lastInputState.jumping()) velocity.y = JUMP_SPEED;
@@ -65,8 +62,10 @@ public class ServerPlayer extends Player {
 
 		// Apply updated velocity to the player.
 		if (velocity.lengthSquared() > 0) {
-			Vector3f scaledVelocity = new Vector3f(velocity).mul(dt);
-			position.add(scaledVelocity);
+			Vector3f movement = new Vector3f(velocity).mul(dt);
+			// Check for collisions if we try to move according to what the player wants.
+			checkBlockCollisions(dt, movement, world);
+			position.add(movement);
 			updated = true;
 		}
 	}
@@ -86,6 +85,7 @@ public class ServerPlayer extends Player {
 			acceleration.normalize();
 			acceleration.rotateAxis(orientation.x, 0, 1, 0);
 			acceleration.mul(MOVEMENT_ACCELERATION);
+			System.out.println(acceleration);
 			horizontalVelocity.add(acceleration);
 			final float maxSpeed;
 			if (lastInputState.crouching()) {
@@ -138,8 +138,8 @@ public class ServerPlayer extends Player {
 		return points;
 	}
 
-	private void checkBlockCollisions(float dt, World world) {
-		final Vector3fc nextTickPosition = new Vector3f(position).add(new Vector3f(velocity).mul(dt));
+	private void checkBlockCollisions(float dt, Vector3f movement, World world) {
+		final Vector3f nextTickPosition = new Vector3f(position).add(movement);
 		List<Vector2i> horizontalSpaces = getHorizontalSpaceOccupied();
 		int minXNextTick = (int) Math.floor(nextTickPosition.x() - RADIUS);
 		int minZNextTick = (int) Math.floor(nextTickPosition.z() - RADIUS);
@@ -148,12 +148,16 @@ public class ServerPlayer extends Player {
 
 		// Check if the player is about to hit a wall.
 		// -Z
-		if (world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, minZNextTick) != 0) {
-			System.out.println("wall -z");
-			position.z = ((float) minZNextTick) + RADIUS + 0.001f;
-			velocity.z = 0;
-			updated = true;
+		if (nextTickPosition.z < position.z && world.getBlockAt(nextTickPosition) != 0) {
+			Vector3f normal = new Vector3f(0, 0, 1);
+			movement.sub(normal.mul(movement.dot(normal)));
 		}
+//		if (world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, minZNextTick) != 0) {
+//			System.out.println("wall -z");
+//			position.z = ((float) minZNextTick) + RADIUS + 0.001f;
+//			velocity.z = 0;
+//			updated = true;
+//		}
 		// +Z
 //		if (
 //				world.getBlockAt(nextTickPosition.x(), nextTickPosition.y(), maxZNextTick) != 0 &&
@@ -200,21 +204,18 @@ public class ServerPlayer extends Player {
 				.anyMatch(point -> world.getBlockAt(point.x, position.y, point.y) != 0 ||
 						world.getBlockAt(point.x, nextTickPosition.y(), point.y) != 0);
 		if (playerFootInBlock) {
-//			System.out.println("Player foot in block.");
 			int nextY = (int) Math.floor(nextTickPosition.y());
 			while (true) {
-//				System.out.println("Checking y = " + nextY);
 				int finalNextY = nextY;
 				boolean isOpen = horizontalSpaces.stream()
 						.allMatch(point -> {
-//							System.out.printf("[%d, %d, %d] -> %d%n", point.x, finalNextY, point.y, world.getBlockAt(point.x, finalNextY, point.y));
 							return world.getBlockAt(point.x, finalNextY, point.y) == 0;
 						});
 				if (isOpen) {
-//					System.out.println("It's clear to move player to y = " + nextY);
 					// Move the player to that spot, and cancel out their velocity.
 					position.y = nextY;
 					velocity.y = 0;
+					movement.y = 0; // Cancel out y movement for this tick.
 					updated = true;
 					break;
 				}
