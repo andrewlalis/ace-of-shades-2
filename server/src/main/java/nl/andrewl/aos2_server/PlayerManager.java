@@ -31,8 +31,14 @@ public class PlayerManager {
 		clientHandlers.put(player.getId(), handler);
 		log.info("Registered player \"{}\" with id {}", player.getUsername(), player.getId());
 		player.setPosition(new Vector3f(0, 64, 0));
-		broadcastTcpMessage(new PlayerJoinMessage(player));
-		broadcastUdpMessage(new PlayerUpdateMessage(player));
+		broadcastTcpMessageToAllBut(new PlayerJoinMessage(player), player);
+		broadcastUdpMessage(new PlayerUpdateMessage(
+				player.getId(),
+				player.getPosition().x, player.getPosition().y, player.getPosition().z,
+				player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
+				player.getOrientation().x, player.getOrientation().y,
+				player.getLastInputState().crouching()
+		));
 		return player;
 	}
 
@@ -80,6 +86,14 @@ public class PlayerManager {
 	public void broadcastTcpMessage(Message msg) {
 		for (var handler : getHandlers()) {
 			handler.sendTcpMessage(msg);
+		}
+	}
+
+	public void broadcastTcpMessageToAllBut(Message msg, ServerPlayer player) {
+		for (var entry : clientHandlers.entrySet()) {
+			if (entry.getKey() != player.getId()) {
+				entry.getValue().sendTcpMessage(msg);
+			}
 		}
 	}
 

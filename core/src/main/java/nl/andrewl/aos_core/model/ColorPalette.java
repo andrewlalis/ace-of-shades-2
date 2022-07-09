@@ -28,6 +28,24 @@ public class ColorPalette {
 		colors[value - 1].set(r, g, b);
 	}
 
+	public float[] toArray() {
+		float[] array = new float[3 * MAX_COLORS];
+		for (int i = 0; i < MAX_COLORS; i++) {
+			array[i * 3] = colors[i].x;
+			array[i * 3 + 1] = colors[i].y;
+			array[i * 3 + 2] = colors[i].z;
+		}
+		return array;
+	}
+
+	public static ColorPalette fromArray(float[] array) {
+		ColorPalette palette = new ColorPalette();
+		for (int i = 0; i < array.length / 3; i++) {
+			palette.colors[i].set(array[i * 3], array[i * 3 + 1], array[i * 3 + 2]);
+		}
+		return palette;
+	}
+
 	public static ColorPalette grayscale() {
 		ColorPalette palette = new ColorPalette();
 		for (int i = 0; i < MAX_COLORS; i++) {

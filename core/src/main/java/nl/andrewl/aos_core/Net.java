@@ -32,6 +32,7 @@ public final class Net {
 		serializer.registerType(10, PlayerUpdateMessage.class);
 		serializer.registerType(11, PlayerJoinMessage.class);
 		serializer.registerType(12, PlayerLeaveMessage.class);
+		serializer.registerType(13, WorldInfoMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

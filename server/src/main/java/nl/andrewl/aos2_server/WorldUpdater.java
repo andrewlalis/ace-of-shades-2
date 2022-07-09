@@ -57,100 +57,13 @@ public class WorldUpdater implements Runnable {
 	private void tick() {
 		for (var player : server.getPlayerManager().getPlayers()) {
 			player.tick(secondsPerTick, server.getWorld());
-			if (player.isUpdated()) server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(player));
-		}
-	}
-
-	private void updatePlayerMovement(ServerPlayer player) {
-		boolean updated = false;
-		var v = player.getVelocity();
-		var hv = new Vector3f(v.x, 0, v.z);
-		var p = player.getPosition();
-
-		// Check if we have a negative velocity that will cause us to fall through a block next tick.
-		float nextTickY = p.y + v.y * secondsPerTick;
-		if (server.getWorld().getBlockAt(new Vector3f(p.x, nextTickY, p.z)) != 0) {
-			// Find the first block we'll hit and set the player down on that.
-			int floorY = (int) Math.floor(p.y) - 1;
-			while (true) {
-				if (server.getWorld().getBlockAt(new Vector3f(p.x, floorY, p.z)) != 0) {
-					p.y = floorY + 1f;
-					v.y = 0;
-					break;
-				} else {
-					floorY--;
-				}
-			}
-		}
-
-		// Check if the player is on the ground.
-		boolean grounded = (Math.floor(p.y) == p.y && server.getWorld().getBlockAt(new Vector3f(p.x, p.y - 0.0001f, p.z)) != 0);
-
-		if (!grounded) {
-			v.y -= 9.81f * secondsPerTick;
-		}
-
-		// Apply horizontal deceleration to the player before computing any input-derived acceleration.
-		if (grounded && hv.length() > 0) {
-			Vector3f deceleration = new Vector3f(hv).negate().normalize().mul(Math.min(hv.length(), 2f));
-			hv.add(deceleration);
-			if (hv.length() < 0.1f) {
-				hv.set(0);
-			}
-			v.x = hv.x;
-			v.z = hv.z;
-			updated = true;
-		}
-
-		Vector3f a = new Vector3f();
-		var inputState = player.getLastInputState();
-		if (inputState.jumping() && grounded) {
-			v.y = 15f;
-		}
-
-		final float horizontalAcceleration = 5;
-		// Compute horizontal motion separately.
-		if (grounded) {
-			if (inputState.forward()) a.z -= 1;
-			if (inputState.backward()) a.z += 1;
-			if (inputState.left()) a.x -= 1;
-			if (inputState.right()) a.x += 1;
-//			if (inputState.crouching()) a.y -= 1; // TODO: do crouching instead of down.
-			if (a.lengthSquared() > 0) {
-				a.normalize();
-				Matrix4f moveTransform = new Matrix4f();
-				moveTransform.rotate(player.getOrientation().x, new Vector3f(0, 1, 0));
-				moveTransform.transformDirection(a);
-				a.mul(horizontalAcceleration);
-				hv.add(a);
-
-				final float maxSpeed;
-				if (inputState.crouching()) {
-					maxSpeed = 2.5f;
-				} else if (inputState.sprinting()) {
-					maxSpeed = 10f;
-				} else {
-					maxSpeed = 6f;
-				}
-				if (hv.length() > maxSpeed) {
-					hv.normalize(maxSpeed);
-				}
-				v.x = hv.x;
-				v.z = hv.z;
-				updated = true;
-			}
-		}
-
-		// Apply velocity to the player's position.
-		if (v.lengthSquared() > 0) {
-			Vector3f scaledVelocity = new Vector3f(v);
-			scaledVelocity.mul(secondsPerTick);
-			p.add(scaledVelocity);
-			updated = true;
-		}
-
-		if (updated) {
-			server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(player));
+			if (player.isUpdated()) server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(
+					player.getId(),
+					player.getPosition().x, player.getPosition().y, player.getPosition().z,
+					player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
+					player.getOrientation().x, player.getOrientation().y,
+					player.getLastInputState().crouching()
+			));
 		}
 	}
 }

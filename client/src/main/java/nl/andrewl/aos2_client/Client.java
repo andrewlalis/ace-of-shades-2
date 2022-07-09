@@ -4,8 +4,10 @@ import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.ColorPalette;
 import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.ChunkDataMessage;
+import nl.andrewl.aos_core.net.WorldInfoMessage;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import org.slf4j.Logger;
@@ -74,6 +76,9 @@ public class Client implements Runnable {
 	}
 
 	public void onMessageReceived(Message msg) {
+		if (msg instanceof WorldInfoMessage worldInfo) {
+			world.setPalette(ColorPalette.fromArray(worldInfo.palette()));
+		}
 		if (msg instanceof ChunkDataMessage chunkDataMessage) {
 			Chunk chunk = chunkDataMessage.toChunk();
 			world.addChunk(chunk);
@@ -81,7 +86,8 @@ public class Client implements Runnable {
 		}
 		if (msg instanceof PlayerUpdateMessage playerUpdate) {
 			if (playerUpdate.clientId() == clientId) {
-				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + 1.8f, playerUpdate.pz());
+				float eyeHeight = playerUpdate.crouching() ? 1.1f : 1.7f;
+				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + eyeHeight, playerUpdate.pz());
 				gameRenderer.getCamera().setVelocity(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
 				// TODO: Unload far away chunks and request close chunks we don't have.
 			}

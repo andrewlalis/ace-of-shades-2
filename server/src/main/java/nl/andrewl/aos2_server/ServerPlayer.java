@@ -51,13 +51,11 @@ public class ServerPlayer extends Player {
 	}
 
 	public void tick(float dt, World world) {
-//		log.info("Ticking player " + id);
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
 
 		checkBlockCollisions(dt, world);
 
 		if (isGrounded(world)) {
-//			System.out.println("g");
 			tickHorizontalVelocity();
 			if (lastInputState.jumping()) velocity.y = JUMP_SPEED;
 		} else {
@@ -71,8 +69,6 @@ public class ServerPlayer extends Player {
 			position.add(scaledVelocity);
 			updated = true;
 		}
-
-//		System.out.printf("pos: [%.3f, %.3f, %.3f]%n", position.x, position.y, position.z);
 	}
 
 	private void tickHorizontalVelocity() {
@@ -152,45 +148,42 @@ public class ServerPlayer extends Player {
 
 		// Check if the player is about to hit a wall.
 		// -Z
-		if (
-				world.getBlockAt(nextTickPosition.x(), nextTickPosition.y(), minZNextTick) != 0 &&
-				world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, minZNextTick) != 0
-		) {
+		if (world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, minZNextTick) != 0) {
 			System.out.println("wall -z");
 			position.z = ((float) minZNextTick) + RADIUS + 0.001f;
 			velocity.z = 0;
 			updated = true;
 		}
 		// +Z
-		if (
-				world.getBlockAt(nextTickPosition.x(), nextTickPosition.y(), maxZNextTick) != 0 &&
-						world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, maxZNextTick) != 0
-		) {
-			System.out.println("wall +z");
-			position.z = ((float) maxZNextTick) - RADIUS - 0.001f;
-			velocity.z = 0;
-			updated = true;
-		}
-		// -X
-		if (
-				world.getBlockAt(minXNextTick, nextTickPosition.y(), nextTickPosition.z()) != 0 &&
-						world.getBlockAt(minXNextTick, nextTickPosition.y() + 1, nextTickPosition.z()) != 0
-		) {
-			System.out.println("wall -x");
-			position.x = ((float) minXNextTick) + RADIUS + 0.001f;
-			velocity.x = 0;
-			updated = true;
-		}
-		// +X
-		if (
-				world.getBlockAt(maxXNextTick, nextTickPosition.y(), nextTickPosition.z()) != 0 &&
-						world.getBlockAt(maxXNextTick, nextTickPosition.y() + 1, nextTickPosition.z()) != 0
-		) {
-			System.out.println("wall +x");
-			position.x = ((float) maxXNextTick) - RADIUS - 0.001f;
-			velocity.x = 0;
-			updated = true;
-		}
+//		if (
+//				world.getBlockAt(nextTickPosition.x(), nextTickPosition.y(), maxZNextTick) != 0 &&
+//						world.getBlockAt(nextTickPosition.x(), nextTickPosition.y() + 1, maxZNextTick) != 0
+//		) {
+//			System.out.println("wall +z");
+//			position.z = ((float) maxZNextTick) - RADIUS - 0.001f;
+//			velocity.z = 0;
+//			updated = true;
+//		}
+//		// -X
+//		if (
+//				world.getBlockAt(minXNextTick, nextTickPosition.y(), nextTickPosition.z()) != 0 &&
+//						world.getBlockAt(minXNextTick, nextTickPosition.y() + 1, nextTickPosition.z()) != 0
+//		) {
+//			System.out.println("wall -x");
+//			position.x = ((float) minXNextTick) + RADIUS + 0.001f;
+//			velocity.x = 0;
+//			updated = true;
+//		}
+//		// +X
+//		if (
+//				world.getBlockAt(maxXNextTick, nextTickPosition.y(), nextTickPosition.z()) != 0 &&
+//						world.getBlockAt(maxXNextTick, nextTickPosition.y() + 1, nextTickPosition.z()) != 0
+//		) {
+//			System.out.println("wall +x");
+//			position.x = ((float) maxXNextTick) - RADIUS - 0.001f;
+//			velocity.x = 0;
+//			updated = true;
+//		}
 
 		// Check if the player is going to hit a ceiling on the next tick, and cancel velocity and set position.
 		final float nextTickHeadY = nextTickPosition.y() + (lastInputState.crouching() ? HEIGHT_CROUCH : HEIGHT);

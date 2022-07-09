@@ -90,6 +90,7 @@ public class ClientCommunicationHandler {
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
 					log.debug("Sent connect accept message.");
 
+					sendTcpMessage(new WorldInfoMessage(server.getWorld()));
 					for (var chunk : server.getWorld().getChunkMap().values()) {
 						sendTcpMessage(new ChunkDataMessage(chunk));
 					}

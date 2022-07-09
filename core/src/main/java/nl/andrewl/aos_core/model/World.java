@@ -5,8 +5,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector3ic;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A world is just a collection of chunks that together form the environment
@@ -14,7 +13,20 @@ import java.util.Map;
  */
 public class World {
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
-	protected final ColorPalette palette = ColorPalette.rainbow();
+	protected ColorPalette palette;
+
+	public World(ColorPalette palette, Collection<Chunk> chunks) {
+		this.palette = palette;
+		for (var chunk : chunks) addChunk(chunk);
+	}
+
+	public World(ColorPalette palette) {
+		this(palette, Collections.emptyList());
+	}
+
+	public World() {
+		this(ColorPalette.rainbow());
+	}
 
 	public void addChunk(Chunk chunk) {
 		chunkMap.put(chunk.getPosition(), chunk);
@@ -30,6 +42,10 @@ public class World {
 
 	public ColorPalette getPalette() {
 		return palette;
+	}
+
+	public void setPalette(ColorPalette palette) {
+		this.palette = palette;
 	}
 
 	public byte getBlockAt(Vector3f pos) {
@@ -60,6 +76,10 @@ public class World {
 				(int) Math.floor(pos.z - chunkPos.z * Chunk.SIZE)
 		);
 		chunk.setBlockAt(blockPos.x, blockPos.y, blockPos.z, block);
+	}
+
+	public void setBlockAt(int x, int y, int z, byte block) {
+		setBlockAt(new Vector3f(x, y, z), block);
 	}
 
 //	public byte getBlockAt(int x, int y, int z) {
