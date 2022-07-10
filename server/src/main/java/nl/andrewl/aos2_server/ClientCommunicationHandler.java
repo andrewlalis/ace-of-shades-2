@@ -78,7 +78,7 @@ public class ClientCommunicationHandler {
 		socket.setSoTimeout(1000);
 		boolean connectionEstablished = false;
 		int attempts = 0;
-		while (!connectionEstablished && attempts < 100) {
+		while (!connectionEstablished && attempts < 10) {
 			try {
 				Message msg = Net.read(in);
 				if (msg instanceof ConnectRequestMessage connectMsg) {

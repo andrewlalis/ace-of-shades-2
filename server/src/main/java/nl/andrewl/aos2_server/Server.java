@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.WorldIO;
 import nl.andrewl.aos_core.model.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
 import nl.andrewl.aos_core.net.udp.ClientInputState;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Path;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
@@ -34,6 +36,8 @@ public class Server implements Runnable {
 		this.playerManager = new PlayerManager();
 		this.worldUpdater = new WorldUpdater(this, 20);
 		this.world = Worlds.testingWorld();
+		WorldIO.write(world, Path.of("worlds", "testingWorld"));
+//		this.world = WorldIO.read(Path.of("worlds", "testingWorld"));
 	}
 
 	@Override

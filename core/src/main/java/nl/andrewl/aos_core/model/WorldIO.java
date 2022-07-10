@@ -14,6 +14,9 @@ public final class WorldIO {
 		var chunks = world.getChunkMap().values();
 		try (var os = Files.newOutputStream(path)) {
 			var out = new DataOutputStream(os);
+			for (var v : world.getPalette().toArray()) {
+				out.writeFloat(v);
+			}
 			out.writeInt(chunks.size());
 			for (var chunk : chunks) {
 				out.writeInt(chunk.getPosition().x);
@@ -28,6 +31,11 @@ public final class WorldIO {
 		World world = new World();
 		try (var is = Files.newInputStream(path)) {
 			var in = new DataInputStream(is);
+			ColorPalette palette = new ColorPalette();
+			for (int i = 0; i < ColorPalette.MAX_COLORS; i++) {
+				palette.setColor((byte) (i + 1), in.readFloat(), in.readFloat(), in.readFloat());
+			}
+			world.setPalette(palette);
 			int chunkCount = in.readInt();
 			for (int i = 0; i < chunkCount; i++) {
 				Chunk chunk = new Chunk(

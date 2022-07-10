@@ -121,6 +121,12 @@ public final class Worlds {
 		world.setBlockAt(15, 1, 20, (byte) 1);
 		world.setBlockAt(15, 1, 21, (byte) 1);
 		world.setBlockAt(15, 1, 22, (byte) 1);
+		// Add a small floor area.
+		for (int x = 17; x < 26; x++) {
+			for (int z = 17; z < 26; z++) {
+				world.setBlockAt(x, 3, z, (byte) 1);
+			}
+		}
 
 		return world;
 	}
