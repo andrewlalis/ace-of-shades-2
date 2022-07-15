@@ -4,10 +4,9 @@ import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
+import org.joml.Vector3i;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -26,7 +25,7 @@ public class ChunkRenderer {
 	private int viewTransformUniform;
 	private int chunkPositionUniform;
 
-	private final List<ChunkMesh> chunkMeshes = new ArrayList<>();
+	private final Map<Vector3i, ChunkMesh> chunkMeshes = new HashMap<>();
 
 	public void setupShaderProgram() {
 		this.shaderProgram = new ShaderProgram.Builder()
@@ -53,18 +52,22 @@ public class ChunkRenderer {
 
 	public void draw(Camera cam, World world) {
 		while (!meshGenerationQueue.isEmpty()) {
-			chunkMeshes.add(new ChunkMesh(meshGenerationQueue.remove(), world, chunkMeshGenerator));
+			Chunk chunk = meshGenerationQueue.remove();
+			ChunkMesh mesh = new ChunkMesh(chunk, world, chunkMeshGenerator);
+			chunkMeshes.put(chunk.getPosition(), mesh);
 		}
 		shaderProgram.use();
 		glUniformMatrix4fv(viewTransformUniform, false, cam.getViewTransformData());
-		for (var mesh : chunkMeshes) {
+		for (var mesh : chunkMeshes.values()) {
 			glUniform3iv(chunkPositionUniform, mesh.getPositionData());
 			mesh.draw();
 		}
 	}
 
 	public void free() {
-		for (var mesh : chunkMeshes) mesh.free();
+		for (var mesh : chunkMeshes.values()) mesh.free();
+		chunkMeshes.clear();
+		meshGenerationQueue.clear();
 		shaderProgram.free();
 	}
 }

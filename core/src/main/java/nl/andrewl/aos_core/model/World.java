@@ -82,21 +82,78 @@ public class World {
 		setBlockAt(new Vector3f(x, y, z), block);
 	}
 
-//	public byte getBlockAt(int x, int y, int z) {
-////		int chunkX = x / Chunk.SIZE;
-////		int localX = x % Chunk.SIZE;
-////		int chunkY = y / Chunk.SIZE;
-////		int localY = y % Chunk.SIZE;
-////		int chunkZ = z / Chunk.SIZE;
-////		int localZ = z % Chunk.SIZE;
-////		Vector3i chunkPos = new Vector3i(chunkX, chunkY, chunkZ);
-////		Chunk chunk = chunkMap.get(chunkPos);
-////		if (chunk == null) return 0;
-////		return chunk.getBlockAt(localX, localY, localZ);
-//	}
-
 	public Chunk getChunkAt(Vector3i chunkPos) {
 		return chunkMap.get(chunkPos);
+	}
+
+	/**
+	 * Gets the position that a system is looking at, within a distance limit.
+	 * Usually used to determine where a player has interacted/clicked in the
+	 * world.
+	 * @param eyePos The origin point to look from.
+	 * @param eyeDir The direction to look towards. This should be normalized.
+	 * @param limit The radius out from the origin to look. Blocks outside this
+	 *              limit will not be returned.
+	 * @return The location of the block that is looked at, or null if none
+	 * could be found.
+	 */
+	public Vector3i getLookingAtPos(Vector3f eyePos, Vector3f eyeDir, float limit) {
+		if (eyeDir.lengthSquared() == 0 || limit <= 0) return null;
+		Vector3f pos = new Vector3f(eyePos);
+		Vector3f movement = new Vector3f(); // Pre-allocate this vector.
+		while (pos.distance(eyePos) < limit) {
+			// Find the coordinates of the next blocks on the x, y, and z axes.
+			float stepX = getNextStep(pos.x, eyeDir.x);
+			float stepY = getNextStep(pos.y, eyeDir.y);
+			float stepZ = getNextStep(pos.z, eyeDir.z);
+			// Get the distance from our current position to the next block on the x, y, and z axes.
+			float distX = Math.abs(pos.x - stepX);
+			float distY = Math.abs(pos.y - stepY);
+			float distZ = Math.abs(pos.z - stepZ);
+			// Get the factor required to multiply each component by to get to its next step.
+			float factorX = Math.abs(distX / eyeDir.x);
+			float factorY = Math.abs(distY / eyeDir.y);
+			float factorZ = Math.abs(distZ / eyeDir.z);
+			float minFactor = Float.MAX_VALUE;
+			if (factorX > 0 && factorX < minFactor) minFactor = factorX;
+			if (factorY > 0 && factorY < minFactor) minFactor = factorY;
+			if (factorZ > 0 && factorZ < minFactor) minFactor = factorZ;
+			// We should add dir * lowest factor to step to the first next block.
+			movement.set(eyeDir).mul(minFactor);
+			pos.add(movement);
+			if (getBlockAt(pos) > 0) {
+				return new Vector3i(
+						(int) Math.floor(pos.x),
+						(int) Math.floor(pos.y),
+						(int) Math.floor(pos.z)
+				);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Helper function to find the next whole number, given a current number and
+	 * an indication of which direction the number is increasing.
+	 * @param n The current number.
+	 * @param sign An indication of which way the number is increasing.
+	 * @return The next whole number up from the current number.
+	 */
+	private static float getNextStep(float n, float sign) {
+		if (sign > 0) {
+			if (Math.ceil(n) == n) {
+				return n + 1;
+			} else {
+				return Math.ceil(n);
+			}
+		} else if (sign < 0) {
+			if (Math.floor(n) == n) {
+				return n - 1;
+			} else {
+				return Math.floor(n);
+			}
+		}
+		return n;
 	}
 
 	/**

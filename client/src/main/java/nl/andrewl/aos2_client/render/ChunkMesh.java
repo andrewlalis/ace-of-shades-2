@@ -37,6 +37,10 @@ public class ChunkMesh {
 		return positionData;
 	}
 
+	public Chunk getChunk() {
+		return chunk;
+	}
+
 	/**
 	 * Generates and loads this chunk's mesh into the allocated OpenGL buffers.
 	 */
