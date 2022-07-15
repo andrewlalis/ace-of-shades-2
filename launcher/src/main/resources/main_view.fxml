@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
+      maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
+      fx:controller="nl.andrewl.aos2_launcher.MainViewController"
+>
+    <MenuBar>
+        <Menu mnemonicParsing="false" text="File">
+            <MenuItem mnemonicParsing="false" text="Exit"/>
+        </Menu>
+        <Menu mnemonicParsing="false" text="Profiles">
+            <MenuItem mnemonicParsing="false" text="New Profile"/>
+        </Menu>
+        <Menu mnemonicParsing="false" text="Help">
+            <MenuItem mnemonicParsing="false" text="About"/>
+        </Menu>
+    </MenuBar>
+    <ScrollPane VBox.vgrow="ALWAYS">
+        <TilePane fx:id="profilesTilePane"/>
+    </ScrollPane>
+</VBox>
