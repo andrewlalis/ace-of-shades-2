@@ -1,15 +1,20 @@
 package nl.andrewl.aos2_client;
 
+import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
+import nl.andrewl.aos2_client.control.PlayerInputMouseClickCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.ColorPalette;
 import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.ChunkDataMessage;
+import nl.andrewl.aos_core.net.ChunkHashMessage;
 import nl.andrewl.aos_core.net.WorldInfoMessage;
+import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
+import org.joml.Vector3i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +30,7 @@ public class Client implements Runnable {
 	private final String username;
 
 	private final CommunicationHandler communicationHandler;
+	private final InputHandler inputHandler;
 	private final GameRenderer gameRenderer;
 
 	private int clientId;
@@ -35,6 +41,7 @@ public class Client implements Runnable {
 		this.serverPort = serverPort;
 		this.username = username;
 		this.communicationHandler = new CommunicationHandler(this);
+		this.inputHandler = new InputHandler(communicationHandler);
 		this.world = new ClientWorld();
 		this.gameRenderer = new GameRenderer(world);
 	}
@@ -52,7 +59,8 @@ public class Client implements Runnable {
 
 		gameRenderer.setupWindow(
 				new PlayerViewCursorCallback(gameRenderer.getCamera(), communicationHandler),
-				new PlayerInputKeyCallback(communicationHandler)
+				new PlayerInputKeyCallback(inputHandler),
+				new PlayerInputMouseClickCallback(inputHandler)
 		);
 
 		long lastFrameAt = System.currentTimeMillis();
@@ -82,11 +90,22 @@ public class Client implements Runnable {
 		if (msg instanceof ChunkDataMessage chunkDataMessage) {
 			Chunk chunk = chunkDataMessage.toChunk();
 			world.addChunk(chunk);
-			gameRenderer.getChunkRenderer().addChunkMesh(chunk);
+			gameRenderer.getChunkRenderer().queueChunkMesh(chunk);
+		}
+		if (msg instanceof ChunkUpdateMessage u) {
+			Vector3i chunkPos = new Vector3i(u.cx(), u.cy(), u.cz());
+			Chunk chunk = world.getChunkAt(chunkPos);
+			System.out.println(u);
+			if (chunk != null) {
+				chunk.setBlockAt(u.lx(), u.ly(), u.lz(), u.newBlock());
+				gameRenderer.getChunkRenderer().queueChunkMesh(chunk);
+			} else {
+				communicationHandler.sendMessage(new ChunkHashMessage(u.cx(), u.cy(), u.cz(), -1));
+			}
 		}
 		if (msg instanceof PlayerUpdateMessage playerUpdate) {
 			if (playerUpdate.clientId() == clientId) {
-				float eyeHeight = playerUpdate.crouching() ? 1.1f : 1.7f;
+				float eyeHeight = playerUpdate.crouching() ? 1.3f : 1.7f;
 				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + eyeHeight, playerUpdate.pz());
 				gameRenderer.getCamera().setVelocity(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
 				// TODO: Unload far away chunks and request close chunks we don't have.

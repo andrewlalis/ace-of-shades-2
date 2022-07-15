@@ -1,11 +1,14 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
 import nl.andrewl.aos_core.net.udp.ClientInputState;
 import org.joml.Math;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +20,8 @@ public class ServerPlayer extends Player {
 
 	public static final float HEIGHT = 1.8f;
 	public static final float HEIGHT_CROUCH = 1.4f;
+	public static final float EYE_HEIGHT = HEIGHT - 0.1f;
+	public static final float EYE_HEIGHT_CROUCH = HEIGHT_CROUCH - 0.1f;
 	public static final float WIDTH = 0.75f;
 	public static final float RADIUS = WIDTH / 2f;
 
@@ -28,13 +33,17 @@ public class ServerPlayer extends Player {
 	public static final float MOVEMENT_DECELERATION = 2f;
 	public static final float JUMP_SPEED = 8f;
 
+	public static final int BLOCK_REMOVE_COOLDOWN = 250;
+
 	private ClientInputState lastInputState;
+	private long lastBlockRemovedAt = 0;
+
 	private boolean updated = false;
 
 	public ServerPlayer(int id, String username) {
 		super(id, username);
 		// Initialize with a default state of no input.
-		lastInputState = new ClientInputState(id, false, false, false, false, false, false, false);
+		lastInputState = new ClientInputState(id, false, false, false, false, false, false, false, false, false);
 	}
 
 	public ClientInputState getLastInputState() {
@@ -49,13 +58,36 @@ public class ServerPlayer extends Player {
 		return updated;
 	}
 
-	public void tick(float dt, World world) {
+	public void tick(float dt, World world, Server server) {
+		long now = System.currentTimeMillis();
+		if (lastInputState.hitting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
+			Vector3f eyePos = new Vector3f(position);
+			eyePos.y += getEyeHeight();
+			Vector3i targetPos = world.getLookingAtPos(eyePos, viewVector, 10);
+			System.out.println(targetPos);
+			if (targetPos != null) {
+				Vector3i chunkPos = World.getChunkPosAt(targetPos);
+				Vector3i localPos = World.getLocalPosAt(targetPos);
+				world.setBlockAt(targetPos.x, targetPos.y, targetPos.z, (byte) 0);
+				lastBlockRemovedAt = now;
+				server.getPlayerManager().broadcastUdpMessage(new ChunkUpdateMessage(
+						chunkPos.x, chunkPos.y, chunkPos.z,
+						localPos.x, localPos.y, localPos.z,
+						(byte) 0
+				));
+			}
+		}
+		tickMovement(dt, world);
+	}
+
+	private void tickMovement(float dt, World world) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
+		boolean grounded = isGrounded(world);
+		tickHorizontalVelocity(grounded);
 
 		if (isGrounded(world)) {
-			tickHorizontalVelocity();
 			if (lastInputState.jumping()) {
-				velocity.y = JUMP_SPEED;
+				velocity.y = JUMP_SPEED * (lastInputState.sprinting() ? 1.25f : 1f);
 				updated = true;
 			}
 		} else {
@@ -73,7 +105,7 @@ public class ServerPlayer extends Player {
 		}
 	}
 
-	private void tickHorizontalVelocity() {
+	private void tickHorizontalVelocity(boolean doDeceleration) {
 		Vector3f horizontalVelocity = new Vector3f(
 				velocity.x == velocity.x ? velocity.x : 0f,
 				0,
@@ -101,7 +133,7 @@ public class ServerPlayer extends Player {
 				horizontalVelocity.normalize(maxSpeed);
 			}
 			updated = true;
-		} else if (horizontalVelocity.lengthSquared() > 0) {
+		} else if (doDeceleration && horizontalVelocity.lengthSquared() > 0) {
 			Vector3f deceleration = new Vector3f(horizontalVelocity)
 					.negate().normalize()
 					.mul(Math.min(horizontalVelocity.length(), MOVEMENT_DECELERATION));
@@ -154,105 +186,144 @@ public class ServerPlayer extends Player {
 //				movement.x, movement.y, movement.z,
 //				nextTickPosition.x, nextTickPosition.y, nextTickPosition.z
 //		);
-		checkWallCollision(world, nextTickPosition, movement);
-		checkCeilingCollision(world, nextTickPosition, movement);
-		checkFloorCollision(world, nextTickPosition, movement);
-	}
+		float height = getCurrentHeight();
+		float delta = 0.00001f;
+		final Vector3f stepSize = new Vector3f(movement).normalize(1.0f);
+		// The number of steps we'll make towards the next tick position.
+		int stepCount = (int) Math.ceil(movement.length());
+		if (stepCount == 0) return; // No movement, so exit.
+		final Vector3f nextPos = new Vector3f(position);
+		final Vector3f lastPos = new Vector3f(position);
+		for (int i = 0; i < stepCount; i++) {
+			lastPos.set(nextPos);
+			nextPos.add(stepSize);
+			// If we shot past the next tick position, clamp it to that.
+			if (new Vector3f(nextPos).sub(position).length() > movement.length()) {
+				nextPos.set(nextTickPosition);
+			}
 
-	private void checkFloorCollision(World world, Vector3f nextTickPosition, Vector3f movement) {
-		// If the player is moving up or not falling out of their current y level, no point in checking.
-		if (velocity.y >= 0 || Math.floor(position.y) == Math.floor(nextTickPosition.y)) return;
-		float dropHeight = Math.abs(movement.y);
-		int steps = (int) Math.ceil(dropHeight);
-//		System.out.printf("  dropHeight=%.3f, steps=%d%n", dropHeight, steps);
-		// Get a vector describing how much we move for each 1 unit Y decreases.
-		Vector3f stepSize = new Vector3f(movement).div(dropHeight);
-		Vector3f potentialPosition = new Vector3f(position);
-		for (int i = 0; i < steps; i++) {
-			potentialPosition.add(stepSize);
-//			System.out.printf("  Checking: %.3f, %.3f, %.3f%n", potentialPosition.x, potentialPosition.y, potentialPosition.z);
-			if (getHorizontalSpaceOccupied(potentialPosition).stream()
-					.anyMatch(p -> world.getBlockAt(p.x, potentialPosition.y, p.y) != 0)) {
-//				System.out.println("    Occupied!");
-				position.y = Math.ceil(potentialPosition.y);
-				velocity.y = 0;
-				movement.y = 0;
-				updated = true;
-				return; // Exit before doing any extra work.
+			// Check if we collide with anything at this new position.
+
+
+			float playerBodyPrevMinZ = lastPos.z - RADIUS;
+			float playerBodyPrevMaxZ = lastPos.z + RADIUS;
+			float playerBodyPrevMinX = lastPos.x - RADIUS;
+			float playerBodyPrevMaxX = lastPos.x + RADIUS;
+			float playerBodyPrevMinY = lastPos.y;
+			float playerBodyPrevMaxY = lastPos.y + height;
+
+			float playerBodyMinZ = nextPos.z - RADIUS;
+			float playerBodyMaxZ = nextPos.z + RADIUS;
+			float playerBodyMinX = nextPos.x - RADIUS;
+			float playerBodyMaxX = nextPos.x + RADIUS;
+			float playerBodyMinY = nextPos.y;
+			float playerBodyMaxY = nextPos.y + height;
+
+			// Compute the bounds of all blocks the player is intersecting with.
+			int minX = (int) Math.floor(playerBodyMinX);
+			int minZ = (int) Math.floor(playerBodyMinZ);
+			int minY = (int) Math.floor(playerBodyMinY);
+			int maxX = (int) Math.floor(playerBodyMaxX);
+			int maxZ = (int) Math.floor(playerBodyMaxZ);
+			int maxY = (int) Math.floor(playerBodyMaxY);
+
+			for (int x = minX; x <= maxX; x++) {
+				for (int z = minZ; z <= maxZ; z++) {
+					for (int y = minY; y <= maxY; y++) {
+						byte block = world.getBlockAt(x, y, z);
+						if (block <= 0) continue; // We're not colliding with this block.
+						float blockMinY = (float) y;
+						float blockMaxY = (float) y + 1;
+						float blockMinX = (float) x;
+						float blockMaxX = (float) x + 1;
+						float blockMinZ = (float) z;
+						float blockMaxZ = (float) z + 1;
+
+						/*
+						To determine if the player is moving into the -Z side of a block:
+						- The player's max z position went from < blockMinZ to >= blockMinZ.
+						- The block to the -Z direction is air.
+						 */
+						boolean collidingWithNegativeZ = playerBodyPrevMaxZ < blockMinZ && playerBodyMaxZ >= blockMinZ && world.getBlockAt(x, y, z - 1) <= 0;
+						if (collidingWithNegativeZ) {
+							position.z = blockMinZ - RADIUS - delta;
+							velocity.z = 0;
+							movement.z = 0;
+						}
+
+						/*
+						To determine if the player is moving into the +Z side of a block:
+						- The player's min z position went from >= blockMaxZ to < blockMaxZ.
+						- The block to the +Z direction is air.
+						 */
+						boolean collidingWithPositiveZ = playerBodyPrevMinZ >= blockMaxZ && playerBodyMinZ < blockMaxZ && world.getBlockAt(x, y, z + 1) <= 0;
+						if (collidingWithPositiveZ) {
+							position.z = blockMaxZ + RADIUS + delta;
+							velocity.z = 0;
+							movement.z = 0;
+						}
+
+						/*
+						To determine if the player is moving into the -X side of a block:
+						- The player's max x position went from < blockMinX to >= blockMinX
+						- The block to the -X direction is air.
+						 */
+						boolean collidingWithNegativeX = playerBodyPrevMaxX < blockMinX && playerBodyMaxX >= blockMinX && world.getBlockAt(x - 1, y, z) <= 0;
+						if (collidingWithNegativeX) {
+							position.x = blockMinX - RADIUS - delta;
+							velocity.x = 0;
+							movement.x = 0;
+						}
+
+						/*
+						To determine if the player is moving into the +X side of a block:
+						- The player's min x position went from >= blockMaxX to < blockMaxX.
+						- The block to the +X direction is air.
+						 */
+						boolean collidingWithPositiveX = playerBodyPrevMinX >= blockMaxX && playerBodyMinX < blockMaxX && world.getBlockAt(x + 1, y, z) <= 0;
+						if (collidingWithPositiveX) {
+							position.x = blockMaxX + RADIUS + delta;
+							velocity.x = 0;
+							movement.x = 0;
+						}
+
+						/*
+						To determine if the player is moving down onto a block:
+						- The player's min y position went from >= blockMaxY to < blockMaxY
+						- The block above the current one is air.
+						 */
+						boolean collidingWithFloor = playerBodyPrevMinY >= blockMaxY && playerBodyMinY < blockMaxY && world.getBlockAt(x, y + 1, z) <= 0;
+						if (collidingWithFloor) {
+							position.y = blockMaxY;
+							velocity.y = 0;
+							movement.y = 0;
+						}
+
+						/*
+						To determine if the player is moving up into a block:
+						- The player's y position went from below blockMinY to >= blockMinY
+						- The block below the current one is air.
+						 */
+						boolean collidingWithCeiling = playerBodyPrevMaxY < blockMinY && playerBodyMaxY >= blockMinY && world.getBlockAt(x, y - 1, z) <= 0;
+						if (collidingWithCeiling) {
+							position.y = blockMinY - height - delta;
+							velocity.y = 0;
+							movement.y = 0;
+						}
+
+						updated = true;
+					}
+				}
 			}
 		}
 	}
 
-	private void checkCeilingCollision(World world, Vector3f nextTickPosition, Vector3f movement) {
-		// If the player is moving down, or not moving out of their current y level, no point in checking.
-		if (velocity.y <= 0 || Math.floor(position.y) == Math.floor(nextTickPosition.y)) return;
-		float riseHeight = Math.abs(movement.y);
-		int steps = (int) Math.ceil(riseHeight);
-		Vector3f stepSize = new Vector3f(movement).div(riseHeight);
-		Vector3f potentialPosition = new Vector3f(position);
-		float playerHeight = lastInputState.crouching() ? HEIGHT_CROUCH : HEIGHT;
-		for (int i = 0; i < steps; i++) {
-			potentialPosition.add(stepSize);
-			if (getHorizontalSpaceOccupied(potentialPosition).stream()
-					.anyMatch(p -> world.getBlockAt(p.x, potentialPosition.y + playerHeight, p.y) != 0)) {
-				position.y = Math.floor(potentialPosition.y);
-				velocity.y = 0;
-				movement.y = 0;
-				updated = true;
-				return; // Exit before doing any extra work.
-			}
-		}
+	public float getCurrentHeight() {
+		return lastInputState.crouching() ? HEIGHT_CROUCH : HEIGHT;
 	}
 
-	private void checkWallCollision(World world, Vector3f nextTickPosition, Vector3f movement) {
-		// If the player isn't moving horizontally, no point in checking.
-		if (velocity.x == 0 && velocity.z == 0) return;
-		Vector3f potentialPosition = new Vector3f(position);
-		Vector3f stepSize = new Vector3f(movement).normalize(); // Step by 1 meter each time. This will guarantee we check everything, no matter what.
-		int steps = (int) Math.ceil(movement.length());
-		for (int i = 0; i < steps; i++) {
-			potentialPosition.add(stepSize);
-			float x = potentialPosition.x;
-			float y = potentialPosition.y + 1f;
-			float z = potentialPosition.z;
-
-			float borderMinZ = z - RADIUS;
-			float borderMaxZ = z + RADIUS;
-			float borderMinX = x - RADIUS;
-			float borderMaxX = x + RADIUS;
-
-			// -Z
-			if (world.getBlockAt(x, y, borderMinZ) != 0) {
-				System.out.println("-z");
-				position.z = Math.ceil(borderMinZ) + RADIUS;
-				velocity.z = 0;
-				movement.z = 0;
-				updated = true;
-			}
-			// +Z
-			if (world.getBlockAt(x, y, borderMaxZ) != 0) {
-				System.out.println("+z");
-				position.z = Math.floor(borderMaxZ) - RADIUS;
-				velocity.z = 0;
-				movement.z = 0;
-				updated = true;
-			}
-			// -X
-			if (world.getBlockAt(borderMinX, y, z) != 0) {
-				System.out.println("-x");
-				position.x = Math.ceil(borderMinX) + RADIUS;
-				velocity.x = 0;
-				movement.z = 0;
-				updated = true;
-			}
-			// +X
-			if (world.getBlockAt(borderMaxX, y, z) != 0) {
-				System.out.println("+x");
-				position.x = Math.floor(borderMaxX) - RADIUS;
-				velocity.x = 0;
-				movement.x = 0;
-				updated = true;
-			}
-		}
+	public float getEyeHeight() {
+		return lastInputState.crouching() ? EYE_HEIGHT_CROUCH : EYE_HEIGHT;
 	}
+
 }

@@ -126,14 +126,4 @@ public class Chunk {
 		}
 		return c;
 	}
-
-	public static Vector3f getColor(byte blockValue) {
-		float v = blockValue / 127.0f;
-		return new Vector3f(v);
-	}
-
-	public static void getColor(byte blockValue, Vector3f vec) {
-		float v = blockValue / 127.0f;
-		vec.set(v);
-	}
 }

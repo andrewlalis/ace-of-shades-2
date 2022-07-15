@@ -1,14 +1,9 @@
 package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
-import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
-import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
-import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.Callbacks;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +43,7 @@ public class GameRenderer {
 
 	}
 
-	public void setupWindow(PlayerViewCursorCallback viewCursorCallback, PlayerInputKeyCallback inputKeyCallback) {
+	public void setupWindow(GLFWCursorPosCallbackI viewCursorCallback, GLFWKeyCallbackI inputKeyCallback, GLFWMouseButtonCallbackI mouseButtonCallback) {
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
 		glfwDefaultWindowHints();
@@ -65,6 +60,7 @@ public class GameRenderer {
 		// Setup callbacks.
 		glfwSetKeyCallback(windowHandle, inputKeyCallback);
 		glfwSetCursorPosCallback(windowHandle, viewCursorCallback);
+		glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback);
 		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		glfwSetCursorPos(windowHandle, 0, 0);
@@ -118,13 +114,16 @@ public class GameRenderer {
 		updatePerspective();
 	}
 
+	public float getAspectRatio() {
+		return (float) screenWidth / (float) screenHeight;
+	}
+
 	/**
 	 * Updates the rendering perspective used to render the game. Note: only
 	 * call this after calling {@link ChunkRenderer#setupShaderProgram()}.
 	 */
 	private void updatePerspective() {
-		float aspect = (float) screenWidth / (float) screenHeight;
-		perspectiveTransform.setPerspective(fov, aspect, Z_NEAR, Z_FAR);
+		perspectiveTransform.setPerspective(fov, getAspectRatio(), Z_NEAR, Z_FAR);
 		chunkRenderer.setPerspective(perspectiveTransform);
 	}
 

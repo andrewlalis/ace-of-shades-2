@@ -42,7 +42,7 @@ public class ChunkRenderer {
 		glUniform1i(chunkSizeUniform, Chunk.SIZE);
 	}
 
-	public void addChunkMesh(Chunk chunk) {
+	public void queueChunkMesh(Chunk chunk) {
 		meshGenerationQueue.add(chunk);
 	}
 
@@ -54,6 +54,8 @@ public class ChunkRenderer {
 		while (!meshGenerationQueue.isEmpty()) {
 			Chunk chunk = meshGenerationQueue.remove();
 			ChunkMesh mesh = new ChunkMesh(chunk, world, chunkMeshGenerator);
+			ChunkMesh existingMesh = chunkMeshes.get(chunk.getPosition());
+			if (existingMesh != null) existingMesh.free();
 			chunkMeshes.put(chunk.getPosition(), mesh);
 		}
 		shaderProgram.use();

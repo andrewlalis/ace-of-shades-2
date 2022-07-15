@@ -2,6 +2,8 @@ package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.World;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -9,6 +11,8 @@ import static org.lwjgl.opengl.GL46.*;
  * Represents a 3d mesh for a chunk.
  */
 public class ChunkMesh {
+	private static final Logger log = LoggerFactory.getLogger(ChunkMesh.class);
+
 	private final int vboId;
 	private final int vaoId;
 	private final int eboId;
@@ -50,12 +54,11 @@ public class ChunkMesh {
 		double dur = (System.nanoTime() - start) / 1_000_000.0;
 		this.indexCount = meshData.indexBuffer().limit();
 		// Print some debug information.
-		System.out.printf(
-				"Generated mesh for chunk (%d, %d, %d) in %.3f ms. %d vertices, %d indices.%n",
+		log.debug(
+				"Generated mesh for chunk ({}, {}, {}) in {} ms. {} vertices and {} indices.",
 				chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z,
 				dur,
-				meshData.vertexBuffer().limit() / 9,
-				indexCount
+				meshData.vertexBuffer().limit() / 9, indexCount
 		);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vboId);

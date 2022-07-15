@@ -56,9 +56,7 @@ public class World {
 		getChunkPosAt(pos, util);
 		Chunk chunk = chunkMap.get(util);
 		if (chunk == null) return 0;
-		util.x = (int) Math.floor(pos.x - util.x * Chunk.SIZE);
-		util.y = (int) Math.floor(pos.y - util.y * Chunk.SIZE);
-		util.z = (int) Math.floor(pos.z - util.z * Chunk.SIZE);
+		getLocalPosAt(pos.x, pos.y, pos.z, util);
 		return chunk.getBlockAt(util);
 	}
 
@@ -70,11 +68,7 @@ public class World {
 		Vector3i chunkPos = getChunkPosAt(pos);
 		Chunk chunk = chunkMap.get(chunkPos);
 		if (chunk == null) return;
-		Vector3i blockPos = new Vector3i(
-				(int) Math.floor(pos.x - chunkPos.x * Chunk.SIZE),
-				(int) Math.floor(pos.y - chunkPos.y * Chunk.SIZE),
-				(int) Math.floor(pos.z - chunkPos.z * Chunk.SIZE)
-		);
+		Vector3i blockPos = getLocalPosAt(pos.x, pos.y, pos.z, chunkPos);
 		chunk.setBlockAt(blockPos.x, blockPos.y, blockPos.z, block);
 	}
 
@@ -84,6 +78,10 @@ public class World {
 
 	public Chunk getChunkAt(Vector3i chunkPos) {
 		return chunkMap.get(chunkPos);
+	}
+
+	public Chunk getChunkAt(int x, int y, int z) {
+		return chunkMap.get(new Vector3i(x, y, z));
 	}
 
 	/**
@@ -157,18 +155,52 @@ public class World {
 	}
 
 	/**
-	 * Gets the coordinates of a chunk at a given world position.
-	 * @param worldPos The world position.
-	 * @return The chunk position. Note that this may not correspond to any existing chunk.
+	 * Gets the chunk position at the specified world position.
+	 * @param x The x coordinate.
+	 * @param y The y coordinate.
+	 * @param z The z coordinate.
+	 * @param dest The destination vector to place the chunk position in.
+	 * @return The destination vector, for method chaining.
 	 */
+	public static Vector3i getChunkPosAt(float x, float y, float z, Vector3i dest) {
+		dest.x = (int) Math.floor(x / Chunk.SIZE);
+		dest.y = (int) Math.floor(y / Chunk.SIZE);
+		dest.z = (int) Math.floor(z / Chunk.SIZE);
+		return dest;
+	}
+
+	public static Vector3i getChunkPosAt(Vector3f worldPos, Vector3i dest) {
+		return getChunkPosAt(worldPos.x, worldPos.y, worldPos.z, dest);
+	}
+
 	public static Vector3i getChunkPosAt(Vector3f worldPos) {
 		return getChunkPosAt(worldPos, new Vector3i());
 	}
 
-	public static Vector3i getChunkPosAt(Vector3f worldPos, Vector3i dest) {
-		dest.x = (int) Math.floor(worldPos.x / Chunk.SIZE);
-		dest.y = (int) Math.floor(worldPos.y / Chunk.SIZE);
-		dest.z = (int) Math.floor(worldPos.z / Chunk.SIZE);
+	public static Vector3i getChunkPosAt(Vector3i worldPos) {
+		return getChunkPosAt(worldPos.x, worldPos.y, worldPos.z, new Vector3i());
+	}
+
+	/**
+	 * Gets the chunk-local position at the specified world position.
+	 * @param x The x coordinate.
+	 * @param y The y coordinate.
+	 * @param z The z coordinate.
+	 * @param dest The destination vector to place the local position in.
+	 * @return The destination vector, for method chaining.
+	 */
+	public static Vector3i getLocalPosAt(float x, float y, float z, Vector3i dest) {
+		getChunkPosAt(x, y, z, dest);
+		float chunkX = dest.x;
+		float chunkY = dest.y;
+		float chunkZ = dest.z;
+		dest.x = (int) Math.floor(x - chunkX * Chunk.SIZE);
+		dest.y = (int) Math.floor(y - chunkY * Chunk.SIZE);
+		dest.z = (int) Math.floor(z - chunkZ * Chunk.SIZE);
 		return dest;
+	}
+
+	public static Vector3i getLocalPosAt(Vector3i worldPos) {
+		return getLocalPosAt(worldPos.x, worldPos.y, worldPos.z, new Vector3i());
 	}
 }

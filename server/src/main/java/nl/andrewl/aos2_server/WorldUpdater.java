@@ -56,7 +56,7 @@ public class WorldUpdater implements Runnable {
 
 	private void tick() {
 		for (var player : server.getPlayerManager().getPlayers()) {
-			player.tick(secondsPerTick, server.getWorld());
+			player.tick(secondsPerTick, server.getWorld(), server);
 			if (player.isUpdated()) server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(
 					player.getId(),
 					player.getPosition().x, player.getPosition().y, player.getPosition().z,

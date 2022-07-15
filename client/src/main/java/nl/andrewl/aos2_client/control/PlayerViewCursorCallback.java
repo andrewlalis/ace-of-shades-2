@@ -9,6 +9,10 @@ import java.util.concurrent.ForkJoinPool;
 
 import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 
+/**
+ * Callback that's called when the player's cursor position updates. This means
+ * the player is looking around.
+ */
 public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 	/**
 	 * The number of milliseconds to wait before sending orientation updates,
