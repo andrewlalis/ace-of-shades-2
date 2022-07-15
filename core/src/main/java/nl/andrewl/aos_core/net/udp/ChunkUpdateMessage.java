@@ -1,6 +1,8 @@
 package nl.andrewl.aos_core.net.udp;
 
+import nl.andrewl.aos_core.model.World;
 import nl.andrewl.record_net.Message;
+import org.joml.Vector3i;
 
 /**
  * A message that's sent to clients when a block in a chunk is updated.
@@ -16,4 +18,14 @@ public record ChunkUpdateMessage(
 		int cx, int cy, int cz,
 		int lx, int ly, int lz,
 		byte newBlock
-) implements Message {}
+) implements Message {
+	public static ChunkUpdateMessage fromWorld(Vector3i worldPos, World world) {
+		Vector3i chunkPos = World.getChunkPosAt(worldPos);
+		Vector3i localPos = World.getLocalPosAt(worldPos);
+		return new ChunkUpdateMessage(
+				chunkPos.x, chunkPos.y, chunkPos.z,
+				localPos.x, localPos.y, localPos.z,
+				world.getBlockAt(worldPos.x, worldPos.y, worldPos.z)
+		);
+	}
+}

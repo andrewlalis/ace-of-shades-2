@@ -1,6 +1,5 @@
 package nl.andrewl.aos2_server;
 
-import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.World;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
@@ -63,18 +62,25 @@ public class ServerPlayer extends Player {
 		if (lastInputState.hitting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
 			Vector3f eyePos = new Vector3f(position);
 			eyePos.y += getEyeHeight();
-			Vector3i targetPos = world.getLookingAtPos(eyePos, viewVector, 10);
-			System.out.println(targetPos);
-			if (targetPos != null) {
-				Vector3i chunkPos = World.getChunkPosAt(targetPos);
-				Vector3i localPos = World.getLocalPosAt(targetPos);
-				world.setBlockAt(targetPos.x, targetPos.y, targetPos.z, (byte) 0);
+			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
+			System.out.println(hit);
+			if (hit != null) {
+				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
-				server.getPlayerManager().broadcastUdpMessage(new ChunkUpdateMessage(
-						chunkPos.x, chunkPos.y, chunkPos.z,
-						localPos.x, localPos.y, localPos.z,
-						(byte) 0
-				));
+				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
+			}
+		}
+		if (lastInputState.interacting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
+			Vector3f eyePos = new Vector3f(position);
+			eyePos.y += getEyeHeight();
+			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
+			System.out.println(hit);
+			if (hit != null) {
+				Vector3i placePos = new Vector3i(hit.pos());
+				placePos.add(hit.norm());
+				world.setBlockAt(placePos.x, placePos.y, placePos.z, (byte) 1);
+				lastBlockRemovedAt = now;
+				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
 			}
 		}
 		tickMovement(dt, world);

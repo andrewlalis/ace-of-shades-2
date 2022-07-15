@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model;
 
+import nl.andrewl.aos_core.Directions;
 import org.joml.Math;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -95,7 +96,7 @@ public class World {
 	 * @return The location of the block that is looked at, or null if none
 	 * could be found.
 	 */
-	public Vector3i getLookingAtPos(Vector3f eyePos, Vector3f eyeDir, float limit) {
+	public Hit getLookingAtPos(Vector3f eyePos, Vector3f eyeDir, float limit) {
 		if (eyeDir.lengthSquared() == 0 || limit <= 0) return null;
 		Vector3f pos = new Vector3f(eyePos);
 		Vector3f movement = new Vector3f(); // Pre-allocate this vector.
@@ -120,11 +121,22 @@ public class World {
 			movement.set(eyeDir).mul(minFactor);
 			pos.add(movement);
 			if (getBlockAt(pos) > 0) {
-				return new Vector3i(
+				Vector3f prevPos = new Vector3f(pos).sub(movement);
+				Vector3i hitPos = new Vector3i(
 						(int) Math.floor(pos.x),
 						(int) Math.floor(pos.y),
 						(int) Math.floor(pos.z)
 				);
+				Vector3ic hitNorm = null;
+
+				if (prevPos.y > hitPos.y + 1) hitNorm = Directions.UP;
+				else if (prevPos.y < hitPos.y) hitNorm = Directions.DOWN;
+				else if (prevPos.x > hitPos.x + 1) hitNorm = Directions.POSITIVE_X;
+				else if (prevPos.x < hitPos.x) hitNorm = Directions.NEGATIVE_X;
+				else if (prevPos.z > hitPos.z + 1) hitNorm = Directions.POSITIVE_Z;
+				else if (prevPos.z < hitPos.z) hitNorm = Directions.NEGATIVE_Z;
+
+				return new Hit(hitPos, hitNorm);
 			}
 		}
 		return null;
