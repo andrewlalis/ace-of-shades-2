@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_client.render.font;
+package nl.andrewl.aos2_client.render.gui.font;
 
 /**
  * Stores the vertex data for all the quads on which a text will be rendered.

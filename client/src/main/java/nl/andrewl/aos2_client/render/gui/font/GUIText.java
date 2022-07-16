@@ -1,10 +1,7 @@
-package nl.andrewl.aos2_client.render.font;
+package nl.andrewl.aos2_client.render.gui.font;
 
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
-
-import java.nio.FloatBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
 

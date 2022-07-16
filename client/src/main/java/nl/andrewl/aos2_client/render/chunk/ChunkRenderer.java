@@ -1,6 +1,7 @@
-package nl.andrewl.aos2_client.render;
+package nl.andrewl.aos2_client.render.chunk;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.render.ShaderProgram;
 import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;

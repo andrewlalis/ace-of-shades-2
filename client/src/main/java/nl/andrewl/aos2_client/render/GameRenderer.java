@@ -1,12 +1,18 @@
 package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
+import nl.andrewl.aos2_client.render.gui.GUIRenderer;
+import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
@@ -23,6 +29,7 @@ public class GameRenderer {
 	private static final float Z_FAR = 500f;
 
 	private final ChunkRenderer chunkRenderer;
+	private final GUIRenderer guiRenderer;
 	private final Camera camera;
 	private final World world;
 
@@ -38,6 +45,7 @@ public class GameRenderer {
 	public GameRenderer(World world) {
 		this.world = world;
 		this.chunkRenderer = new ChunkRenderer();
+		this.guiRenderer = new GUIRenderer();
 		this.camera = new Camera();
 		this.perspectiveTransform = new Matrix4f();
 
@@ -52,6 +60,7 @@ public class GameRenderer {
 
 		primaryMonitorSettings = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
+		log.debug("Primary monitor settings: Width: {}, Height: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
 		windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", 0, 0);
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
 		fullscreen = false;
@@ -80,6 +89,16 @@ public class GameRenderer {
 		log.debug("Initialized OpenGL context.");
 
 		chunkRenderer.setupShaderProgram();
+		guiRenderer.setup();
+		// TODO: More organized way to load textures for GUI.
+		try {
+			var crosshairTexture = new GUITexture("gui/crosshair.png");
+			float size = 32;
+			crosshairTexture.getScale().set(size / screenWidth, size / screenHeight);
+			guiRenderer.addTexture(crosshairTexture);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		updatePerspective();
 	}
 
@@ -143,12 +162,14 @@ public class GameRenderer {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		chunkRenderer.draw(camera, world);
+		guiRenderer.draw();
 
 		glfwSwapBuffers(windowHandle);
 		glfwPollEvents();
 	}
 
 	public void freeWindow() {
+		guiRenderer.free();
 		chunkRenderer.free();
 		GL.destroy();
 		Callbacks.glfwFreeCallbacks(windowHandle);

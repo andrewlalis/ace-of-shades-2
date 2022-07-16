@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_client.render.font;
+package nl.andrewl.aos2_client.render.gui.font;
 
 /**
  * Simple data structure class holding information about a certain glyph in the

@@ -28,8 +28,16 @@ public class ShaderProgram {
 		glUseProgram(id);
 	}
 
+	public void stopUsing() {
+		glUseProgram(0);
+	}
+
 	public int getUniform(String name) {
 		return glGetUniformLocation(id, name);
+	}
+
+	public void bindAttribute(int attribute, String variableName) {
+		glBindAttribLocation(id, attribute, variableName);
 	}
 
 	public void free() {

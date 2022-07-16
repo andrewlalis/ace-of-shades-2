@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_client.render.font;
+package nl.andrewl.aos2_client.render.gui.font;
 
 import java.io.File;
 
