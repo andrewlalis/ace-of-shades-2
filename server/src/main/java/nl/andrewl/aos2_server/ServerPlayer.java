@@ -28,8 +28,8 @@ public class ServerPlayer extends Player {
 	public static final float SPEED_NORMAL = 4f;
 	public static final float SPEED_CROUCH = 1.5f;
 	public static final float SPEED_SPRINT = 9f;
-	public static final float MOVEMENT_ACCELERATION = 5f;
-	public static final float MOVEMENT_DECELERATION = 2f;
+	public static final float MOVEMENT_ACCELERATION = 2f;
+	public static final float MOVEMENT_DECELERATION = 1f;
 	public static final float JUMP_SPEED = 8f;
 
 	public static final int BLOCK_REMOVE_COOLDOWN = 250;
