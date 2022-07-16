@@ -37,7 +37,7 @@ public class GameRenderer {
 	private boolean fullscreen;
 	private int screenWidth = 800;
 	private int screenHeight = 600;
-	private float fov = 70f;
+	private float fov = 90f;
 
 	private final Matrix4f perspectiveTransform;
 
@@ -57,12 +57,15 @@ public class GameRenderer {
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-		primaryMonitorSettings = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		long monitorId = glfwGetPrimaryMonitor();
+		primaryMonitorSettings = glfwGetVideoMode(monitorId);
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
 		log.debug("Primary monitor settings: Width: {}, Height: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
-		windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", 0, 0);
+		screenWidth = primaryMonitorSettings.width();
+		screenHeight = primaryMonitorSettings.height();
+		windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", monitorId, 0);
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
-		fullscreen = false;
+		fullscreen = true;
 		log.debug("Initialized GLFW window.");
 
 		// Setup callbacks.
@@ -106,12 +109,14 @@ public class GameRenderer {
 	public void setFullscreen(boolean fullscreen) {
 		if (windowHandle == 0) throw new IllegalStateException("Window not setup.");
 		long monitor = glfwGetPrimaryMonitor();
-		if (!this.fullscreen && fullscreen) {
+		if (fullscreen) {
+			log.debug("Changing to fullscreen: {} x {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
 			glfwSetWindowMonitor(windowHandle, monitor, 0, 0, primaryMonitorSettings.width(), primaryMonitorSettings.height(), primaryMonitorSettings.refreshRate());
 			screenWidth = primaryMonitorSettings.width();
 			screenHeight = primaryMonitorSettings.height();
 			updatePerspective();
-		} else if (this.fullscreen && !fullscreen) {
+		} else {
+			log.debug("Changing to windowed mode.");
 			screenWidth = 800;
 			screenHeight = 600;
 			int left = primaryMonitorSettings.width() / 2;
