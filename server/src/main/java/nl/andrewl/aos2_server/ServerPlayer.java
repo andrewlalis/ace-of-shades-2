@@ -33,9 +33,11 @@ public class ServerPlayer extends Player {
 	public static final float JUMP_SPEED = 8f;
 
 	public static final int BLOCK_REMOVE_COOLDOWN = 250;
+	public static final int BLOCK_PLACE_COOLDOWN = 100;
 
 	private ClientInputState lastInputState;
 	private long lastBlockRemovedAt = 0;
+	private long lastBlockPlacedAt = 0;
 
 	private boolean updated = false;
 
@@ -59,27 +61,27 @@ public class ServerPlayer extends Player {
 
 	public void tick(float dt, World world, Server server) {
 		long now = System.currentTimeMillis();
+		// Check for breaking blocks.
 		if (lastInputState.hitting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
 			Vector3f eyePos = new Vector3f(position);
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
-			System.out.println(hit);
 			if (hit != null) {
 				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
 				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
 			}
 		}
-		if (lastInputState.interacting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
+		// Check for placing blocks.
+		if (lastInputState.interacting() && now - lastBlockPlacedAt > BLOCK_PLACE_COOLDOWN) {
 			Vector3f eyePos = new Vector3f(position);
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
-			System.out.println(hit);
 			if (hit != null) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());
 				world.setBlockAt(placePos.x, placePos.y, placePos.z, (byte) 1);
-				lastBlockRemovedAt = now;
+				lastBlockPlacedAt = now;
 				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
 			}
 		}

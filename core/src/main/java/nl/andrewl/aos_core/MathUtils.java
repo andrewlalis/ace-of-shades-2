@@ -17,4 +17,12 @@ public class MathUtils {
 		if (value < min) return min;
 		return Math.min(value, max);
 	}
+
+	public static float min(float... values) {
+		float m = Float.MAX_VALUE;
+		for (float v : values) {
+			if (v < m) m = v;
+		}
+		return m;
+	}
 }

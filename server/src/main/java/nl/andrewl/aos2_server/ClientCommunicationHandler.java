@@ -101,7 +101,7 @@ public class ClientCommunicationHandler {
 					new Thread(tcpReceiver).start();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				log.warn("An IOException occurred while attempting to establish a connection to a client.", e);
 			}
 			attempts++;
 		}

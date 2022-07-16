@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model;
 
+import nl.andrewl.aos_core.Directions;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.junit.jupiter.api.Test;
@@ -35,79 +36,22 @@ public class WorldTest {
 
 	@Test
 	public void testGetLookingAtPos() {
-		World world = Worlds.testingWorld();
-		// Spawn a block high in the air.
-		Vector3i blockPos = new Vector3i(20, 20, 20);
-		world.setBlockAt(blockPos.x, blockPos.y, blockPos.z, (byte) 5);
-		assertEquals( // Looking straight down onto block.
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(20.5f, 25, 20.5f),
-						new Vector3f(0, -1, 0),
-						15
-				)
-		);
-		assertEquals( // Looking straight up.
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(20.5f, 15, 20.5f),
-						new Vector3f(0, 1, 0),
-						15
-				)
-		);
-		assertEquals( // Looking towards -Z
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(20.5f, 20.5f, 26f),
-						new Vector3f(0, 0, -1),
-						15
-				)
-		);
-		assertEquals( // Looking towards +Z
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(20.5f, 20.5f, 15f),
-						new Vector3f(0, 0, 1),
-						15
-				)
-		);
-		assertEquals( // Looking towards -X
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(26f, 20.5f, 20.5f),
-						new Vector3f(-1, 0, 0),
-						15
-				)
-		);
-		assertEquals( // Looking towards +X
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(15f, 20.5f, 20.5f),
-						new Vector3f(1, 0, 0),
-						15
-				)
-		);
+		World world = new World();
+		Chunk chunk = new Chunk(0, 0, 0);
+		world.addChunk(chunk);
+		// Spawn a block in the middle for testing.
+		Vector3i blockPos = new Vector3i(7, 7, 7);
+		world.setBlockAt(blockPos.x, blockPos.y, blockPos.z, (byte) 1);
+		Hit hit;
 
-		// Looking up into the void.
-		assertNull(world.getLookingAtPos(
-				new Vector3f(0, 30, 0),
-				new Vector3f(0, 1, 0),
-				10
-		));
+		// Looking down.
+		hit = world.getLookingAtPos(new Vector3f(7.5f, 10, 7.5f), new Vector3f(0, -1, 0), 10);
+		assertEquals(blockPos, hit.pos());
+		assertEquals(Directions.UP, hit.norm());
 
-		// Looking straight down, but too far away.
-		assertNull(world.getLookingAtPos(
-				new Vector3f(0.5f, 20, 0.5f),
-				new Vector3f(0, -1, 0),
-				15
-		));
-		assertEquals( // Standing in the corner, looking into center of block.
-				blockPos,
-				world.getLookingAtPos(
-						new Vector3f(20f, 21f, 20f),
-						new Vector3f(1, -2, 1).normalize(),
-						15
-				)
-		);
+		// Looking up.
+		hit = world.getLookingAtPos(new Vector3f(7.5f, 5, 7.5f), new Vector3f(0, 1, 0), 10);
+		assertEquals(blockPos, hit.pos());
+		assertEquals(Directions.DOWN, hit.norm());
 	}
 }

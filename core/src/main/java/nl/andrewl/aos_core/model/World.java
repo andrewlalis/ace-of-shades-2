@@ -1,18 +1,24 @@
 package nl.andrewl.aos_core.model;
 
 import nl.andrewl.aos_core.Directions;
+import nl.andrewl.aos_core.MathUtils;
 import org.joml.Math;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector3ic;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A world is just a collection of chunks that together form the environment
  * that players can interact in.
  */
 public class World {
+	private static final float DELTA = 0.00001f;
+
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 	protected ColorPalette palette;
 
@@ -99,42 +105,35 @@ public class World {
 	public Hit getLookingAtPos(Vector3f eyePos, Vector3f eyeDir, float limit) {
 		if (eyeDir.lengthSquared() == 0 || limit <= 0) return null;
 		Vector3f pos = new Vector3f(eyePos);
-		Vector3f movement = new Vector3f(); // Pre-allocate this vector.
 		while (pos.distance(eyePos) < limit) {
-			// Find the coordinates of the next blocks on the x, y, and z axes.
-			float stepX = getNextStep(pos.x, eyeDir.x);
-			float stepY = getNextStep(pos.y, eyeDir.y);
-			float stepZ = getNextStep(pos.z, eyeDir.z);
-			// Get the distance from our current position to the next block on the x, y, and z axes.
-			float distX = Math.abs(pos.x - stepX);
-			float distY = Math.abs(pos.y - stepY);
-			float distZ = Math.abs(pos.z - stepZ);
-			// Get the factor required to multiply each component by to get to its next step.
-			float factorX = Math.abs(distX / eyeDir.x);
-			float factorY = Math.abs(distY / eyeDir.y);
-			float factorZ = Math.abs(distZ / eyeDir.z);
-			float minFactor = Float.MAX_VALUE;
-			if (factorX > 0 && factorX < minFactor) minFactor = factorX;
-			if (factorY > 0 && factorY < minFactor) minFactor = factorY;
-			if (factorZ > 0 && factorZ < minFactor) minFactor = factorZ;
-			// We should add dir * lowest factor to step to the first next block.
-			movement.set(eyeDir).mul(minFactor);
-			pos.add(movement);
+			stepToNextBlock(pos, eyeDir);
 			if (getBlockAt(pos) > 0) {
-				Vector3f prevPos = new Vector3f(pos).sub(movement);
 				Vector3i hitPos = new Vector3i(
 						(int) Math.floor(pos.x),
 						(int) Math.floor(pos.y),
 						(int) Math.floor(pos.z)
 				);
-				Vector3ic hitNorm = null;
+				Vector3ic hitNorm;
 
-				if (prevPos.y > hitPos.y + 1) hitNorm = Directions.UP;
-				else if (prevPos.y < hitPos.y) hitNorm = Directions.DOWN;
-				else if (prevPos.x > hitPos.x + 1) hitNorm = Directions.POSITIVE_X;
-				else if (prevPos.x < hitPos.x) hitNorm = Directions.NEGATIVE_X;
-				else if (prevPos.z > hitPos.z + 1) hitNorm = Directions.POSITIVE_Z;
-				else if (prevPos.z < hitPos.z) hitNorm = Directions.NEGATIVE_Z;
+				// Determine the face that was hit based on which face was closest to the hit point.
+				float minYDist = Math.abs(pos.y - hitPos.y);
+				float maxYDist = Math.abs(pos.y - (hitPos.y + 1));
+				float minXDist = Math.abs(pos.x - hitPos.x);
+				float maxXDist = Math.abs(pos.x - (hitPos.x + 1));
+				float minZDist = Math.abs(pos.z - hitPos.z);
+				float maxZDist = Math.abs(pos.z - (hitPos.z + 1));
+				float minDist = MathUtils.min(minYDist, maxYDist, minXDist, maxXDist, minZDist, maxZDist);
+
+				if (minDist == maxYDist) hitNorm = Directions.UP;
+				else if (minDist == minYDist) hitNorm = Directions.DOWN;
+				else if (minDist == maxXDist) hitNorm = Directions.POSITIVE_X;
+				else if (minDist == minXDist) hitNorm = Directions.NEGATIVE_X;
+				else if (minDist == maxZDist) hitNorm = Directions.POSITIVE_Z;
+				else if (minDist == minZDist) hitNorm = Directions.NEGATIVE_Z;
+				else {
+					hitNorm = Directions.UP;
+					System.err.println("Invalid hit!");
+				}
 
 				return new Hit(hitPos, hitNorm);
 			}
@@ -143,27 +142,54 @@ public class World {
 	}
 
 	/**
-	 * Helper function to find the next whole number, given a current number and
-	 * an indication of which direction the number is increasing.
-	 * @param n The current number.
-	 * @param sign An indication of which way the number is increasing.
-	 * @return The next whole number up from the current number.
+	 * Increments the given position until it hits a new block space, moving in
+	 * the specified direction. Note that we move slightly into a block if
+	 * needed, to ensure accuracy, so the position may not be a whole number.
+	 * @param pos The position.
+	 * @param dir The direction to move in.
 	 */
-	private static float getNextStep(float n, float sign) {
-		if (sign > 0) {
-			if (Math.ceil(n) == n) {
-				return n + 1;
+	private static void stepToNextBlock(Vector3f pos, Vector3f dir) {
+		if (dir.lengthSquared() == 0) return;
+		// Find the amount we'd have to multiply dir by to get pos to move to the next block on that axis.
+		float factorX = Float.MAX_VALUE;
+		float factorY = Float.MAX_VALUE;
+		float factorZ = Float.MAX_VALUE;
+
+		if (dir.x != 0) {
+			float nextValue;
+			if (dir.x > 0) {
+				nextValue = (Math.ceil(pos.x) == pos.x) ? pos.x + 1 : Math.ceil(pos.x);
 			} else {
-				return Math.ceil(n);
+				nextValue = Math.floor(pos.x) - DELTA;
 			}
-		} else if (sign < 0) {
-			if (Math.floor(n) == n) {
-				return n - 1;
-			} else {
-				return Math.floor(n);
-			}
+			float diff = nextValue - pos.x;
+			factorX = Math.abs(diff / dir.x);
 		}
-		return n;
+
+		if (dir.y != 0) {
+			float nextValue;
+			if (dir.y > 0) {
+				nextValue = (Math.ceil(pos.y) == pos.y) ? pos.y + 1 : Math.ceil(pos.y);
+			} else {
+				nextValue = Math.floor(pos.y) - DELTA;
+			}
+			float diff = nextValue - pos.y;
+			factorY = Math.abs(diff / dir.y);
+		}
+
+		if (dir.z != 0) {
+			float nextValue;
+			if (dir.z > 0) {
+				nextValue = (Math.ceil(pos.z) == pos.z) ? pos.z + 1 : Math.ceil(pos.z);
+			} else {
+				nextValue = Math.floor(pos.z) - DELTA;
+			}
+			float diff = nextValue - pos.z;
+			factorZ = Math.abs(diff / dir.z);
+		}
+
+		float minFactor = Math.min(factorX, Math.min(factorY, factorZ));
+		dir.mulAdd(minFactor, pos, pos);
 	}
 
 	/**
