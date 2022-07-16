@@ -8,7 +8,6 @@ import nl.andrewl.aos_core.model.World;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +88,7 @@ public class GameRenderer {
 		log.debug("Initialized OpenGL context.");
 
 		chunkRenderer.setupShaderProgram();
+		log.debug("Initialized chunk renderer.");
 		guiRenderer.setup();
 		// TODO: More organized way to load textures for GUI.
 		try {
@@ -99,6 +99,7 @@ public class GameRenderer {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+		log.debug("Initialized GUI renderer.");
 		updatePerspective();
 	}
 
