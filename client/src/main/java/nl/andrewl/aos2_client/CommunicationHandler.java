@@ -33,10 +33,15 @@ public class CommunicationHandler {
 		this.client = client;
 	}
 	
-	public int establishConnection(InetAddress address, int port, String username) throws IOException {
+	public int establishConnection() throws IOException {
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
+		InetAddress address = InetAddress.getByName(client.getConfig().serverHost);
+		int port = client.getConfig().serverPort;
+		String username = client.getConfig().username;
+		log.info("Connecting to server at {}, port {}, with username \"{}\"...", address, port, username);
+
 		socket = new Socket(address, port);
 		socket.setSoTimeout(1000);
 		ExtendedDataInputStream in = Net.getInputStream(socket.getInputStream());
@@ -50,6 +55,7 @@ public class CommunicationHandler {
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
 			establishDatagramConnection();
+			log.info("Connection to server established. My client id is {}.", clientId);
 			new Thread(new TcpReceiver(in, client::onMessageReceived)).start();
 			new Thread(new UdpReceiver(datagramSocket, (msg, packet) -> client.onMessageReceived(msg))).start();
 			return acceptMessage.clientId();

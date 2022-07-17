@@ -2,6 +2,7 @@ package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.ClientWorld;
+import nl.andrewl.aos2_client.config.ClientConfig;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
@@ -28,6 +29,7 @@ public class GameRenderer {
 	private static final float Z_NEAR = 0.01f;
 	private static final float Z_FAR = 500f;
 
+	private final ClientConfig.DisplayConfig config;
 	private ChunkRenderer chunkRenderer;
 	private GUIRenderer guiRenderer;
 	private ModelRenderer modelRenderer;
@@ -39,11 +41,11 @@ public class GameRenderer {
 	private long windowHandle;
 	private int screenWidth = 800;
 	private int screenHeight = 600;
-	private float fov = 90f;
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(ClientWorld world) {
+	public GameRenderer(ClientConfig.DisplayConfig config, ClientWorld world) {
+		this.config = config;
 		this.world = world;
 		this.camera = new Camera();
 		this.perspectiveTransform = new Matrix4f();
@@ -52,9 +54,7 @@ public class GameRenderer {
 	public void setupWindow(
 			GLFWCursorPosCallbackI viewCursorCallback,
 			GLFWKeyCallbackI inputKeyCallback,
-			GLFWMouseButtonCallbackI mouseButtonCallback,
-			boolean fullscreen,
-			boolean grabCursor
+			GLFWMouseButtonCallbackI mouseButtonCallback
 	) {
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
@@ -66,7 +66,7 @@ public class GameRenderer {
 		GLFWVidMode primaryMonitorSettings = glfwGetVideoMode(monitorId);
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
 		log.debug("Primary monitor settings: Width: {}, Height: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
-		if (fullscreen) {
+		if (config.fullscreen) {
 			screenWidth = primaryMonitorSettings.width();
 			screenHeight = primaryMonitorSettings.height();
 			windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", monitorId, 0);
@@ -82,7 +82,7 @@ public class GameRenderer {
 		glfwSetKeyCallback(windowHandle, inputKeyCallback);
 		glfwSetCursorPosCallback(windowHandle, viewCursorCallback);
 		glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback);
-		if (grabCursor) {
+		if (config.captureCursor) {
 			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
@@ -125,11 +125,6 @@ public class GameRenderer {
 		updatePerspective();
 	}
 
-	public void setFov(float fov) {
-		this.fov = fov;
-		updatePerspective();
-	}
-
 	public float getAspectRatio() {
 		return (float) screenWidth / (float) screenHeight;
 	}
@@ -138,7 +133,7 @@ public class GameRenderer {
 	 * Updates the rendering perspective used to render the game.
 	 */
 	private void updatePerspective() {
-		perspectiveTransform.setPerspective(fov, getAspectRatio(), Z_NEAR, Z_FAR);
+		perspectiveTransform.setPerspective(config.fov, getAspectRatio(), Z_NEAR, Z_FAR);
 		float[] data = new float[16];
 		perspectiveTransform.get(data);
 		if (chunkRenderer != null) chunkRenderer.setPerspective(data);

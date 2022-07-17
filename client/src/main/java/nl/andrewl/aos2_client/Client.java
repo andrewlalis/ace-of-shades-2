@@ -1,10 +1,12 @@
 package nl.andrewl.aos2_client;
 
+import nl.andrewl.aos2_client.config.ClientConfig;
 import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
 import nl.andrewl.aos2_client.control.PlayerInputMouseClickCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.render.GameRenderer;
+import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.world.ColorPalette;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
@@ -14,16 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
+import java.nio.file.Path;
+import java.util.List;
 
 public class Client implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(Client.class);
 	public static final double FPS = 60;
 
-	private final InetAddress serverAddress;
-	private final int serverPort;
-	private final String username;
-
+	private final ClientConfig config;
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
 	private final GameRenderer gameRenderer;
@@ -31,33 +31,31 @@ public class Client implements Runnable {
 	private int clientId;
 	private final ClientWorld world;
 
-	public Client(InetAddress serverAddress, int serverPort, String username) {
-		this.serverAddress = serverAddress;
-		this.serverPort = serverPort;
-		this.username = username;
+	public Client(ClientConfig config) {
+		this.config = config;
 		this.communicationHandler = new CommunicationHandler(this);
 		this.inputHandler = new InputHandler(communicationHandler);
 		this.world = new ClientWorld();
-		this.gameRenderer = new GameRenderer(world);
+		this.gameRenderer = new GameRenderer(config.display, world);
+	}
+
+	public ClientConfig getConfig() {
+		return config;
 	}
 
 	@Override
 	public void run() {
 		try {
-			log.debug("Connecting to server at {}, port {}, with username \"{}\"...", serverAddress, serverPort, username);
-			this.clientId = communicationHandler.establishConnection(serverAddress, serverPort, username);
-			log.info("Established a connection to the server.");
+			this.clientId = communicationHandler.establishConnection();
 		} catch (IOException e) {
 			log.error("Couldn't connect to the server: {}", e.getMessage());
 			return;
 		}
 
 		gameRenderer.setupWindow(
-				new PlayerViewCursorCallback(gameRenderer.getCamera(), communicationHandler),
+				new PlayerViewCursorCallback(config.input, gameRenderer.getCamera(), communicationHandler),
 				new PlayerInputKeyCallback(inputHandler),
-				new PlayerInputMouseClickCallback(inputHandler),
-				false,
-				false
+				new PlayerInputMouseClickCallback(inputHandler)
 		);
 
 		long lastFrameAt = System.currentTimeMillis();
@@ -107,11 +105,12 @@ public class Client implements Runnable {
 
 
 	public static void main(String[] args) throws IOException {
-		InetAddress serverAddress = InetAddress.getByName(args[0]);
-		int serverPort = Integer.parseInt(args[1]);
-		String username = args[2].trim();
-
-		Client client = new Client(serverAddress, serverPort, username);
+		List<Path> configPaths = Config.getCommonConfigPaths();
+		if (args.length > 0) {
+			configPaths.add(Path.of(args[0].trim()));
+		}
+		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig());
+		Client client = new Client(clientConfig);
 		client.run();
 	}
 }
