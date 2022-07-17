@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.net.udp;
 
+import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.record_net.Message;
 
 /**
@@ -12,4 +13,11 @@ public record PlayerUpdateMessage(
 		float vx, float vy, float vz,
 		float ox, float oy,
 		boolean crouching
-) implements Message {}
+) implements Message {
+
+	public void apply(Player p) {
+		p.getPosition().set(px, py, pz);
+		p.getVelocity().set(vx, vy, vz);
+		p.getOrientation().set(ox, oy);
+	}
+}

@@ -49,17 +49,16 @@ public class ChunkMesh {
 	 * Generates and loads this chunk's mesh into the allocated OpenGL buffers.
 	 */
 	private void loadMesh(ChunkMeshGenerator meshGenerator) {
-		long start = System.nanoTime();
+//		long start = System.nanoTime();
 		var meshData = meshGenerator.generateMesh(chunk, world);
-		double dur = (System.nanoTime() - start) / 1_000_000.0;
+//		double dur = (System.nanoTime() - start) / 1_000_000.0;
 		this.indexCount = meshData.indexBuffer().limit();
-		// Print some debug information.
-		log.debug(
-				"Generated mesh for chunk ({}, {}, {}) in {} ms. {} vertices and {} indices.",
-				chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z,
-				dur,
-				meshData.vertexBuffer().limit() / 9, indexCount
-		);
+//		log.debug(
+//				"Generated mesh for chunk ({}, {}, {}) in {} ms. {} vertices and {} indices.",
+//				chunk.getPosition().x, chunk.getPosition().y, chunk.getPosition().z,
+//				dur,
+//				meshData.vertexBuffer().limit() / 9, indexCount
+//		);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vboId);
 		glBufferData(GL_ARRAY_BUFFER, meshData.vertexBuffer(), GL_STATIC_DRAW);

@@ -146,6 +146,11 @@
             <artifactId>aos2-core</artifactId>
             <version>${parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>de.javagl</groupId>
+            <artifactId>obj</artifactId>
+            <version>0.3.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.lwjgl</groupId>

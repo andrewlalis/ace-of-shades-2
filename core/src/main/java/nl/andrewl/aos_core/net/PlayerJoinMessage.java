@@ -21,4 +21,12 @@ public record PlayerJoinMessage(
 				player.getOrientation().x, player.getOrientation().y
 		);
 	}
+
+	public Player toPlayer() {
+		Player p = new Player(id, username);
+		p.getPosition().set(px, py, pz);
+		p.getVelocity().set(vx, vy, vz);
+		p.getOrientation().set(ox, oy);
+		return p;
+	}
 }

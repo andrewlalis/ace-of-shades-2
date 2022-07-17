@@ -91,6 +91,13 @@ public class ClientCommunicationHandler {
 					log.debug("Sent connect accept message.");
 
 					sendTcpMessage(new WorldInfoMessage(server.getWorld()));
+					// Send join info for all players that are already connected.
+					for (var player : server.getPlayerManager().getPlayers()) {
+						if (player.getId() != this.player.getId()) {
+							sendTcpMessage(new PlayerJoinMessage(player));
+						}
+					}
+					// Send chunk data.
 					for (var chunk : server.getWorld().getChunkMap().values()) {
 						sendTcpMessage(new ChunkDataMessage(chunk));
 					}

@@ -35,7 +35,6 @@ public class UdpReceiver implements Runnable {
 				handler.handle(msg, packet);
 			} catch (SocketException e) {
 				if (e.getMessage().equals("Socket closed")) {
-					System.out.println("Socket closed!");
 					break;
 				}
 				e.printStackTrace();

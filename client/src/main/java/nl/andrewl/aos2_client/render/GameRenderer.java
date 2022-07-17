@@ -1,10 +1,11 @@
 package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.ClientWorld;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos2_client.render.model.Model;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
@@ -27,30 +28,33 @@ public class GameRenderer {
 	private static final float Z_NEAR = 0.01f;
 	private static final float Z_FAR = 500f;
 
-	private final ChunkRenderer chunkRenderer;
-	private final GUIRenderer guiRenderer;
+	private ChunkRenderer chunkRenderer;
+	private GUIRenderer guiRenderer;
+	private ModelRenderer modelRenderer;
 	private final Camera camera;
-	private final World world;
+	private final ClientWorld world;
+	private Model playerModel; // Standard player model used to render all players.
 
 	private long windowHandle;
-	private GLFWVidMode primaryMonitorSettings;
-	private boolean fullscreen;
 	private int screenWidth = 800;
 	private int screenHeight = 600;
 	private float fov = 90f;
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(World world) {
+	public GameRenderer(ClientWorld world) {
 		this.world = world;
-		this.chunkRenderer = new ChunkRenderer();
-		this.guiRenderer = new GUIRenderer();
 		this.camera = new Camera();
 		this.perspectiveTransform = new Matrix4f();
-
 	}
 
-	public void setupWindow(GLFWCursorPosCallbackI viewCursorCallback, GLFWKeyCallbackI inputKeyCallback, GLFWMouseButtonCallbackI mouseButtonCallback) {
+	public void setupWindow(
+			GLFWCursorPosCallbackI viewCursorCallback,
+			GLFWKeyCallbackI inputKeyCallback,
+			GLFWMouseButtonCallbackI mouseButtonCallback,
+			boolean fullscreen,
+			boolean grabCursor
+	) {
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
 		glfwDefaultWindowHints();
@@ -58,21 +62,28 @@ public class GameRenderer {
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 		long monitorId = glfwGetPrimaryMonitor();
-		primaryMonitorSettings = glfwGetVideoMode(monitorId);
+		GLFWVidMode primaryMonitorSettings = glfwGetVideoMode(monitorId);
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
 		log.debug("Primary monitor settings: Width: {}, Height: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
-		screenWidth = primaryMonitorSettings.width();
-		screenHeight = primaryMonitorSettings.height();
-		windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", monitorId, 0);
+		if (fullscreen) {
+			screenWidth = primaryMonitorSettings.width();
+			screenHeight = primaryMonitorSettings.height();
+			windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", monitorId, 0);
+		} else {
+			screenWidth = 1000;
+			screenHeight = 800;
+			windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", 0, 0);
+		}
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
-		fullscreen = true;
 		log.debug("Initialized GLFW window.");
 
 		// Setup callbacks.
 		glfwSetKeyCallback(windowHandle, inputKeyCallback);
 		glfwSetCursorPosCallback(windowHandle, viewCursorCallback);
 		glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback);
-		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		if (grabCursor) {
+			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		glfwSetCursorPos(windowHandle, 0, 0);
 		log.debug("Set up window callbacks.");
@@ -80,7 +91,6 @@ public class GameRenderer {
 		glfwMakeContextCurrent(windowHandle);
 		glfwSwapInterval(1);
 		glfwShowWindow(windowHandle);
-		log.debug("Made window visible.");
 
 		GL.createCapabilities();
 //		GLUtil.setupDebugMessageCallback(System.out);
@@ -90,9 +100,9 @@ public class GameRenderer {
 		glCullFace(GL_BACK);
 		log.debug("Initialized OpenGL context.");
 
-		chunkRenderer.setupShaderProgram();
+		this.chunkRenderer = new ChunkRenderer();
 		log.debug("Initialized chunk renderer.");
-		guiRenderer.setup();
+		this.guiRenderer = new GUIRenderer();
 		// TODO: More organized way to load textures for GUI.
 		try {
 			var crosshairTexture = new GUITexture("gui/crosshair.png");
@@ -103,34 +113,13 @@ public class GameRenderer {
 			throw new RuntimeException(e);
 		}
 		log.debug("Initialized GUI renderer.");
-		updatePerspective();
-	}
-
-	public void setFullscreen(boolean fullscreen) {
-		if (windowHandle == 0) throw new IllegalStateException("Window not setup.");
-		long monitor = glfwGetPrimaryMonitor();
-		if (fullscreen) {
-			log.debug("Changing to fullscreen: {} x {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
-			glfwSetWindowMonitor(windowHandle, monitor, 0, 0, primaryMonitorSettings.width(), primaryMonitorSettings.height(), primaryMonitorSettings.refreshRate());
-			screenWidth = primaryMonitorSettings.width();
-			screenHeight = primaryMonitorSettings.height();
-			updatePerspective();
-		} else {
-			log.debug("Changing to windowed mode.");
-			screenWidth = 800;
-			screenHeight = 600;
-			int left = primaryMonitorSettings.width() / 2;
-			int top = primaryMonitorSettings.height() / 2;
-			glfwSetWindowMonitor(windowHandle, 0, left, top, screenWidth, screenHeight, primaryMonitorSettings.refreshRate());
-			updatePerspective();
+		this.modelRenderer = new ModelRenderer();
+		try {
+			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
-		this.fullscreen = fullscreen;
-	}
-
-	public void setSize(int width, int height) {
-		glfwSetWindowSize(windowHandle, width, height);
-		this.screenWidth = width;
-		this.screenHeight = height;
+		log.debug("Initialized model renderer.");
 		updatePerspective();
 	}
 
@@ -144,12 +133,18 @@ public class GameRenderer {
 	}
 
 	/**
-	 * Updates the rendering perspective used to render the game. Note: only
-	 * call this after calling {@link ChunkRenderer#setupShaderProgram()}.
+	 * Updates the rendering perspective used to render the game.
 	 */
 	private void updatePerspective() {
 		perspectiveTransform.setPerspective(fov, getAspectRatio(), Z_NEAR, Z_FAR);
-		chunkRenderer.setPerspective(perspectiveTransform);
+		float[] data = new float[16];
+		perspectiveTransform.get(data);
+		if (chunkRenderer != null) chunkRenderer.setPerspective(data);
+		if (modelRenderer != null) modelRenderer.setPerspective(data);
+	}
+
+	public Matrix4f getPerspectiveTransform() {
+		return perspectiveTransform;
 	}
 
 	public boolean windowShouldClose() {
@@ -160,14 +155,20 @@ public class GameRenderer {
 		return camera;
 	}
 
-	public ChunkRenderer getChunkRenderer() {
-		return chunkRenderer;
-	}
-
 	public void draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		chunkRenderer.draw(camera, world.getChunkMeshesToDraw());
 
-		chunkRenderer.draw(camera, world);
+		// Draw players.
+		modelRenderer.setView(camera.getViewTransformData());
+		playerModel.bind();
+		Matrix4f playerModelTransform = new Matrix4f();
+		for (var player : world.getPlayers()) {
+			playerModelTransform.identity().translate(player.getPosition());
+			modelRenderer.render(playerModel, playerModelTransform);
+		}
+		playerModel.unbind();
+
 		guiRenderer.draw();
 
 		glfwSwapBuffers(windowHandle);
@@ -175,8 +176,10 @@ public class GameRenderer {
 	}
 
 	public void freeWindow() {
-		guiRenderer.free();
-		chunkRenderer.free();
+		if (playerModel != null) playerModel.free();
+		if (modelRenderer != null) modelRenderer.free();
+		if (guiRenderer != null) guiRenderer.free();
+		if (chunkRenderer != null) chunkRenderer.free();
 		GL.destroy();
 		Callbacks.glfwFreeCallbacks(windowHandle);
 		glfwSetErrorCallback(null);

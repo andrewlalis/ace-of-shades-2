@@ -5,16 +5,11 @@ import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
 import nl.andrewl.aos2_client.control.PlayerInputMouseClickCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.render.GameRenderer;
-import nl.andrewl.aos_core.model.Chunk;
 import nl.andrewl.aos_core.model.ColorPalette;
-import nl.andrewl.aos_core.model.World;
-import nl.andrewl.aos_core.net.ChunkDataMessage;
-import nl.andrewl.aos_core.net.ChunkHashMessage;
-import nl.andrewl.aos_core.net.WorldInfoMessage;
+import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
-import org.joml.Vector3i;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,14 +55,18 @@ public class Client implements Runnable {
 		gameRenderer.setupWindow(
 				new PlayerViewCursorCallback(gameRenderer.getCamera(), communicationHandler),
 				new PlayerInputKeyCallback(inputHandler),
-				new PlayerInputMouseClickCallback(inputHandler)
+				new PlayerInputMouseClickCallback(inputHandler),
+				false,
+				false
 		);
 
 		long lastFrameAt = System.currentTimeMillis();
 		while (!gameRenderer.windowShouldClose()) {
 			long now = System.currentTimeMillis();
 			float dt = (now - lastFrameAt) / 1000f;
+			world.processQueuedChunkUpdates();
 			gameRenderer.getCamera().interpolatePosition(dt);
+			world.interpolatePlayers(dt);
 			gameRenderer.draw();
 			lastFrameAt = now;
 		}
@@ -75,31 +74,17 @@ public class Client implements Runnable {
 		communicationHandler.shutdown();
 	}
 
-	public int getClientId() {
-		return clientId;
-	}
-
-	public World getWorld() {
-		return world;
-	}
-
 	public void onMessageReceived(Message msg) {
 		if (msg instanceof WorldInfoMessage worldInfo) {
 			world.setPalette(ColorPalette.fromArray(worldInfo.palette()));
 		}
 		if (msg instanceof ChunkDataMessage chunkDataMessage) {
-			Chunk chunk = chunkDataMessage.toChunk();
-			world.addChunk(chunk);
-			gameRenderer.getChunkRenderer().queueChunkMesh(chunk);
+			world.addChunk(chunkDataMessage);
 		}
 		if (msg instanceof ChunkUpdateMessage u) {
-			Vector3i chunkPos = new Vector3i(u.cx(), u.cy(), u.cz());
-			Chunk chunk = world.getChunkAt(chunkPos);
-			System.out.println(u);
-			if (chunk != null) {
-				chunk.setBlockAt(u.lx(), u.ly(), u.lz(), u.newBlock());
-				gameRenderer.getChunkRenderer().queueChunkMesh(chunk);
-			} else {
+			world.updateChunk(u);
+			// If we received an update for a chunk we don't have, request it!
+			if (world.getChunkAt(u.getChunkPos()) == null) {
 				communicationHandler.sendMessage(new ChunkHashMessage(u.cx(), u.cy(), u.cz(), -1));
 			}
 		}
@@ -108,8 +93,15 @@ public class Client implements Runnable {
 				float eyeHeight = playerUpdate.crouching() ? 1.3f : 1.7f;
 				gameRenderer.getCamera().setPosition(playerUpdate.px(), playerUpdate.py() + eyeHeight, playerUpdate.pz());
 				gameRenderer.getCamera().setVelocity(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
-				// TODO: Unload far away chunks and request close chunks we don't have.
+			} else {
+				world.playerUpdated(playerUpdate);
 			}
+		}
+		if (msg instanceof PlayerJoinMessage joinMessage) {
+			world.playerJoined(joinMessage);
+		}
+		if (msg instanceof PlayerLeaveMessage leaveMessage) {
+			world.playerLeft(leaveMessage);
 		}
 	}
 

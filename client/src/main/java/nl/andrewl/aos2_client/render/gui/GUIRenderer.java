@@ -14,20 +14,16 @@ import static org.lwjgl.opengl.GL46.*;
  * Manages rendering of 2D GUI components like cross-hairs, inventory stuff, etc.
  */
 public class GUIRenderer {
-	private int vaoId;
-	private int vboId;
-	private int vertexCount;
-	private ShaderProgram shaderProgram;
-	private int transformUniformLocation;
+	private final int vaoId;
+	private final int vboId;
+	private final int vertexCount;
+	private final ShaderProgram shaderProgram;
+	private final int transformUniformLocation;
 
 
 	private final List<GUITexture> guiTextures = new ArrayList<>();
 
-	public void addTexture(GUITexture texture) {
-		guiTextures.add(texture);
-	}
-
-	public void setup() {
+	public GUIRenderer() {
 		vaoId = glGenVertexArrays();
 		vboId = glGenBuffers();
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(8);
@@ -51,6 +47,10 @@ public class GUIRenderer {
 				.build();
 		transformUniformLocation = shaderProgram.getUniform("transform");
 		shaderProgram.bindAttribute(0, "position");
+	}
+
+	public void addTexture(GUITexture texture) {
+		guiTextures.add(texture);
 	}
 
 	public void draw() {

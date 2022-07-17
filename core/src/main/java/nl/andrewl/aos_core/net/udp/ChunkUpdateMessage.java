@@ -28,4 +28,12 @@ public record ChunkUpdateMessage(
 				world.getBlockAt(worldPos.x, worldPos.y, worldPos.z)
 		);
 	}
+
+	public Vector3i getChunkPos() {
+		return new Vector3i(cx, cy, cz);
+	}
+
+	public Vector3i getLocalPos() {
+		return new Vector3i(lx, ly, lz);
+	}
 }
