@@ -1,7 +1,7 @@
 package nl.andrewl.aos2_client.render.chunk;
 
-import nl.andrewl.aos_core.model.Chunk;
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.world.Chunk;
+import nl.andrewl.aos_core.model.world.World;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.lwjgl.BufferUtils;

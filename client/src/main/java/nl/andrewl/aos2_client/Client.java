@@ -5,7 +5,7 @@ import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
 import nl.andrewl.aos2_client.control.PlayerInputMouseClickCallback;
 import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.render.GameRenderer;
-import nl.andrewl.aos_core.model.ColorPalette;
+import nl.andrewl.aos_core.model.world.ColorPalette;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
 import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;

@@ -2,16 +2,9 @@ package nl.andrewl.aos2_client.render.chunk;
 
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.render.ShaderProgram;
-import nl.andrewl.aos_core.model.Chunk;
-import nl.andrewl.aos_core.model.World;
-import org.joml.Matrix4f;
-import org.joml.Vector3i;
+import nl.andrewl.aos_core.model.world.Chunk;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.lwjgl.opengl.GL46.*;
 

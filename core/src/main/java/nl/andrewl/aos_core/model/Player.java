@@ -42,7 +42,14 @@ public class Player {
 	 */
 	protected final Vector3f viewVector;
 
+	/**
+	 * The player's name.
+	 */
 	protected final String username;
+
+	/**
+	 * The player's unique id that it was assigned by the server.
+	 */
 	protected final int id;
 
 	public Player(int id, String username) {

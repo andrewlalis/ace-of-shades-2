@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model;
 
+import nl.andrewl.aos_core.model.world.Chunk;
 import org.joml.Vector3i;
 import org.junit.jupiter.api.Test;
 

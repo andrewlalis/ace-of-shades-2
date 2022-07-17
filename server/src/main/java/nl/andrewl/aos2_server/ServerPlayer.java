@@ -1,7 +1,7 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
 import nl.andrewl.aos_core.net.udp.ClientInputState;
 import org.joml.Math;

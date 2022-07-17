@@ -1,4 +1,4 @@
-package nl.andrewl.aos_core.model;
+package nl.andrewl.aos_core.model.world;
 
 import org.joml.Vector3i;
 

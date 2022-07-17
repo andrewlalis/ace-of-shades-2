@@ -1,9 +1,8 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
-import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.net.*;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;

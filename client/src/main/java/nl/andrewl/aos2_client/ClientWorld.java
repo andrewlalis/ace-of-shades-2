@@ -2,9 +2,9 @@ package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.render.chunk.ChunkMesh;
 import nl.andrewl.aos2_client.render.chunk.ChunkMeshGenerator;
-import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.ChunkDataMessage;
 import nl.andrewl.aos_core.net.PlayerJoinMessage;
 import nl.andrewl.aos_core.net.PlayerLeaveMessage;

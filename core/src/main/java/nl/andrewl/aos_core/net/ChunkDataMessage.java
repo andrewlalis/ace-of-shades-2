@@ -1,6 +1,6 @@
 package nl.andrewl.aos_core.net;
 
-import nl.andrewl.aos_core.model.Chunk;
+import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.record_net.Message;
 
 /**

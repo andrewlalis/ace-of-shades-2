@@ -1,6 +1,6 @@
 package nl.andrewl.aos_core.net.udp;
 
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3i;
 

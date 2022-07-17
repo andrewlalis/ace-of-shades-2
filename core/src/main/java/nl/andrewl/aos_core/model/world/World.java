@@ -1,4 +1,4 @@
-package nl.andrewl.aos_core.model;
+package nl.andrewl.aos_core.model.world;
 
 import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.MathUtils;

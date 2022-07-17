@@ -1,7 +1,7 @@
 package nl.andrewl.aos2_client.render.chunk;
 
-import nl.andrewl.aos_core.model.Chunk;
-import nl.andrewl.aos_core.model.World;
+import nl.andrewl.aos_core.model.world.Chunk;
+import nl.andrewl.aos_core.model.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
