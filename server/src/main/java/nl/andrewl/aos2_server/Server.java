@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.config.ServerConfig;
+import nl.andrewl.aos2_server.logic.WorldUpdater;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.Worlds;
@@ -8,7 +9,6 @@ import nl.andrewl.aos_core.net.UdpReceiver;
 import nl.andrewl.aos_core.net.udp.ClientInputState;
 import nl.andrewl.aos_core.net.udp.ClientOrientationState;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,26 +66,14 @@ public class Server implements Runnable {
 		} else if (msg instanceof ClientInputState inputState) {
 			ServerPlayer player = playerManager.getPlayer(inputState.clientId());
 			if (player != null) {
-				player.setLastInputState(inputState);
-				playerManager.broadcastUdpMessage(new PlayerUpdateMessage(
-						player.getId(),
-						player.getPosition().x, player.getPosition().y, player.getPosition().z,
-						player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-						player.getOrientation().x, player.getOrientation().y,
-						player.getLastInputState().crouching()
-				));
+				player.getActionManager().setLastInputState(inputState);
+				playerManager.broadcastUdpMessage(player.getUpdateMessage());
 			}
 		} else if (msg instanceof ClientOrientationState orientationState) {
 			ServerPlayer player = playerManager.getPlayer(orientationState.clientId());
 			if (player != null) {
 				player.setOrientation(orientationState.x(), orientationState.y());
-				playerManager.broadcastUdpMessageToAllBut(new PlayerUpdateMessage(
-						player.getId(),
-						player.getPosition().x, player.getPosition().y, player.getPosition().z,
-						player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-						player.getOrientation().x, player.getOrientation().y,
-						player.getLastInputState().crouching()
-				), player);
+				playerManager.broadcastUdpMessageToAllBut(player.getUpdateMessage(), player);
 			}
 		}
 	}

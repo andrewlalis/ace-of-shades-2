@@ -102,9 +102,9 @@ public class Player {
 	public Vector3f getRightVector() {
 		float x = orientation.x - (float) (Math.PI / 2);
 		return new Vector3f(
-				sin(orientation.x),
+				sin(x),
 				0,
-				cos(orientation.x)
+				cos(x)
 		).normalize();
 	}
 }

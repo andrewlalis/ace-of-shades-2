@@ -1,9 +1,7 @@
-package nl.andrewl.aos2_server;
+package nl.andrewl.aos2_server.logic;
 
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
+import nl.andrewl.aos2_server.Server;
 import org.joml.Math;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,14 +54,8 @@ public class WorldUpdater implements Runnable {
 
 	private void tick() {
 		for (var player : server.getPlayerManager().getPlayers()) {
-			player.tick(secondsPerTick, server.getWorld(), server);
-			if (player.isUpdated()) server.getPlayerManager().broadcastUdpMessage(new PlayerUpdateMessage(
-					player.getId(),
-					player.getPosition().x, player.getPosition().y, player.getPosition().z,
-					player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-					player.getOrientation().x, player.getOrientation().y,
-					player.getLastInputState().crouching()
-			));
+			player.getActionManager().tick(secondsPerTick, server.getWorld(), server);
+			if (player.getActionManager().isUpdated()) server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage());
 		}
 	}
 }

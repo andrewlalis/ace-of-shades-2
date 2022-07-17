@@ -12,7 +12,8 @@ public record PlayerUpdateMessage(
 		float px, float py, float pz,
 		float vx, float vy, float vz,
 		float ox, float oy,
-		boolean crouching
+		boolean crouching,
+		int selectedItemId
 ) implements Message {
 
 	public void apply(Player p) {

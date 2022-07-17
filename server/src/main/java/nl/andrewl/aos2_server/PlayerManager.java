@@ -4,7 +4,6 @@ import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.net.PlayerJoinMessage;
 import nl.andrewl.aos_core.net.PlayerLeaveMessage;
 import nl.andrewl.aos_core.net.udp.DatagramInit;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -32,13 +31,7 @@ public class PlayerManager {
 		log.info("Registered player \"{}\" with id {}", player.getUsername(), player.getId());
 		player.setPosition(new Vector3f(0, 64, 0));
 		broadcastTcpMessageToAllBut(new PlayerJoinMessage(player), player);
-		broadcastUdpMessage(new PlayerUpdateMessage(
-				player.getId(),
-				player.getPosition().x, player.getPosition().y, player.getPosition().z,
-				player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-				player.getOrientation().x, player.getOrientation().y,
-				player.getLastInputState().crouching()
-		));
+		broadcastUdpMessage(player.getUpdateMessage());
 		return player;
 	}
 

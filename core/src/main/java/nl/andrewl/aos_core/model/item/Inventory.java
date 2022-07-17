@@ -21,6 +21,10 @@ public class Inventory {
 		this.selectedIndex = selectedIndex;
 	}
 
+	public List<ItemStack> getItemStacks() {
+		return itemStacks;
+	}
+
 	public ItemStack getSelectedItemStack() {
 		return itemStacks.get(selectedIndex);
 	}

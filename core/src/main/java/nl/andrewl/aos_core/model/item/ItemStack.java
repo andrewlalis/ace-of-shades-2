@@ -5,15 +5,15 @@ package nl.andrewl.aos_core.model.item;
  * a type of item, and the amount of it.
  */
 public class ItemStack {
-	private final ItemType type;
+	private final Item type;
 	private int amount;
 
-	public ItemStack(ItemType type, int amount) {
+	public ItemStack(Item type, int amount) {
 		this.type = type;
 		this.amount = amount;
 	}
 
-	public Object getType() {
+	public Item getType() {
 		return type;
 	}
 
