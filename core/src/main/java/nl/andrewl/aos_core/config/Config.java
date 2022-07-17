@@ -49,6 +49,8 @@ public final class Config {
 
 	public static List<Path> getCommonConfigPaths() {
 		List<Path> paths = new ArrayList<>();
+		paths.add(Path.of("configuration.yaml"));
+		paths.add(Path.of("configuration.yml"));
 		paths.add(Path.of("config.yaml"));
 		paths.add(Path.of("config.yml"));
 		paths.add(Path.of("cfg.yaml"));
