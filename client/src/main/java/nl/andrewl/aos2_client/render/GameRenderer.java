@@ -34,6 +34,7 @@ public class GameRenderer {
 	private final Camera camera;
 	private final ClientWorld world;
 	private Model playerModel; // Standard player model used to render all players.
+	private Model rifleModel;
 
 	private long windowHandle;
 	private int screenWidth = 800;
@@ -116,6 +117,7 @@ public class GameRenderer {
 		this.modelRenderer = new ModelRenderer();
 		try {
 			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
+			rifleModel = new Model("model/rifle.obj", "model/rifle.png");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -162,12 +164,21 @@ public class GameRenderer {
 		// Draw players.
 		modelRenderer.setView(camera.getViewTransformData());
 		playerModel.bind();
-		Matrix4f playerModelTransform = new Matrix4f();
+		Matrix4f modelTransform = new Matrix4f();
 		for (var player : world.getPlayers()) {
-			playerModelTransform.identity().translate(player.getPosition());
-			modelRenderer.render(playerModel, playerModelTransform);
+			modelTransform.identity().translate(player.getPosition());
+			modelRenderer.render(playerModel, modelTransform);
 		}
 		playerModel.unbind();
+		rifleModel.bind();
+		for (var player : world.getPlayers()) {
+			modelTransform.identity()
+					.translate(player.getPosition())
+					.rotate((float) (player.getOrientation().x - Math.PI / 2), Camera.UP)
+					.translate(0, 0, -0.45f);
+			modelRenderer.render(rifleModel, modelTransform);
+		}
+		rifleModel.unbind();
 
 		guiRenderer.draw();
 

@@ -91,4 +91,13 @@ public class Player {
 	public Vector3f getViewVector() {
 		return viewVector;
 	}
+
+	public Vector3f getRightVector() {
+		float x = orientation.x - (float) (Math.PI / 2);
+		return new Vector3f(
+				sin(orientation.x),
+				0,
+				cos(orientation.x)
+		).normalize();
+	}
 }
