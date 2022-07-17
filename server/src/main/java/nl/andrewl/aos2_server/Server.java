@@ -1,7 +1,8 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.config.ServerConfig;
+import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.world.World;
-import nl.andrewl.aos_core.model.world.WorldIO;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
 import nl.andrewl.aos_core.net.udp.ClientInputState;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.*;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
@@ -23,18 +25,19 @@ public class Server implements Runnable {
 	private final ServerSocket serverSocket;
 	private final DatagramSocket datagramSocket;
 	private volatile boolean running;
-
+	private final ServerConfig config;
 	private final PlayerManager playerManager;
 	private final World world;
 	private final WorldUpdater worldUpdater;
 
-	public Server() throws IOException {
-		this.serverSocket = new ServerSocket(25565, 5);
+	public Server(ServerConfig config) throws IOException {
+		this.config = config;
+		this.serverSocket = new ServerSocket(config.port, config.connectionBacklog);
 		this.serverSocket.setReuseAddress(true);
-		this.datagramSocket = new DatagramSocket(25565);
+		this.datagramSocket = new DatagramSocket(config.port);
 		this.datagramSocket.setReuseAddress(true);
 		this.playerManager = new PlayerManager();
-		this.worldUpdater = new WorldUpdater(this, 20);
+		this.worldUpdater = new WorldUpdater(this, config.ticksPerSecond);
 		this.world = Worlds.testingWorld();
 	}
 
@@ -107,6 +110,10 @@ public class Server implements Runnable {
 		}
 	}
 
+	public ServerConfig getConfig() {
+		return config;
+	}
+
 	public World getWorld() {
 		return world;
 	}
@@ -116,6 +123,11 @@ public class Server implements Runnable {
 	}
 
 	public static void main(String[] args) throws IOException {
-		new Server().run();
+		List<Path> configPaths = Config.getCommonConfigPaths();
+		if (args.length > 0) {
+			configPaths.add(Path.of(args[0].trim()));
+		}
+		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig());
+		new Server(cfg).run();
 	}
 }

@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
@@ -23,17 +24,6 @@ public class ServerPlayer extends Player {
 	public static final float EYE_HEIGHT_CROUCH = HEIGHT_CROUCH - 0.1f;
 	public static final float WIDTH = 0.75f;
 	public static final float RADIUS = WIDTH / 2f;
-
-	public static final float GRAVITY = 9.81f * 3;
-	public static final float SPEED_NORMAL = 4f;
-	public static final float SPEED_CROUCH = 1.5f;
-	public static final float SPEED_SPRINT = 9f;
-	public static final float MOVEMENT_ACCELERATION = 2f;
-	public static final float MOVEMENT_DECELERATION = 1f;
-	public static final float JUMP_SPEED = 8f;
-
-	public static final int BLOCK_REMOVE_COOLDOWN = 250;
-	public static final int BLOCK_PLACE_COOLDOWN = 100;
 
 	private ClientInputState lastInputState;
 	private long lastBlockRemovedAt = 0;
@@ -62,7 +52,7 @@ public class ServerPlayer extends Player {
 	public void tick(float dt, World world, Server server) {
 		long now = System.currentTimeMillis();
 		// Check for breaking blocks.
-		if (lastInputState.hitting() && now - lastBlockRemovedAt > BLOCK_REMOVE_COOLDOWN) {
+		if (lastInputState.hitting() && now - lastBlockRemovedAt > server.getConfig().actions.blockRemoveCooldown * 1000) {
 			Vector3f eyePos = new Vector3f(position);
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
@@ -73,7 +63,7 @@ public class ServerPlayer extends Player {
 			}
 		}
 		// Check for placing blocks.
-		if (lastInputState.interacting() && now - lastBlockPlacedAt > BLOCK_PLACE_COOLDOWN) {
+		if (lastInputState.interacting() && now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000) {
 			Vector3f eyePos = new Vector3f(position);
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, viewVector, 10);
@@ -85,21 +75,21 @@ public class ServerPlayer extends Player {
 				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
 			}
 		}
-		tickMovement(dt, world);
+		tickMovement(dt, world, server.getConfig().physics);
 	}
 
-	private void tickMovement(float dt, World world) {
+	private void tickMovement(float dt, World world, ServerConfig.PhysicsConfig config) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
 		boolean grounded = isGrounded(world);
-		tickHorizontalVelocity(grounded);
+		tickHorizontalVelocity(config, grounded);
 
 		if (isGrounded(world)) {
 			if (lastInputState.jumping()) {
-				velocity.y = JUMP_SPEED * (lastInputState.sprinting() ? 1.25f : 1f);
+				velocity.y = config.jumpVerticalSpeed * (lastInputState.sprinting() ? 1.25f : 1f);
 				updated = true;
 			}
 		} else {
-			velocity.y -= GRAVITY * dt;
+			velocity.y -= config.gravity * dt;
 			updated = true;
 		}
 
@@ -113,7 +103,7 @@ public class ServerPlayer extends Player {
 		}
 	}
 
-	private void tickHorizontalVelocity(boolean doDeceleration) {
+	private void tickHorizontalVelocity(ServerConfig.PhysicsConfig config, boolean doDeceleration) {
 		Vector3f horizontalVelocity = new Vector3f(
 				velocity.x == velocity.x ? velocity.x : 0f,
 				0,
@@ -127,15 +117,15 @@ public class ServerPlayer extends Player {
 		if (acceleration.lengthSquared() > 0) {
 			acceleration.normalize();
 			acceleration.rotateAxis(orientation.x, 0, 1, 0);
-			acceleration.mul(MOVEMENT_ACCELERATION);
+			acceleration.mul(config.movementAcceleration);
 			horizontalVelocity.add(acceleration);
 			final float maxSpeed;
 			if (lastInputState.crouching()) {
-				maxSpeed = SPEED_CROUCH;
+				maxSpeed = config.crouchingSpeed;
 			} else if (lastInputState.sprinting()) {
-				maxSpeed = SPEED_SPRINT;
+				maxSpeed = config.sprintingSpeed;
 			} else {
-				maxSpeed = SPEED_NORMAL;
+				maxSpeed = config.walkingSpeed;
 			}
 			if (horizontalVelocity.length() > maxSpeed) {
 				horizontalVelocity.normalize(maxSpeed);
@@ -144,7 +134,7 @@ public class ServerPlayer extends Player {
 		} else if (doDeceleration && horizontalVelocity.lengthSquared() > 0) {
 			Vector3f deceleration = new Vector3f(horizontalVelocity)
 					.negate().normalize()
-					.mul(Math.min(horizontalVelocity.length(), MOVEMENT_DECELERATION));
+					.mul(Math.min(horizontalVelocity.length(), config.movementDeceleration));
 			horizontalVelocity.add(deceleration);
 			if (horizontalVelocity.length() < 0.1f) {
 				horizontalVelocity.set(0);
