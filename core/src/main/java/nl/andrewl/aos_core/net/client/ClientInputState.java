@@ -1,4 +1,4 @@
-package nl.andrewl.aos_core.net.udp;
+package nl.andrewl.aos_core.net.client;
 
 import nl.andrewl.record_net.Message;
 
@@ -19,5 +19,6 @@ public record ClientInputState(
 
 		// Interaction
 		boolean hitting, // Usually a "left-click" action.
-		boolean interacting // Usually a "right-click" action.
+		boolean interacting, // Usually a "right-click" action.
+		int selectedInventoryIndex // The selected index in the player's inventory.
 ) implements Message {}

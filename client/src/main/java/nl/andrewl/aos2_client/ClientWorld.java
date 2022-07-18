@@ -5,11 +5,11 @@ import nl.andrewl.aos2_client.render.chunk.ChunkMeshGenerator;
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.world.World;
-import nl.andrewl.aos_core.net.ChunkDataMessage;
-import nl.andrewl.aos_core.net.PlayerJoinMessage;
-import nl.andrewl.aos_core.net.PlayerLeaveMessage;
-import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
+import nl.andrewl.aos_core.net.world.ChunkDataMessage;
+import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
+import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
+import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
+import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 

@@ -25,13 +25,17 @@ public class Inventory {
 		return itemStacks;
 	}
 
+	public int getSelectedIndex() {
+		return selectedIndex;
+	}
+
 	public ItemStack getSelectedItemStack() {
 		return itemStacks.get(selectedIndex);
 	}
 
 	public void setSelectedIndex(int newIndex) {
-		while (newIndex < 0) newIndex += itemStacks.size();
-		while (newIndex > itemStacks.size() - 1) newIndex -= itemStacks.size();
+		if (newIndex < 0) newIndex = 0;
+		if (newIndex > itemStacks.size() - 1) newIndex = itemStacks.size() - 1;
 		this.selectedIndex = newIndex;
 	}
 }

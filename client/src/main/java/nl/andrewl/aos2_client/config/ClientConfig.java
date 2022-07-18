@@ -13,7 +13,7 @@ public class ClientConfig {
 
 	public static class DisplayConfig {
 		public boolean fullscreen = false;
-		public boolean captureCursor = true;
+		public boolean captureCursor = false;
 		public float fov = 70;
 	}
 }

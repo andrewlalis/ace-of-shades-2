@@ -3,6 +3,14 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.net.*;
+import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
+import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
+import nl.andrewl.aos_core.net.client.ClientInventoryMessage;
+import nl.andrewl.aos_core.net.world.ChunkDataMessage;
+import nl.andrewl.aos_core.net.world.ChunkHashMessage;
+import nl.andrewl.aos_core.net.world.WorldInfoMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -81,6 +89,7 @@ public class ClientCommunicationHandler {
 			try {
 				Message msg = Net.read(in);
 				if (msg instanceof ConnectRequestMessage connectMsg) {
+					log.debug("Received connect request from player \"{}\"", connectMsg.username());
 					// Try to set the TCP timeout back to 0 now that we've got the correct request.
 					socket.setSoTimeout(0);
 					this.clientAddress = socket.getInetAddress();
@@ -90,7 +99,10 @@ public class ClientCommunicationHandler {
 					log.debug("Sent connect accept message.");
 
 					sendTcpMessage(new WorldInfoMessage(server.getWorld()));
-					// Send join info for all players that are already connected.
+					// Send player's inventory information.
+					sendTcpMessage(new ClientInventoryMessage(player.getInventory()));
+
+					// Send "join" info about all the players that are already connected, so the client is aware of them.
 					for (var player : server.getPlayerManager().getPlayers()) {
 						if (player.getId() != this.player.getId()) {
 							sendTcpMessage(new PlayerJoinMessage(player));

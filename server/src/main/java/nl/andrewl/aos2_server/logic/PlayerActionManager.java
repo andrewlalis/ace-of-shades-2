@@ -3,9 +3,13 @@ package nl.andrewl.aos2_server.logic;
 import nl.andrewl.aos2_server.Server;
 import nl.andrewl.aos2_server.ServerPlayer;
 import nl.andrewl.aos2_server.config.ServerConfig;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.ItemTypes;
 import nl.andrewl.aos_core.model.world.World;
-import nl.andrewl.aos_core.net.udp.ChunkUpdateMessage;
-import nl.andrewl.aos_core.net.udp.ClientInputState;
+import nl.andrewl.aos_core.net.client.ClientInputState;
+import nl.andrewl.aos_core.net.client.InventorySelectedStackMessage;
+import nl.andrewl.aos_core.net.client.ItemStackMessage;
+import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Math;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -30,15 +34,23 @@ public class PlayerActionManager {
 
 	public PlayerActionManager(ServerPlayer player) {
 		this.player = player;
-		lastInputState = new ClientInputState(player.getId(), false, false, false, false, false, false, false, false, false);
+		lastInputState = new ClientInputState(
+				player.getId(),
+				false, false, false, false,
+				false, false, false,
+				false, false,
+				player.getInventory().getSelectedIndex()
+		);
 	}
 
 	public ClientInputState getLastInputState() {
 		return lastInputState;
 	}
 
-	public void setLastInputState(ClientInputState lastInputState) {
-		this.lastInputState = lastInputState;
+	public boolean setLastInputState(ClientInputState lastInputState) {
+		boolean change = !lastInputState.equals(this.lastInputState);
+		if (change) this.lastInputState = lastInputState;
+		return change;
 	}
 
 	public boolean isUpdated() {
@@ -46,36 +58,65 @@ public class PlayerActionManager {
 	}
 
 	public void tick(float dt, World world, Server server) {
+		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
 		long now = System.currentTimeMillis();
+		if (player.getInventory().getSelectedIndex() != lastInputState.selectedInventoryIndex()) {
+			player.getInventory().setSelectedIndex(lastInputState.selectedInventoryIndex());
+			// Tell the client that their inventory slot has been updated properly.
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new InventorySelectedStackMessage(player.getInventory().getSelectedIndex()));
+			updated = true; // Tell everyone else that this player's selected item has changed.
+		}
+
+		if (player.getInventory().getSelectedItemStack().getType().equals(ItemTypes.BLOCK)) {
+			tickBlockAction(now, server, world);
+		}
+
+		tickMovement(dt, world, server.getConfig().physics);
+	}
+
+	private void tickBlockAction(long now, Server server, World world) {
+		BlockItemStack stack = (BlockItemStack) player.getInventory().getSelectedItemStack();
 		// Check for breaking blocks.
-		if (lastInputState.hitting() && now - lastBlockRemovedAt > server.getConfig().actions.blockRemoveCooldown * 1000) {
+		if (
+				lastInputState.hitting() &&
+				stack.getAmount() < stack.getType().getMaxAmount() &&
+				now - lastBlockRemovedAt > server.getConfig().actions.blockRemoveCooldown * 1000
+		) {
 			Vector3f eyePos = new Vector3f(player.getPosition());
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, player.getViewVector(), 10);
 			if (hit != null) {
 				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
+				stack.incrementAmount();
+				server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
 				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
 			}
 		}
 		// Check for placing blocks.
-		if (lastInputState.interacting() && now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000) {
+		if (
+				lastInputState.interacting() &&
+				stack.getAmount() > 0 &&
+				now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000
+		) {
 			Vector3f eyePos = new Vector3f(player.getPosition());
 			eyePos.y += getEyeHeight();
 			var hit = world.getLookingAtPos(eyePos, player.getViewVector(), 10);
 			if (hit != null) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());
-				world.setBlockAt(placePos.x, placePos.y, placePos.z, (byte) 1);
-				lastBlockPlacedAt = now;
-				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
+				if (!isSpaceOccupied(placePos)) { // Ensure that we can't place blocks in space we're occupying.
+					world.setBlockAt(placePos.x, placePos.y, placePos.z, stack.getSelectedValue());
+					lastBlockPlacedAt = now;
+					stack.decrementAmount();
+					server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+					server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
+				}
 			}
 		}
-		tickMovement(dt, world, server.getConfig().physics);
 	}
 
 	private void tickMovement(float dt, World world, ServerConfig.PhysicsConfig config) {
-		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
 		var velocity = player.getVelocity();
 		var position = player.getPosition();
 		boolean grounded = isGrounded(world);
@@ -178,15 +219,30 @@ public class PlayerActionManager {
 		return points;
 	}
 
+	private boolean isSpaceOccupied(Vector3i pos) {
+		var playerPos = player.getPosition();
+		float playerBodyMinZ = playerPos.z - RADIUS;
+		float playerBodyMaxZ = playerPos.z + RADIUS;
+		float playerBodyMinX = playerPos.x - RADIUS;
+		float playerBodyMaxX = playerPos.x + RADIUS;
+		float playerBodyMinY = playerPos.y;
+		float playerBodyMaxY = playerPos.y + getCurrentHeight();
+
+		// Compute the bounds of all blocks the player is intersecting with.
+		int minX = (int) Math.floor(playerBodyMinX);
+		int minZ = (int) Math.floor(playerBodyMinZ);
+		int minY = (int) Math.floor(playerBodyMinY);
+		int maxX = (int) Math.floor(playerBodyMaxX);
+		int maxZ = (int) Math.floor(playerBodyMaxZ);
+		int maxY = (int) Math.floor(playerBodyMaxY);
+
+		return pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY && pos.z >= minZ && pos.z <= maxZ;
+	}
+
 	private void checkBlockCollisions(Vector3f movement, World world) {
 		var position = player.getPosition();
 		var velocity = player.getVelocity();
 		final Vector3f nextTickPosition = new Vector3f(position).add(movement);
-//		System.out.printf("Pos:\t\t%.3f, %.3f, %.3f%nmov:\t\t%.3f, %.3f, %.3f%nNexttick:\t%.3f, %.3f, %.3f%n",
-//				position.x, position.y, position.z,
-//				movement.x, movement.y, movement.z,
-//				nextTickPosition.x, nextTickPosition.y, nextTickPosition.z
-//		);
 		float height = getCurrentHeight();
 		float delta = 0.00001f;
 		final Vector3f stepSize = new Vector3f(movement).normalize(1.0f);
@@ -204,7 +260,6 @@ public class PlayerActionManager {
 			}
 
 			// Check if we collide with anything at this new position.
-
 
 			float playerBodyPrevMinZ = lastPos.z - RADIUS;
 			float playerBodyPrevMaxZ = lastPos.z + RADIUS;

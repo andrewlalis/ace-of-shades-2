@@ -1,4 +1,4 @@
-package nl.andrewl.aos_core.net.udp;
+package nl.andrewl.aos_core.net.connect;
 
 import nl.andrewl.record_net.Message;
 

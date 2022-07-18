@@ -1,8 +1,12 @@
 package nl.andrewl.aos2_client;
 
+import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.net.*;
-import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
+import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -33,7 +37,7 @@ public class CommunicationHandler {
 		this.client = client;
 	}
 	
-	public int establishConnection() throws IOException {
+	public void establishConnection() throws IOException {
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
@@ -54,11 +58,11 @@ public class CommunicationHandler {
 		}
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
+			client.setPlayer(new ClientPlayer(clientId, username));
 			establishDatagramConnection();
 			log.info("Connection to server established. My client id is {}.", clientId);
 			new Thread(new TcpReceiver(in, client::onMessageReceived)).start();
 			new Thread(new UdpReceiver(datagramSocket, (msg, packet) -> client.onMessageReceived(msg))).start();
-			return acceptMessage.clientId();
 		} else {
 			throw new IOException("Server returned an unexpected message: " + response);
 		}

@@ -12,9 +12,12 @@ public final class ItemTypes {
 	private static final Map<Integer, Item> TYPES_BY_ID = new HashMap<>();
 	private static final Map<String, Item> TYPES_BY_NAME = new HashMap<>();
 
+	public static final BlockItem BLOCK = new BlockItem(1);
+	public static final Rifle RIFLE = new Rifle(2);
+
 	static {
-		registerType(new BlockItem(1));
-		registerType(new Rifle(2));
+		registerType(BLOCK);
+		registerType(RIFLE);
 	}
 
 	public static void registerType(Item type) {

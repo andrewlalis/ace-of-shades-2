@@ -1,4 +1,4 @@
-package nl.andrewl.aos_core.net;
+package nl.andrewl.aos_core.net.world;
 
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.record_net.Message;

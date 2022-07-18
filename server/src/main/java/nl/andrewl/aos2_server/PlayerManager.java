@@ -1,9 +1,9 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
-import nl.andrewl.aos_core.net.PlayerJoinMessage;
-import nl.andrewl.aos_core.net.PlayerLeaveMessage;
-import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
+import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
+import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
 import org.slf4j.Logger;

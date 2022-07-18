@@ -2,15 +2,20 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.model.item.*;
-import nl.andrewl.aos_core.model.item.gun.Rifle;
-import nl.andrewl.aos_core.net.udp.PlayerUpdateMessage;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.GunItemStack;
+import nl.andrewl.aos_core.model.item.Inventory;
+import nl.andrewl.aos_core.model.item.ItemTypes;
+import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 
+/**
+ * An extension of the base player class with additional information that's
+ * needed for the server.
+ */
 public class ServerPlayer extends Player {
 	private static final Logger log = LoggerFactory.getLogger(ServerPlayer.class);
 
@@ -26,14 +31,18 @@ public class ServerPlayer extends Player {
 
 	public ServerPlayer(int id, String username) {
 		super(id, username);
-		this.actionManager = new PlayerActionManager(this);
 		this.inventory = new Inventory(new ArrayList<>(), 0);
+		this.actionManager = new PlayerActionManager(this);
 		inventory.getItemStacks().add(new GunItemStack(ItemTypes.get("Rifle")));
-		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.get("Block"), 50));
+		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.get("Block"), 50, (byte) 1));
 	}
 
 	public PlayerActionManager getActionManager() {
 		return actionManager;
+	}
+
+	public Inventory getInventory() {
+		return inventory;
 	}
 
 	/**

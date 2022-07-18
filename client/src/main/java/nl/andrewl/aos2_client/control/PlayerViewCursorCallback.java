@@ -1,9 +1,10 @@
 package nl.andrewl.aos2_client.control;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.CommunicationHandler;
 import nl.andrewl.aos2_client.config.ClientConfig;
-import nl.andrewl.aos_core.net.udp.ClientOrientationState;
+import nl.andrewl.aos_core.net.client.ClientOrientationState;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 
 import java.util.concurrent.ForkJoinPool;
@@ -22,15 +23,17 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 	private static final int ORIENTATION_UPDATE_LIMIT = 20;
 
 	private final ClientConfig.InputConfig config;
+	private final Client client;
 	private final Camera camera;
 	private final CommunicationHandler comm;
 	private float lastMouseCursorX;
 	private float lastMouseCursorY;
 	private long lastOrientationUpdateSentAt = 0L;
 
-	public PlayerViewCursorCallback(ClientConfig.InputConfig config, Camera camera, CommunicationHandler comm) {
+	public PlayerViewCursorCallback(ClientConfig.InputConfig config, Client client, Camera cam, CommunicationHandler comm) {
 		this.config = config;
-		this.camera = camera;
+		this.client = client;
+		this.camera = cam;
 		this.comm = comm;
 	}
 
@@ -45,13 +48,18 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 		float dy = y - lastMouseCursorY;
 		lastMouseCursorX = x;
 		lastMouseCursorY = y;
-		camera.setOrientation(
-				camera.getOrientation().x - dx * config.mouseSensitivity,
-				camera.getOrientation().y - dy * config.mouseSensitivity
+		client.getPlayer().setOrientation(
+				client.getPlayer().getOrientation().x - dx * config.mouseSensitivity,
+				client.getPlayer().getOrientation().y - dy * config.mouseSensitivity
 		);
+		camera.setOrientation(client.getPlayer().getOrientation().x, client.getPlayer().getOrientation().y);
 		long now = System.currentTimeMillis();
 		if (lastOrientationUpdateSentAt + ORIENTATION_UPDATE_LIMIT < now) {
-			ForkJoinPool.commonPool().submit(() -> comm.sendDatagramPacket(new ClientOrientationState(comm.getClientId(), camera.getOrientation().x, camera.getOrientation().y)));
+			ForkJoinPool.commonPool().submit(() -> comm.sendDatagramPacket(new ClientOrientationState(
+					client.getPlayer().getId(),
+					client.getPlayer().getOrientation().x,
+					client.getPlayer().getOrientation().y
+			)));
 			lastOrientationUpdateSentAt = now;
 		}
 	}

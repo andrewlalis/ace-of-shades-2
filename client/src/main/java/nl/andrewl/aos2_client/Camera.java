@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos_core.MathUtils;
+import nl.andrewl.aos_core.model.Player;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -44,6 +45,11 @@ public class Camera {
 		this.velocity = new Vector3f();
 		this.orientation = new Vector2f(0, (float) (Math.PI / 2));
 		this.viewTransform = new Matrix4f();
+	}
+
+	public void setToPlayer(Player p) {
+		position.set(p.getPosition());
+		velocity.set(p.getVelocity());
 	}
 
 	public Matrix4f getViewTransform() {

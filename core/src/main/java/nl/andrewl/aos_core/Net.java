@@ -1,7 +1,14 @@
 package nl.andrewl.aos_core;
 
-import nl.andrewl.aos_core.net.*;
-import nl.andrewl.aos_core.net.udp.*;
+import nl.andrewl.aos_core.net.client.*;
+import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
+import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
+import nl.andrewl.aos_core.net.connect.DatagramInit;
+import nl.andrewl.aos_core.net.world.ChunkDataMessage;
+import nl.andrewl.aos_core.net.world.ChunkHashMessage;
+import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
+import nl.andrewl.aos_core.net.world.WorldInfoMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.Serializer;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
@@ -33,6 +40,10 @@ public final class Net {
 		serializer.registerType(11, PlayerJoinMessage.class);
 		serializer.registerType(12, PlayerLeaveMessage.class);
 		serializer.registerType(13, WorldInfoMessage.class);
+		// Separate serializers for client inventory messages.
+		serializer.registerTypeSerializer(14, new InventorySerializer());
+		serializer.registerTypeSerializer(15, new ItemStackSerializer());
+		serializer.registerType(16, InventorySelectedStackMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

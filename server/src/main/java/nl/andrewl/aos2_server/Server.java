@@ -6,9 +6,9 @@ import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
-import nl.andrewl.aos_core.net.udp.ClientInputState;
-import nl.andrewl.aos_core.net.udp.ClientOrientationState;
-import nl.andrewl.aos_core.net.udp.DatagramInit;
+import nl.andrewl.aos_core.net.client.ClientInputState;
+import nl.andrewl.aos_core.net.client.ClientOrientationState;
+import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +66,9 @@ public class Server implements Runnable {
 		} else if (msg instanceof ClientInputState inputState) {
 			ServerPlayer player = playerManager.getPlayer(inputState.clientId());
 			if (player != null) {
-				player.getActionManager().setLastInputState(inputState);
-				playerManager.broadcastUdpMessage(player.getUpdateMessage());
+				if (player.getActionManager().setLastInputState(inputState)) {
+					playerManager.broadcastUdpMessage(player.getUpdateMessage());
+				}
 			}
 		} else if (msg instanceof ClientOrientationState orientationState) {
 			ServerPlayer player = playerManager.getPlayer(orientationState.clientId());
@@ -86,7 +87,7 @@ public class Server implements Runnable {
 			ForkJoinPool.commonPool().submit(() -> {
 				try {
 					handler.establishConnection();
-				} catch (IOException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			});
