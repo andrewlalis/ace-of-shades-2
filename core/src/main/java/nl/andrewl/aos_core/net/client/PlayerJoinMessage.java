@@ -1,6 +1,7 @@
 package nl.andrewl.aos_core.net.client;
 
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.item.ItemTypes;
 import nl.andrewl.record_net.Message;
 
 /**
@@ -11,14 +12,18 @@ public record PlayerJoinMessage(
 		int id, String username,
 		float px, float py, float pz,
 		float vx, float vy, float vz,
-		float ox, float oy
+		float ox, float oy,
+		boolean crouching,
+		int selectedItemId
 ) implements Message {
 	public PlayerJoinMessage(Player player) {
 		this(
 				player.getId(), player.getUsername(),
 				player.getPosition().x, player.getPosition().y, player.getPosition().z,
 				player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-				player.getOrientation().x, player.getOrientation().y
+				player.getOrientation().x, player.getOrientation().y,
+				player.isCrouching(),
+				ItemTypes.BLOCK.getId()
 		);
 	}
 

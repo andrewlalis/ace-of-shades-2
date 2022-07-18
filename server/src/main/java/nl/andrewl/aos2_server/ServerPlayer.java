@@ -19,13 +19,6 @@ import java.util.ArrayList;
 public class ServerPlayer extends Player {
 	private static final Logger log = LoggerFactory.getLogger(ServerPlayer.class);
 
-	public static final float HEIGHT = 1.8f;
-	public static final float HEIGHT_CROUCH = 1.4f;
-	public static final float EYE_HEIGHT = HEIGHT - 0.1f;
-	public static final float EYE_HEIGHT_CROUCH = HEIGHT_CROUCH - 0.1f;
-	public static final float WIDTH = 0.75f;
-	public static final float RADIUS = WIDTH / 2f;
-
 	private final PlayerActionManager actionManager;
 	private final Inventory inventory;
 

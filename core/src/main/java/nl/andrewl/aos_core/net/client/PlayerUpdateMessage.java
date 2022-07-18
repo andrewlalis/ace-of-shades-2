@@ -20,5 +20,6 @@ public record PlayerUpdateMessage(
 		p.getPosition().set(px, py, pz);
 		p.getVelocity().set(vx, vy, vz);
 		p.getOrientation().set(ox, oy);
+		p.setCrouching(crouching);
 	}
 }

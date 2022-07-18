@@ -48,8 +48,12 @@ public class Camera {
 	}
 
 	public void setToPlayer(Player p) {
-		position.set(p.getPosition());
+		position.set(p.getEyePosition());
 		velocity.set(p.getVelocity());
+	}
+
+	public void setOrientationToPlayer(Player p) {
+		orientation.set(p.getOrientation());
 	}
 
 	public Matrix4f getViewTransform() {

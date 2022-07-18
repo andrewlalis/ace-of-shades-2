@@ -29,7 +29,7 @@ public class Client implements Runnable {
 	private final ClientConfig config;
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
-	private final GameRenderer gameRenderer;
+	private GameRenderer gameRenderer;
 
 	private final ClientWorld world;
 	private ClientPlayer player;
@@ -39,7 +39,6 @@ public class Client implements Runnable {
 		this.communicationHandler = new CommunicationHandler(this);
 		this.inputHandler = new InputHandler(this, communicationHandler);
 		this.world = new ClientWorld();
-		this.gameRenderer = new GameRenderer(config.display, world);
 	}
 
 	public ClientConfig getConfig() {
@@ -68,6 +67,7 @@ public class Client implements Runnable {
 			return;
 		}
 
+		gameRenderer = new GameRenderer(config.display, player, world);
 		gameRenderer.setupWindow(
 				new PlayerViewCursorCallback(config.input, this, gameRenderer.getCamera(), communicationHandler),
 				new PlayerInputKeyCallback(inputHandler),
@@ -103,22 +103,19 @@ public class Client implements Runnable {
 			if (playerUpdate.clientId() == player.getId()) {
 				player.getPosition().set(playerUpdate.px(), playerUpdate.py(), playerUpdate.pz());
 				player.getVelocity().set(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
-				gameRenderer.getCamera().setToPlayer(player);
-				// TODO: Add getEyeHeight() and isCrouching() to main Player class.
-				float eyeHeight = playerUpdate.crouching() ? 1.3f : 1.7f;
-				gameRenderer.getCamera().getPosition().y += eyeHeight;
+				player.setCrouching(playerUpdate.crouching());
+				if (gameRenderer != null) {
+					gameRenderer.getCamera().setToPlayer(player);
+				}
 			} else {
 				world.playerUpdated(playerUpdate);
 			}
 		} else if (msg instanceof ClientInventoryMessage inventoryMessage) {
 			player.setInventory(inventoryMessage.inv());
-			System.out.println("Got inventory!");
 		} else if (msg instanceof InventorySelectedStackMessage selectedStackMessage) {
 			player.getInventory().setSelectedIndex(selectedStackMessage.index());
-			System.out.println("Selected item stack: " + player.getInventory().getSelectedItemStack().getType().getName());
 		} else if (msg instanceof ItemStackMessage itemStackMessage) {
 			player.getInventory().getItemStacks().set(itemStackMessage.index(), itemStackMessage.stack());
-			System.out.println("Item stack updated: " + itemStackMessage.index());
 		} else if (msg instanceof PlayerJoinMessage joinMessage) {
 			world.playerJoined(joinMessage);
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {

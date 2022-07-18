@@ -11,6 +11,13 @@ import static org.joml.Math.*;
  * know.
  */
 public class Player {
+	public static final float HEIGHT = 1.8f;
+	public static final float HEIGHT_CROUCH = 1.4f;
+	public static final float EYE_HEIGHT = HEIGHT - 0.1f;
+	public static final float EYE_HEIGHT_CROUCH = HEIGHT_CROUCH - 0.1f;
+	public static final float WIDTH = 0.75f;
+	public static final float RADIUS = WIDTH / 2f;
+
 	/**
 	 * The player's position. This is the position of their feet. So if a
 	 * player is standing on a block at y=5 (block occupies space from 4 to 5)
@@ -34,6 +41,12 @@ public class Player {
 	 * straight down, and y=PI looking straight up.
 	 */
 	protected final Vector2f orientation;
+
+	/**
+	 * Whether this player is crouching or not. This affects the player's
+	 * height, eye-level, speed, and accuracy.
+	 */
+	protected boolean crouching = false;
 
 	/**
 	 * A vector that's internally re-computed each time the player's
@@ -87,6 +100,14 @@ public class Player {
 		viewVector.set(sin(orientation.x) * cos(y), -sin(y), cos(orientation.x) * cos(y)).normalize();
 	}
 
+	public boolean isCrouching() {
+		return crouching;
+	}
+
+	public void setCrouching(boolean crouching) {
+		this.crouching = crouching;
+	}
+
 	public String getUsername() {
 		return username;
 	}
@@ -106,5 +127,21 @@ public class Player {
 				0,
 				cos(x)
 		).normalize();
+	}
+
+	public float getEyeHeight() {
+		return crouching ? EYE_HEIGHT_CROUCH : EYE_HEIGHT;
+	}
+
+	public Vector3f getEyePosition() {
+		return new Vector3f(
+				position.x,
+				position.y + getEyeHeight(),
+				position.z
+		);
+	}
+
+	public float getCurrentHeight() {
+		return crouching ? HEIGHT_CROUCH : HEIGHT;
 	}
 }

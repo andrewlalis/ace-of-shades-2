@@ -3,13 +3,18 @@ package nl.andrewl.aos2_client.render;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.ClientWorld;
 import nl.andrewl.aos2_client.config.ClientConfig;
+import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos2_client.render.model.Model;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.ItemTypes;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +39,13 @@ public class GameRenderer {
 	private GUIRenderer guiRenderer;
 	private ModelRenderer modelRenderer;
 	private final Camera camera;
+	private final ClientPlayer clientPlayer;
 	private final ClientWorld world;
-	private Model playerModel; // Standard player model used to render all players.
+
+	// Standard models for various game components.
+	private Model playerModel;
 	private Model rifleModel;
+	private Model blockModel;
 
 	private long windowHandle;
 	private int screenWidth = 800;
@@ -44,10 +53,12 @@ public class GameRenderer {
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(ClientConfig.DisplayConfig config, ClientWorld world) {
+	public GameRenderer(ClientConfig.DisplayConfig config, ClientPlayer clientPlayer, ClientWorld world) {
 		this.config = config;
+		this.clientPlayer = clientPlayer;
 		this.world = world;
 		this.camera = new Camera();
+		camera.setToPlayer(clientPlayer);
 		this.perspectiveTransform = new Matrix4f();
 	}
 
@@ -118,6 +129,7 @@ public class GameRenderer {
 		try {
 			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
 			rifleModel = new Model("model/rifle.obj", "model/rifle.png");
+			blockModel = new Model("model/block.obj", "model/block.png");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -156,24 +168,41 @@ public class GameRenderer {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		chunkRenderer.draw(camera, world.getChunkMeshesToDraw());
 
-		// Draw players.
-		modelRenderer.setView(camera.getViewTransformData());
+		// Draw models. Use one texture at a time for efficiency.
+		modelRenderer.start(camera.getViewTransformData());
+		clientPlayer.updateHeldItemTransform(camera);
 		playerModel.bind();
-		Matrix4f modelTransform = new Matrix4f();
 		for (var player : world.getPlayers()) {
-			modelTransform.identity().translate(player.getPosition());
-			modelRenderer.render(playerModel, modelTransform);
+			// TODO: set aspect color based on player team color
+			modelRenderer.setAspectColor(new Vector3f(0.8f, 0.4f, 0));
+			modelRenderer.render(playerModel, player.getModelTransformData());
 		}
 		playerModel.unbind();
 		rifleModel.bind();
+		if (clientPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
+			modelRenderer.render(rifleModel, clientPlayer.getHeldItemTransformData());
+		}
 		for (var player : world.getPlayers()) {
-			modelTransform.identity()
-					.translate(player.getPosition())
-					.rotate((float) (player.getOrientation().x - Math.PI / 2), Camera.UP)
-					.translate(0, 0, -0.45f);
-			modelRenderer.render(rifleModel, modelTransform);
+			if (player.getHeldItemId() == ItemTypes.RIFLE.getId()) {
+				modelRenderer.render(rifleModel, player.getHeldItemTransformData());
+			}
 		}
 		rifleModel.unbind();
+		blockModel.bind();
+		if (clientPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
+			BlockItemStack stack = (BlockItemStack) clientPlayer.getInventory().getSelectedItemStack();
+			modelRenderer.setAspectColor(world.getPalette().getColor(stack.getSelectedValue()));
+			modelRenderer.render(blockModel, clientPlayer.getHeldItemTransformData());
+		}
+		modelRenderer.setAspectColor(new Vector3f(0.5f, 0.5f, 0.5f));
+		for (var player : world.getPlayers()) {
+			if (player.getHeldItemId() == ItemTypes.BLOCK.getId()) {
+				modelRenderer.render(blockModel, player.getHeldItemTransformData());
+			}
+		}
+		blockModel.unbind();
+
+		modelRenderer.end();
 
 		guiRenderer.draw();
 

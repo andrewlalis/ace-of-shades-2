@@ -71,6 +71,11 @@ public class PlayerActionManager {
 			tickBlockAction(now, server, world);
 		}
 
+		if (player.isCrouching() != lastInputState.crouching()) {
+			player.setCrouching(lastInputState.crouching());
+			updated = true;
+		}
+
 		tickMovement(dt, world, server.getConfig().physics);
 	}
 
@@ -82,9 +87,7 @@ public class PlayerActionManager {
 				stack.getAmount() < stack.getType().getMaxAmount() &&
 				now - lastBlockRemovedAt > server.getConfig().actions.blockRemoveCooldown * 1000
 		) {
-			Vector3f eyePos = new Vector3f(player.getPosition());
-			eyePos.y += getEyeHeight();
-			var hit = world.getLookingAtPos(eyePos, player.getViewVector(), 10);
+			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 10);
 			if (hit != null) {
 				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
@@ -99,9 +102,7 @@ public class PlayerActionManager {
 				stack.getAmount() > 0 &&
 				now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000
 		) {
-			Vector3f eyePos = new Vector3f(player.getPosition());
-			eyePos.y += getEyeHeight();
-			var hit = world.getLookingAtPos(eyePos, player.getViewVector(), 10);
+			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 10);
 			if (hit != null) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());
@@ -226,7 +227,7 @@ public class PlayerActionManager {
 		float playerBodyMinX = playerPos.x - RADIUS;
 		float playerBodyMaxX = playerPos.x + RADIUS;
 		float playerBodyMinY = playerPos.y;
-		float playerBodyMaxY = playerPos.y + getCurrentHeight();
+		float playerBodyMaxY = playerPos.y + player.getCurrentHeight();
 
 		// Compute the bounds of all blocks the player is intersecting with.
 		int minX = (int) Math.floor(playerBodyMinX);
@@ -243,7 +244,7 @@ public class PlayerActionManager {
 		var position = player.getPosition();
 		var velocity = player.getVelocity();
 		final Vector3f nextTickPosition = new Vector3f(position).add(movement);
-		float height = getCurrentHeight();
+		float height = player.getCurrentHeight();
 		float delta = 0.00001f;
 		final Vector3f stepSize = new Vector3f(movement).normalize(1.0f);
 		// The number of steps we'll make towards the next tick position.
@@ -372,13 +373,5 @@ public class PlayerActionManager {
 				}
 			}
 		}
-	}
-
-	public float getCurrentHeight() {
-		return lastInputState.crouching() ? HEIGHT_CROUCH : HEIGHT;
-	}
-
-	public float getEyeHeight() {
-		return lastInputState.crouching() ? EYE_HEIGHT_CROUCH : EYE_HEIGHT;
 	}
 }
