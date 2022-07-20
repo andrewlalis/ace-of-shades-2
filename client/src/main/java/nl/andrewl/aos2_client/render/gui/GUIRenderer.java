@@ -5,8 +5,8 @@ import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -19,9 +19,10 @@ public class GUIRenderer {
 	private final int vertexCount;
 	private final ShaderProgram shaderProgram;
 	private final int transformUniformLocation;
+	private final Matrix4f transformMatrix;
+	private final float[] transformMatrixData;
 
-
-	private final List<GUITexture> guiTextures = new ArrayList<>();
+	private final Map<String, GUITexture> textures = new HashMap<>();
 
 	public GUIRenderer() {
 		vaoId = glGenVertexArrays();
@@ -47,38 +48,52 @@ public class GUIRenderer {
 				.build();
 		transformUniformLocation = shaderProgram.getUniform("transform");
 		shaderProgram.bindAttribute(0, "position");
+		this.transformMatrix = new Matrix4f();
+		this.transformMatrixData = new float[16];
 	}
 
-	public void addTexture(GUITexture texture) {
-		guiTextures.add(texture);
+	public void loadTexture(String name, String resource) {
+		textures.put(name, new GUITexture(resource));
 	}
 
-	public void draw() {
+	public void addTexture(String name, GUITexture texture) {
+		textures.put(name, texture);
+	}
+
+	public void start() {
 		shaderProgram.use();
 		glBindVertexArray(vaoId);
 		glEnableVertexAttribArray(0);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
-		for (var texture : guiTextures) {
-			glActiveTexture(GL_TEXTURE0);
-			Matrix4f transform = new Matrix4f()
-					.translate(texture.getPosition().x, texture.getPosition().y, 0)
-					.scale(texture.getScale().x, texture.getScale().y, 1);
-			float[] transformData = new float[16];
-			transform.get(transformData);
-			glUniformMatrix4fv(transformUniformLocation, false, transformData);
-			glBindTexture(GL_TEXTURE_2D, texture.getTextureId());
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
-		}
+	}
+
+	public void draw(String name, float scaleX, float scaleY, float x, float y) {
+		draw(textures.get(name), scaleX, scaleY, x, y);
+	}
+
+	public void draw(GUITexture texture, float scaleX, float scaleY, float x, float y) {
+		glActiveTexture(0);
+		transformMatrix.identity()
+						.translate(x, y, 0)
+						.scale(scaleX, scaleY, 1)
+						.get(transformMatrixData);
+		glUniformMatrix4fv(transformUniformLocation, false, transformMatrixData);
+		glBindTexture(GL_TEXTURE_2D, texture.getTextureId());
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+	}
+
+	public void end() {
 		glDisable(GL_BLEND);
 		glEnable(GL_DEPTH_TEST);
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
+		shaderProgram.stopUsing();
 	}
 
 	public void free() {
-		for (var tex : guiTextures) tex.free();
+		for (var tex : textures.values()) tex.free();
 		glDeleteBuffers(vboId);
 		glDeleteVertexArrays(vaoId);
 		shaderProgram.free();

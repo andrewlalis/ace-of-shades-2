@@ -3,12 +3,12 @@ package nl.andrewl.aos2_server.logic;
 import nl.andrewl.aos2_server.Server;
 import nl.andrewl.aos2_server.ServerPlayer;
 import nl.andrewl.aos2_server.config.ServerConfig;
-import nl.andrewl.aos_core.model.item.BlockItemStack;
-import nl.andrewl.aos_core.model.item.ItemTypes;
+import nl.andrewl.aos_core.model.item.*;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos_core.net.client.InventorySelectedStackMessage;
 import nl.andrewl.aos_core.net.client.ItemStackMessage;
+import nl.andrewl.aos_core.net.client.SoundMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Math;
 import org.joml.Vector2i;
@@ -30,6 +30,11 @@ public class PlayerActionManager {
 	private long lastBlockRemovedAt = 0;
 	private long lastBlockPlacedAt = 0;
 
+	private long gunLastShotAt = 0;
+	private boolean gunNeedsReCock = false;
+	private boolean gunReloading = false;
+	private long gunReloadingStartedAt = 0;
+
 	private boolean updated = false;
 
 	public PlayerActionManager(ServerPlayer player) {
@@ -38,7 +43,7 @@ public class PlayerActionManager {
 				player.getId(),
 				false, false, false, false,
 				false, false, false,
-				false, false,
+				false, false, false,
 				player.getInventory().getSelectedIndex()
 		);
 	}
@@ -67,8 +72,15 @@ public class PlayerActionManager {
 			updated = true; // Tell everyone else that this player's selected item has changed.
 		}
 
-		if (player.getInventory().getSelectedItemStack().getType().equals(ItemTypes.BLOCK)) {
-			tickBlockAction(now, server, world);
+		ItemStack selectedStack = player.getInventory().getSelectedItemStack();
+		if (selectedStack instanceof BlockItemStack b) {
+			tickBlockAction(now, server, world, b);
+		} else if (selectedStack instanceof GunItemStack g) {
+			try {
+				tickGunAction(now, server, world, g);
+			} catch (Exception e) {
+				System.out.println("bleh");
+			}
 		}
 
 		if (player.isCrouching() != lastInputState.crouching()) {
@@ -79,8 +91,52 @@ public class PlayerActionManager {
 		tickMovement(dt, world, server.getConfig().physics);
 	}
 
-	private void tickBlockAction(long now, Server server, World world) {
-		BlockItemStack stack = (BlockItemStack) player.getInventory().getSelectedItemStack();
+	private void tickGunAction(long now, Server server, World world, GunItemStack g) {
+		Gun gun = (Gun) g.getType();
+		if (// Check to see if the player is shooting.
+				lastInputState.hitting() &&
+				g.getBulletCount() > 0 &&
+				!gunReloading &&
+				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
+				(gun.isAutomatic() || !gunNeedsReCock)
+		) {
+			// TODO: trace a ray from gun to see if players intersect with it.
+			g.setBulletCount(g.getBulletCount() - 1);
+			gunLastShotAt = now;
+			if (!gun.isAutomatic()) {
+				gunNeedsReCock = true;
+			}
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("rifle", player.getPosition().x(), player.getPosition().y(), player.getPosition().z()));
+		}
+
+		if (// Check to see if the player is reloading.
+				lastInputState.reloading() &&
+				!gunReloading &&
+				g.getClipCount() > 0
+		) {
+			g.setClipCount(g.getClipCount() - 1);
+			gunReloadingStartedAt = now;
+			gunReloading = true;
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+		}
+
+		if (// Check to see if reloading is done.
+				gunReloading &&
+				now - gunReloadingStartedAt > gun.getReloadTime() * 1000
+		) {
+			g.setBulletCount(gun.getMaxBulletCount());
+			gunReloading = false;
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+		}
+
+		// Check to see if the player released the trigger, for non-automatic weapons.
+		if (!gun.isAutomatic() && gunNeedsReCock && !lastInputState.hitting()) {
+			gunNeedsReCock = false;
+		}
+	}
+
+	private void tickBlockAction(long now, Server server, World world, BlockItemStack stack) {
 		// Check for breaking blocks.
 		if (
 				lastInputState.hitting() &&

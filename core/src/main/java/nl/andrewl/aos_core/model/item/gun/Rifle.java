@@ -14,7 +14,8 @@ public class Rifle extends Gun {
 				0.8f,
 				2.5f,
 				80f,
-				50f
+				50f,
+				false
 		);
 	}
 }

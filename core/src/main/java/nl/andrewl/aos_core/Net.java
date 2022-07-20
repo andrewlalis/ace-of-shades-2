@@ -42,6 +42,7 @@ public final class Net {
 		serializer.registerTypeSerializer(13, new InventorySerializer());
 		serializer.registerTypeSerializer(14, new ItemStackSerializer());
 		serializer.registerType(15, InventorySelectedStackMessage.class);
+		serializer.registerType(16, SoundMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

@@ -8,6 +8,8 @@ import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
+import nl.andrewl.aos2_client.sound.SoundManager;
+import nl.andrewl.aos2_client.sound.SoundSource;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Team;
@@ -34,6 +36,8 @@ public class Client implements Runnable {
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
 	private GameRenderer gameRenderer;
+	private SoundManager soundManager;
+	private SoundSource playerSource;
 	private long lastPlayerUpdate = 0;
 
 	private ClientWorld world;
@@ -81,6 +85,9 @@ public class Client implements Runnable {
 				new PlayerInputKeyCallback(inputHandler),
 				new PlayerInputMouseClickCallback(inputHandler)
 		);
+		soundManager = new SoundManager();
+		soundManager.load("rifle", "sound/m1garand-shot1.wav");
+		playerSource = new SoundSource();
 
 		long lastFrameAt = System.currentTimeMillis();
 		while (!gameRenderer.windowShouldClose()) {
@@ -113,6 +120,7 @@ public class Client implements Runnable {
 				if (gameRenderer != null) {
 					gameRenderer.getCamera().setToPlayer(myPlayer);
 				}
+				soundManager.updateListener(myPlayer.getPosition(), myPlayer.getVelocity());
 				lastPlayerUpdate = playerUpdate.timestamp();
 			} else {
 				OtherPlayer p = players.get(playerUpdate.clientId());
@@ -141,6 +149,8 @@ public class Client implements Runnable {
 			players.put(op.getId(), op);
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {
 			players.remove(leaveMessage.id());
+		} else if (msg instanceof SoundMessage soundMessage) {
+			playerSource.play(soundManager.getSoundBuffer(soundMessage.name()));
 		}
 	}
 

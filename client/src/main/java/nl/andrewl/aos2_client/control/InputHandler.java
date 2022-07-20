@@ -39,6 +39,7 @@ public class InputHandler {
 				glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS,
 				glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS,
 				glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS,
+				glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS,
 				selectedInventoryIndex
 		);
 		if (!currentInputState.equals(lastInputState)) {

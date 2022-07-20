@@ -8,6 +8,8 @@ import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos2_client.render.model.Model;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.Gun;
+import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemTypes;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -43,6 +45,11 @@ public class GameRenderer {
 	private Model playerModel;
 	private Model rifleModel;
 	private Model blockModel;
+
+	// Standard GUI textures.
+	private GUITexture crosshairTexture;
+	private GUITexture clipTexture;
+	private GUITexture bulletTexture;
 
 	private long windowHandle;
 	private int screenWidth = 800;
@@ -110,17 +117,16 @@ public class GameRenderer {
 
 		this.chunkRenderer = new ChunkRenderer();
 		log.debug("Initialized chunk renderer.");
+
 		this.guiRenderer = new GUIRenderer();
-		// TODO: More organized way to load textures for GUI.
-		try {
-			var crosshairTexture = new GUITexture("gui/crosshair.png");
-			float size = 32;
-			crosshairTexture.getScale().set(size / screenWidth, size / screenHeight);
-			guiRenderer.addTexture(crosshairTexture);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		crosshairTexture = new GUITexture("gui/crosshair.png");
+		clipTexture = new GUITexture("gui/clip.png");
+		bulletTexture = new GUITexture("gui/bullet.png");
+		guiRenderer.addTexture("crosshair", crosshairTexture);
+		guiRenderer.addTexture("clip", clipTexture);
+		guiRenderer.addTexture("bullet", bulletTexture);
 		log.debug("Initialized GUI renderer.");
+
 		this.modelRenderer = new ModelRenderer();
 		try {
 			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
@@ -212,7 +218,32 @@ public class GameRenderer {
 
 		modelRenderer.end();
 
-		guiRenderer.draw();
+		// GUI rendering
+		guiRenderer.start();
+		guiRenderer.draw(crosshairTexture, crosshairTexture.getIdealScaleX(32, screenWidth), crosshairTexture.getIdealScaleY(32, screenHeight), 0, 0);
+		// If we're holding a gun, draw clip and bullet graphics.
+		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType() instanceof Gun) {
+			GunItemStack stack = (GunItemStack) client.getMyPlayer().getInventory().getSelectedItemStack();
+			for (int i = 0; i < stack.getClipCount(); i++) {
+				guiRenderer.draw(
+						clipTexture,
+						clipTexture.getIdealScaleX(64, screenWidth),
+						clipTexture.getIdealScaleY(clipTexture.getIdealHeight(64), screenHeight),
+						0.90f,
+						-0.90f + (i * 0.15f)
+				);
+			}
+			for (int i = 0; i < stack.getBulletCount(); i++) {
+				guiRenderer.draw(
+						bulletTexture,
+						bulletTexture.getIdealScaleX(16, screenWidth),
+						bulletTexture.getIdealScaleY(bulletTexture.getIdealHeight(16), screenHeight),
+						0.80f - (i * 0.05f),
+						-0.90f
+				);
+			}
+		}
+		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);
 		glfwPollEvents();

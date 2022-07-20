@@ -14,6 +14,7 @@ public class Gun extends Item {
 	private final float reloadTime;
 	private final float baseDamage;
 	private final float recoil;
+	private boolean automatic;
 
 	public Gun(
 			int id,
@@ -25,7 +26,8 @@ public class Gun extends Item {
 			float shotCooldownTime,
 			float reloadTime,
 			float baseDamage,
-			float recoil
+			float recoil,
+			boolean automatic
 	) {
 		super(id, name, 1);
 		this.maxClipCount = maxClipCount;
@@ -36,6 +38,7 @@ public class Gun extends Item {
 		this.reloadTime = reloadTime;
 		this.baseDamage = baseDamage;
 		this.recoil = recoil;
+		this.automatic = automatic;
 	}
 
 	public int getMaxClipCount() {
@@ -68,5 +71,9 @@ public class Gun extends Item {
 
 	public float getRecoil() {
 		return recoil;
+	}
+
+	public boolean isAutomatic() {
+		return automatic;
 	}
 }

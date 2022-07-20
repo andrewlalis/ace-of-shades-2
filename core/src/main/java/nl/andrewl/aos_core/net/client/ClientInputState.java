@@ -20,5 +20,6 @@ public record ClientInputState(
 		// Interaction
 		boolean hitting, // Usually a "left-click" action.
 		boolean interacting, // Usually a "right-click" action.
+		boolean reloading, // Usually the "R" key.
 		int selectedInventoryIndex // The selected index in the player's inventory.
 ) implements Message {}
