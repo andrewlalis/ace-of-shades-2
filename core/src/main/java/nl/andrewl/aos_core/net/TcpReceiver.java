@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.util.function.Consumer;
 
+/**
+ * A generic runnable that's meant to be run in its own thread, and handle
+ * receiving messages from a TCP socket.
+ */
 public class TcpReceiver implements Runnable {
 	private final ExtendedDataInputStream in;
 	private final Consumer<Message> messageConsumer;

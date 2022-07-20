@@ -1,9 +1,8 @@
 package nl.andrewl.aos2_client.render;
 
 import nl.andrewl.aos2_client.Camera;
-import nl.andrewl.aos2_client.ClientWorld;
+import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.config.ClientConfig;
-import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
@@ -14,7 +13,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +37,7 @@ public class GameRenderer {
 	private GUIRenderer guiRenderer;
 	private ModelRenderer modelRenderer;
 	private final Camera camera;
-	private final ClientPlayer clientPlayer;
-	private final ClientWorld world;
+	private final Client client;
 
 	// Standard models for various game components.
 	private Model playerModel;
@@ -53,12 +50,11 @@ public class GameRenderer {
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(ClientConfig.DisplayConfig config, ClientPlayer clientPlayer, ClientWorld world) {
+	public GameRenderer(ClientConfig.DisplayConfig config, Client client) {
 		this.config = config;
-		this.clientPlayer = clientPlayer;
-		this.world = world;
+		this.client = client;
 		this.camera = new Camera();
-		camera.setToPlayer(clientPlayer);
+		camera.setToPlayer(client.getMyPlayer());
 		this.perspectiveTransform = new Matrix4f();
 	}
 
@@ -76,7 +72,7 @@ public class GameRenderer {
 		long monitorId = glfwGetPrimaryMonitor();
 		GLFWVidMode primaryMonitorSettings = glfwGetVideoMode(monitorId);
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
-		log.debug("Primary monitor settings: Width: {}, Height: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height());
+		log.debug("Primary monitor settings: Width: {}, Height: {}, FOV: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height(), config.fov);
 		if (config.fullscreen) {
 			screenWidth = primaryMonitorSettings.width();
 			screenHeight = primaryMonitorSettings.height();
@@ -145,7 +141,13 @@ public class GameRenderer {
 	 * Updates the rendering perspective used to render the game.
 	 */
 	private void updatePerspective() {
-		perspectiveTransform.setPerspective(config.fov, getAspectRatio(), Z_NEAR, Z_FAR);
+		float fovRad = (float) Math.toRadians(config.fov);
+		if (fovRad >= Math.PI) {
+			fovRad = (float) (Math.PI - 0.01f);
+		} else if (fovRad <= 0) {
+			fovRad = 0.01f;
+		}
+		perspectiveTransform.setPerspective(fovRad, getAspectRatio(), Z_NEAR, Z_FAR);
 		float[] data = new float[16];
 		perspectiveTransform.get(data);
 		if (chunkRenderer != null) chunkRenderer.setPerspective(data);
@@ -166,36 +168,42 @@ public class GameRenderer {
 
 	public void draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		chunkRenderer.draw(camera, world.getChunkMeshesToDraw());
+		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
 
 		// Draw models. Use one texture at a time for efficiency.
 		modelRenderer.start(camera.getViewTransformData());
-		clientPlayer.updateHeldItemTransform(camera);
+		client.getMyPlayer().updateHeldItemTransform(camera);
+
 		playerModel.bind();
-		for (var player : world.getPlayers()) {
-			// TODO: set aspect color based on player team color
-			modelRenderer.setAspectColor(new Vector3f(0.8f, 0.4f, 0));
+		for (var player : client.getPlayers().values()) {
+			if (player.getTeam() != null) {
+				modelRenderer.setAspectColor(player.getTeam().getColor());
+			} else {
+				modelRenderer.setAspectColor(new Vector3f(0.3f, 0.3f, 0.3f));
+			}
 			modelRenderer.render(playerModel, player.getModelTransformData());
 		}
 		playerModel.unbind();
+
 		rifleModel.bind();
-		if (clientPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
-			modelRenderer.render(rifleModel, clientPlayer.getHeldItemTransformData());
+		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
+			modelRenderer.render(rifleModel, client.getMyPlayer().getHeldItemTransformData());
 		}
-		for (var player : world.getPlayers()) {
+		for (var player : client.getPlayers().values()) {
 			if (player.getHeldItemId() == ItemTypes.RIFLE.getId()) {
 				modelRenderer.render(rifleModel, player.getHeldItemTransformData());
 			}
 		}
 		rifleModel.unbind();
+
 		blockModel.bind();
-		if (clientPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
-			BlockItemStack stack = (BlockItemStack) clientPlayer.getInventory().getSelectedItemStack();
-			modelRenderer.setAspectColor(world.getPalette().getColor(stack.getSelectedValue()));
-			modelRenderer.render(blockModel, clientPlayer.getHeldItemTransformData());
+		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
+			BlockItemStack stack = (BlockItemStack) client.getMyPlayer().getInventory().getSelectedItemStack();
+			modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(stack.getSelectedValue()));
+			modelRenderer.render(blockModel, client.getMyPlayer().getHeldItemTransformData());
 		}
 		modelRenderer.setAspectColor(new Vector3f(0.5f, 0.5f, 0.5f));
-		for (var player : world.getPlayers()) {
+		for (var player : client.getPlayers().values()) {
 			if (player.getHeldItemId() == ItemTypes.BLOCK.getId()) {
 				modelRenderer.render(blockModel, player.getHeldItemTransformData());
 			}

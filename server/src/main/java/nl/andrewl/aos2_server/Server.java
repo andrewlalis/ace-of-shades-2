@@ -3,6 +3,7 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos2_server.logic.WorldUpdater;
 import nl.andrewl.aos_core.config.Config;
+import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
@@ -10,13 +11,14 @@ import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos_core.net.client.ClientOrientationState;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
@@ -27,6 +29,8 @@ public class Server implements Runnable {
 	private volatile boolean running;
 	private final ServerConfig config;
 	private final PlayerManager playerManager;
+	private final Map<Integer, Team> teams;
+	private final Map<Team, String> teamSpawnPoints;
 	private final World world;
 	private final WorldUpdater worldUpdater;
 
@@ -36,9 +40,14 @@ public class Server implements Runnable {
 		this.serverSocket.setReuseAddress(true);
 		this.datagramSocket = new DatagramSocket(config.port);
 		this.datagramSocket.setReuseAddress(true);
-		this.playerManager = new PlayerManager();
+		this.playerManager = new PlayerManager(this);
 		this.worldUpdater = new WorldUpdater(this, config.ticksPerSecond);
 		this.world = Worlds.testingWorld();
+		this.teams = new HashMap<>();
+		this.teamSpawnPoints = new HashMap<>();
+		// TODO: Add some way to configure teams with config files.
+		teams.put(1, new Team(1, "Red", new Vector3f(0.8f, 0, 0), world.getSpawnPoint("first")));
+		teams.put(2, new Team(2, "Blue", new Vector3f(0, 0, 0.8f), world.getSpawnPoint("first")));
 	}
 
 	@Override
@@ -61,20 +70,21 @@ public class Server implements Runnable {
 	}
 
 	public void handleUdpMessage(Message msg, DatagramPacket packet) {
+		long now = System.currentTimeMillis();
 		if (msg instanceof DatagramInit init) {
 			playerManager.handleUdpInit(init, packet);
 		} else if (msg instanceof ClientInputState inputState) {
 			ServerPlayer player = playerManager.getPlayer(inputState.clientId());
 			if (player != null) {
 				if (player.getActionManager().setLastInputState(inputState)) {
-					playerManager.broadcastUdpMessage(player.getUpdateMessage());
+					playerManager.broadcastUdpMessage(player.getUpdateMessage(now));
 				}
 			}
 		} else if (msg instanceof ClientOrientationState orientationState) {
 			ServerPlayer player = playerManager.getPlayer(orientationState.clientId());
 			if (player != null) {
 				player.setOrientation(orientationState.x(), orientationState.y());
-				playerManager.broadcastUdpMessageToAllBut(player.getUpdateMessage(), player);
+				playerManager.broadcastUdpMessageToAllBut(player.getUpdateMessage(now), player);
 			}
 		}
 	}
@@ -109,6 +119,18 @@ public class Server implements Runnable {
 
 	public PlayerManager getPlayerManager() {
 		return playerManager;
+	}
+
+	public Map<Integer, Team> getTeams() {
+		return teams;
+	}
+
+	public String getSpawnPoint(Team team) {
+		return teamSpawnPoints.get(team);
+	}
+
+	public Collection<ServerPlayer> getPlayersInTeam(Team team) {
+		return playerManager.getPlayers().stream().filter(p -> Objects.equals(p.getTeam(), team)).toList();
 	}
 
 	public static void main(String[] args) throws IOException {

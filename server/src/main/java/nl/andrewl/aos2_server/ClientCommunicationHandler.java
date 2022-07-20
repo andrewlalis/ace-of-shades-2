@@ -1,16 +1,15 @@
 package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.Chunk;
-import nl.andrewl.aos_core.net.*;
-import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
+import nl.andrewl.aos_core.model.world.WorldIO;
+import nl.andrewl.aos_core.net.TcpReceiver;
 import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
-import nl.andrewl.aos_core.net.client.ClientInventoryMessage;
 import nl.andrewl.aos_core.net.world.ChunkDataMessage;
 import nl.andrewl.aos_core.net.world.ChunkHashMessage;
-import nl.andrewl.aos_core.net.world.WorldInfoMessage;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
@@ -23,6 +22,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.LinkedList;
 
 /**
  * Component which manages the establishing and maintenance of a connection
@@ -97,22 +97,8 @@ public class ClientCommunicationHandler {
 					this.player = server.getPlayerManager().register(this, connectMsg.username());
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
 					log.debug("Sent connect accept message.");
-
-					sendTcpMessage(new WorldInfoMessage(server.getWorld()));
-					// Send player's inventory information.
-					sendTcpMessage(new ClientInventoryMessage(player.getInventory()));
-
-					// Send "join" info about all the players that are already connected, so the client is aware of them.
-					for (var player : server.getPlayerManager().getPlayers()) {
-						if (player.getId() != this.player.getId()) {
-							sendTcpMessage(new PlayerJoinMessage(player));
-						}
-					}
-					// Send chunk data.
-					for (var chunk : server.getWorld().getChunkMap().values()) {
-						sendTcpMessage(new ChunkDataMessage(chunk));
-					}
-
+					sendInitialData();
+					log.debug("Sent initial data.");
 					// Initiate a TCP receiver thread to accept incoming messages from the client.
 					TcpReceiver tcpReceiver = new TcpReceiver(in, this::handleTcpMessage)
 							.withShutdownHook(() -> server.getPlayerManager().deregister(this.player));
@@ -165,5 +151,74 @@ public class ClientCommunicationHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Dedicated method to send all initial data to the client when they first
+	 * connect. We don't use record-net for this, but a custom stream writing
+	 * operation to improve efficiency.
+	 */
+	private void sendInitialData() throws IOException {
+		// First world data. We send this in the same format that we'd use for files.
+		WorldIO.write(server.getWorld(), out);
+
+		// Team data.
+		var teams = server.getTeams().values();
+		out.writeInt(teams.size());
+		for (var team : teams) {
+			out.writeInt(team.getId());
+			out.writeString(team.getName());
+			out.writeFloat(team.getColor().x());
+			out.writeFloat(team.getColor().y());
+			out.writeFloat(team.getColor().z());
+			out.writeFloat(team.getSpawnPoint().x());
+			out.writeFloat(team.getSpawnPoint().y());
+			out.writeFloat(team.getSpawnPoint().z());
+		}
+
+		// Player data.
+		var otherPlayers = new LinkedList<>(server.getPlayerManager().getPlayers());
+		otherPlayers.remove(player);
+		out.writeInt(otherPlayers.size());
+		for (var player : otherPlayers) {
+			out.writeInt(player.getId());
+			out.writeString(player.getUsername());
+			if (player.getTeam() == null) {
+				out.writeInt(-1);
+			} else {
+				out.writeInt(player.getTeam().getId());
+			}
+
+			out.writeFloat(player.getPosition().x());
+			out.writeFloat(player.getPosition().y());
+			out.writeFloat(player.getPosition().z());
+
+			out.writeFloat(player.getVelocity().x());
+			out.writeFloat(player.getVelocity().y());
+			out.writeFloat(player.getVelocity().z());
+
+			out.writeFloat(player.getOrientation().x());
+			out.writeFloat(player.getOrientation().y());
+
+			out.writeBoolean(player.isCrouching());
+			out.writeInt(player.getInventory().getSelectedItemStack().getType().getId());
+		}
+
+		// Send the player's own inventory data.
+		out.writeInt(player.getInventory().getItemStacks().size());
+		for (var stack : player.getInventory().getItemStacks()) {
+			ItemStack.write(stack, out);
+		}
+		out.writeInt(player.getInventory().getSelectedIndex());
+
+		// Send the player's own player data.
+		if (player.getTeam() == null) {
+			out.writeInt(-1);
+		} else {
+			out.writeInt(player.getTeam().getId());
+		}
+		out.writeFloat(player.getPosition().x());
+		out.writeFloat(player.getPosition().y());
+		out.writeFloat(player.getPosition().z());
 	}
 }

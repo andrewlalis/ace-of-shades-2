@@ -33,7 +33,7 @@ public class ClientPlayer extends Player {
 				.translate(cam.getPosition())
 				.rotate((float) (cam.getOrientation().x + Math.PI), Camera.UP)
 				.rotate(-cam.getOrientation().y + (float) Math.PI / 2, Camera.RIGHT)
-				.translate(-0.35f, -0.4f, 1f);
+				.translate(-0.35f, -0.4f, 0.5f);
 		heldItemTransform.get(heldItemTransformData);
 	}
 

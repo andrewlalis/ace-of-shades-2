@@ -35,7 +35,7 @@ public class WorldUpdater implements Runnable {
 		running = true;
 		while (running) {
 			long start = System.nanoTime();
-			tick();
+			tick(System.currentTimeMillis());
 			long elapsedNs = System.nanoTime() - start;
 			if (elapsedNs > nsPerTick) {
 				log.warn("Took {} ns to do one tick, which is more than the desired {} ns per tick.", elapsedNs, nsPerTick);
@@ -52,10 +52,12 @@ public class WorldUpdater implements Runnable {
 		}
 	}
 
-	private void tick() {
+	private void tick(long currentTimeMillis) {
 		for (var player : server.getPlayerManager().getPlayers()) {
 			player.getActionManager().tick(secondsPerTick, server.getWorld(), server);
-			if (player.getActionManager().isUpdated()) server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage());
+			if (player.getActionManager().isUpdated()) {
+				server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage(currentTimeMillis));
+			}
 		}
 	}
 }

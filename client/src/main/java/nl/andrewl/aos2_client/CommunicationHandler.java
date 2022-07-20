@@ -1,7 +1,12 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.model.ClientPlayer;
+import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.model.Team;
+import nl.andrewl.aos_core.model.item.ItemStack;
+import nl.andrewl.aos_core.model.world.World;
+import nl.andrewl.aos_core.model.world.WorldIO;
 import nl.andrewl.aos_core.net.*;
 import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
@@ -10,6 +15,7 @@ import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +37,7 @@ public class CommunicationHandler {
 	private Socket socket;
 	private DatagramSocket datagramSocket;
 	private ExtendedDataOutputStream out;
+	private ExtendedDataInputStream in;
 	private int clientId;
 
 	public CommunicationHandler(Client client) {
@@ -48,7 +55,7 @@ public class CommunicationHandler {
 
 		socket = new Socket(address, port);
 		socket.setSoTimeout(1000);
-		ExtendedDataInputStream in = Net.getInputStream(socket.getInputStream());
+		in = Net.getInputStream(socket.getInputStream());
 		out = Net.getOutputStream(socket.getOutputStream());
 		Net.write(new ConnectRequestMessage(username), out);
 		Message response = Net.read(in);
@@ -58,7 +65,10 @@ public class CommunicationHandler {
 		}
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
-			client.setPlayer(new ClientPlayer(clientId, username));
+			log.debug("Connection accepted. My client id is {}.", clientId);
+			client.setMyPlayer(new ClientPlayer(clientId, username));
+			receiveInitialData();
+			log.debug("Initial data received.");
 			establishDatagramConnection();
 			log.info("Connection to server established. My client id is {}.", clientId);
 			new Thread(new TcpReceiver(in, client::onMessageReceived)).start();
@@ -126,5 +136,58 @@ public class CommunicationHandler {
 
 	public int getClientId() {
 		return clientId;
+	}
+
+	private void receiveInitialData() throws IOException {
+		// Read the world data.
+		World world = WorldIO.read(in);
+		ClientWorld clientWorld = new ClientWorld();
+		clientWorld.setPalette(world.getPalette());
+		for (var chunk : world.getChunkMap().values()) {
+			clientWorld.addChunk(chunk);
+		}
+		for (var spawnPoint : world.getSpawnPoints().entrySet()) {
+			clientWorld.setSpawnPoint(spawnPoint.getKey(), spawnPoint.getValue());
+		}
+		client.setWorld(clientWorld);
+
+		// Read the team data.
+		int teamCount = in.readInt();
+		for (int i = 0; i < teamCount; i++) {
+			int id = in.readInt();
+			client.getTeams().put(id, new Team(
+					id, in.readString(),
+					new Vector3f(in.readFloat(), in.readFloat(), in.readFloat()),
+					new Vector3f(in.readFloat(), in.readFloat(), in.readFloat())
+			));
+		}
+
+		// Read player data.
+		int playerCount = in.readInt();
+		for (int i = 0; i < playerCount; i++) {
+			OtherPlayer player = new OtherPlayer(in.readInt(), in.readString());
+			int teamId = in.readInt();
+			if (teamId != -1) player.setTeam(client.getTeams().get(teamId));
+			System.out.println(teamId);
+			player.getPosition().set(in.readFloat(), in.readFloat(), in.readFloat());
+			player.getVelocity().set(in.readFloat(), in.readFloat(), in.readFloat());
+			player.getOrientation().set(in.readFloat(), in.readFloat());
+			player.setCrouching(in.readBoolean());
+			player.setHeldItemId(in.readInt());
+			client.getPlayers().put(player.getId(), player);
+		}
+
+		// Read inventory data.
+		int itemStackCount = in.readInt();
+		var inv = client.getMyPlayer().getInventory();
+		for (int i = 0; i < itemStackCount; i++) {
+			inv.getItemStacks().add(ItemStack.read(in));
+		}
+		inv.setSelectedIndex(in.readInt());
+
+		// Read our own player data.
+		int teamId = in.readInt();
+		if (teamId != -1) client.getMyPlayer().setTeam(client.getTeams().get(teamId));
+		client.getMyPlayer().getPosition().set(in.readFloat(), in.readFloat(), in.readFloat());
 	}
 }

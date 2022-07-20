@@ -65,13 +65,23 @@ public class Player {
 	 */
 	protected final int id;
 
-	public Player(int id, String username) {
+	/**
+	 * The team that this player belongs to. This might be null.
+	 */
+	protected Team team;
+
+	public Player(int id, String username, Team team) {
 		this.position = new Vector3f();
 		this.velocity = new Vector3f();
 		this.orientation = new Vector2f();
 		this.viewVector = new Vector3f();
 		this.id = id;
 		this.username = username;
+		this.team = team;
+	}
+
+	public Player(int id, String username) {
+		this(id, username, null);
 	}
 
 	public Vector3f getPosition() {
@@ -114,6 +124,14 @@ public class Player {
 
 	public int getId() {
 		return id;
+	}
+
+	public Team getTeam() {
+		return team;
+	}
+
+	public void setTeam(Team team) {
+		this.team = team;
 	}
 
 	public Vector3f getViewVector() {

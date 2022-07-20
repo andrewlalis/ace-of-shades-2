@@ -4,7 +4,8 @@ import org.joml.Vector3f;
 
 /**
  * A team is a group of players in a world that should work together to
- * achieve some goal.
+ * achieve some goal. Teams belong to a server directly, and persist even if
+ * the world is changed.
  */
 public class Team {
 	/**
@@ -23,10 +24,16 @@ public class Team {
 	 */
 	private final Vector3f color;
 
-	public Team(int id, String name, Vector3f color) {
+	/**
+	 * The team's spawn point, in the current world.
+	 */
+	private final Vector3f spawnPoint;
+
+	public Team(int id, String name, Vector3f color, Vector3f spawnPoint) {
 		this.id = id;
 		this.name = name;
 		this.color = color;
+		this.spawnPoint = spawnPoint;
 	}
 
 	public int getId() {
@@ -39,5 +46,13 @@ public class Team {
 
 	public Vector3f getColor() {
 		return color;
+	}
+
+	public Vector3f getSpawnPoint() {
+		return spawnPoint;
+	}
+
+	public void setSpawnPoint(Vector3f p) {
+		spawnPoint.set(p);
 	}
 }

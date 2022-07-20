@@ -1,17 +1,11 @@
 package nl.andrewl.aos2_client;
 
-import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkMesh;
 import nl.andrewl.aos2_client.render.chunk.ChunkMeshGenerator;
-import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.model.world.World;
-import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
-import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
-import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 import nl.andrewl.aos_core.net.world.ChunkDataMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
-import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.util.*;
@@ -28,44 +22,6 @@ public class ClientWorld extends World {
 	private final Queue<Chunk> chunkRemovalQueue = new ConcurrentLinkedQueue<>();
 	private final ChunkMeshGenerator chunkMeshGenerator = new ChunkMeshGenerator();
 	private final Map<Chunk, ChunkMesh> chunkMeshes = new ConcurrentHashMap<>();
-
-	private final Map<Integer, OtherPlayer> players = new HashMap<>();
-
-	public void playerJoined(PlayerJoinMessage joinMessage) {
-		Player p = joinMessage.toPlayer();
-		OtherPlayer op = new OtherPlayer(p.getId(), p.getUsername());
-		op.getPosition().set(p.getPosition());
-		op.getVelocity().set(p.getVelocity());
-		op.getOrientation().set(p.getOrientation());
-		op.setHeldItemId(joinMessage.selectedItemId());
-		players.put(op.getId(), op);
-	}
-
-	public void playerLeft(PlayerLeaveMessage leaveMessage) {
-		players.remove(leaveMessage.id());
-	}
-
-	public void playerUpdated(PlayerUpdateMessage playerUpdate) {
-		OtherPlayer p = players.get(playerUpdate.clientId());
-		if (p != null) {
-			playerUpdate.apply(p);
-			p.setHeldItemId(playerUpdate.selectedItemId());
-			p.updateModelTransform();
-		}
-	}
-
-	public Collection<OtherPlayer> getPlayers() {
-		return players.values();
-	}
-
-	public void interpolatePlayers(float dt) {
-		Vector3f movement = new Vector3f();
-		for (var player : getPlayers()) {
-			movement.set(player.getVelocity()).mul(dt);
-			player.getPosition().add(movement);
-			player.updateModelTransform();
-		}
-	}
 
 	@Override
 	public void addChunk(Chunk chunk) {

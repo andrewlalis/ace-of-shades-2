@@ -23,7 +23,7 @@ public class InputHandler {
 	public void updateInputState(long window) {
 		// TODO: Allow customized keybindings.
 		int selectedInventoryIndex;
-		selectedInventoryIndex = client.getPlayer().getInventory().getSelectedIndex();
+		selectedInventoryIndex = client.getMyPlayer().getInventory().getSelectedIndex();
 		if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) selectedInventoryIndex = 0;
 		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) selectedInventoryIndex = 1;
 		if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) selectedInventoryIndex = 2;

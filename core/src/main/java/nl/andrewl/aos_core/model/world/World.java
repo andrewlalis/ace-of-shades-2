@@ -21,6 +21,7 @@ public class World {
 
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 	protected ColorPalette palette;
+	protected final Map<String, Vector3f> spawnPoints = new HashMap<>();
 
 	public World(ColorPalette palette, Collection<Chunk> chunks) {
 		this.palette = palette;
@@ -89,6 +90,30 @@ public class World {
 
 	public Chunk getChunkAt(int x, int y, int z) {
 		return chunkMap.get(new Vector3i(x, y, z));
+	}
+
+	public Vector3f getSpawnPoint(String name) {
+		return spawnPoints.get(name);
+	}
+
+	public void setSpawnPoint(String name, Vector3f location) {
+		spawnPoints.put(name, location);
+	}
+
+	public void removeSpawnPoint(String name) {
+		spawnPoints.remove(name);
+	}
+
+	public Map<String, Vector3f> getSpawnPoints() {
+		return Collections.unmodifiableMap(spawnPoints);
+	}
+
+	/**
+	 * Clears all data from the world.
+	 */
+	public void clear() {
+		chunkMap.clear();
+		spawnPoints.clear();
 	}
 
 	/**

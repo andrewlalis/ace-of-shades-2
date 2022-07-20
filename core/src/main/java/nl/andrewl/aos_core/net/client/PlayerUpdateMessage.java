@@ -5,10 +5,13 @@ import nl.andrewl.record_net.Message;
 
 /**
  * This message is sent by the server to clients whenever a player has updated
- * in some way, like movement or orientation or held items.
+ * in some way, like movement or orientation or held items. This is generally
+ * the thing that clients receive rapidly on each game tick, when players are
+ * moving.
  */
 public record PlayerUpdateMessage(
 		int clientId,
+		long timestamp,
 		float px, float py, float pz,
 		float vx, float vy, float vz,
 		float ox, float oy,

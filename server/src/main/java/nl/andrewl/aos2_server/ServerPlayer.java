@@ -43,9 +43,9 @@ public class ServerPlayer extends Player {
 	 * various clients.
 	 * @return The update message.
 	 */
-	public PlayerUpdateMessage getUpdateMessage() {
+	public PlayerUpdateMessage getUpdateMessage(long timestamp) {
 		return new PlayerUpdateMessage(
-				id,
+				id, timestamp,
 				position.x, position.y, position.z,
 				velocity.x, velocity.y, velocity.z,
 				orientation.x, orientation.y,

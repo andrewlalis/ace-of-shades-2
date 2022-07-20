@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model.world;
 
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.util.Collections;
@@ -127,6 +128,8 @@ public final class Worlds {
 				world.setBlockAt(x, 3, z, (byte) 1);
 			}
 		}
+
+		world.setSpawnPoint("first", new Vector3f(0.5f, 0f, 0.5f));
 
 		return world;
 	}

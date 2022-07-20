@@ -9,7 +9,7 @@ import nl.andrewl.record_net.Message;
  * joins, so that they can add that player to their world.
  */
 public record PlayerJoinMessage(
-		int id, String username,
+		int id, String username, int teamId,
 		float px, float py, float pz,
 		float vx, float vy, float vz,
 		float ox, float oy,
@@ -18,7 +18,7 @@ public record PlayerJoinMessage(
 ) implements Message {
 	public PlayerJoinMessage(Player player) {
 		this(
-				player.getId(), player.getUsername(),
+				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
 				player.getPosition().x, player.getPosition().y, player.getPosition().z,
 				player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
 				player.getOrientation().x, player.getOrientation().y,
