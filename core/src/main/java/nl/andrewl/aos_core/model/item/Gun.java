@@ -14,7 +14,7 @@ public class Gun extends Item {
 	private final float reloadTime;
 	private final float baseDamage;
 	private final float recoil;
-	private boolean automatic;
+	private final boolean automatic;
 
 	public Gun(
 			int id,

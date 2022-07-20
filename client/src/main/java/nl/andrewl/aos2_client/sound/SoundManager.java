@@ -1,6 +1,5 @@
 package nl.andrewl.aos2_client.sound;
 
-import nl.andrewl.aos2_client.model.ClientPlayer;
 import org.joml.Vector3f;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
@@ -11,9 +10,12 @@ import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.lwjgl.openal.ALC10.*;
 import static org.lwjgl.openal.AL10.*;
+import static org.lwjgl.openal.ALC10.*;
 
+/**
+ * Main class for managing the OpenAL audio interface.
+ */
 public class SoundManager {
 	private final long alContext;
 	private final Map<String, Integer> audioBuffers = new HashMap<>();
@@ -24,7 +26,6 @@ public class SoundManager {
 		alContext = alcCreateContext(device, (IntBuffer) null);
 		alcMakeContextCurrent(alContext);
 		AL.createCapabilities(capabilities);
-
 	}
 
 	public void load(String name, String resource) {

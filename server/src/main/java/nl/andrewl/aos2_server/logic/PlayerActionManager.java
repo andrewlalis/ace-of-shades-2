@@ -101,6 +101,11 @@ public class PlayerActionManager {
 				(gun.isAutomatic() || !gunNeedsReCock)
 		) {
 			// TODO: trace a ray from gun to see if players intersect with it.
+			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 100);
+			if (hit != null) {
+				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
+				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
+			}
 			g.setBulletCount(g.getBulletCount() - 1);
 			gunLastShotAt = now;
 			if (!gun.isAutomatic()) {

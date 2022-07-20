@@ -180,41 +180,24 @@ public class World {
 		float factorY = Float.MAX_VALUE;
 		float factorZ = Float.MAX_VALUE;
 
-		if (dir.x != 0) {
-			float nextValue;
-			if (dir.x > 0) {
-				nextValue = (Math.ceil(pos.x) == pos.x) ? pos.x + 1 : Math.ceil(pos.x);
-			} else {
-				nextValue = Math.floor(pos.x) - DELTA;
-			}
-			float diff = nextValue - pos.x;
-			factorX = Math.abs(diff / dir.x);
-		}
-
-		if (dir.y != 0) {
-			float nextValue;
-			if (dir.y > 0) {
-				nextValue = (Math.ceil(pos.y) == pos.y) ? pos.y + 1 : Math.ceil(pos.y);
-			} else {
-				nextValue = Math.floor(pos.y) - DELTA;
-			}
-			float diff = nextValue - pos.y;
-			factorY = Math.abs(diff / dir.y);
-		}
-
-		if (dir.z != 0) {
-			float nextValue;
-			if (dir.z > 0) {
-				nextValue = (Math.ceil(pos.z) == pos.z) ? pos.z + 1 : Math.ceil(pos.z);
-			} else {
-				nextValue = Math.floor(pos.z) - DELTA;
-			}
-			float diff = nextValue - pos.z;
-			factorZ = Math.abs(diff / dir.z);
-		}
+		if (dir.x != 0) factorX = factorToNextValue(pos.x, dir.x);
+		if (dir.y != 0) factorY = factorToNextValue(pos.y, dir.y);
+		if (dir.z != 0) factorZ = factorToNextValue(pos.z, dir.z);
 
 		float minFactor = Math.min(factorX, Math.min(factorY, factorZ));
 		dir.mulAdd(minFactor, pos, pos);
+	}
+
+	private static float factorToNextValue(float n, float dir) {
+		if (dir == 0) return 0;
+		float nextValue;
+		if (dir > 0) {
+			nextValue = (Math.ceil(n) == n) ? n + 1 : Math.ceil(n);
+		} else {
+			nextValue = Math.floor(n) - DELTA;
+		}
+		float diff = nextValue - n;
+		return Math.abs(diff / dir);
 	}
 
 	/**

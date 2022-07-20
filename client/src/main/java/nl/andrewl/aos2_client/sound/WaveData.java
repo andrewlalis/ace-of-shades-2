@@ -44,7 +44,7 @@ public class WaveData {
 		}
 	}
 
-	private ByteBuffer loadData() {
+	private void loadData() {
 		try {
 			int bytesRead = audioStream.read(dataArray, 0, totalBytes);
 			data.clear();
@@ -54,7 +54,6 @@ public class WaveData {
 			e.printStackTrace();
 			System.err.println("Couldn't read bytes from audio stream!");
 		}
-		return data;
 	}
 
 
@@ -62,7 +61,7 @@ public class WaveData {
 		InputStream stream = WaveData.class.getClassLoader().getResourceAsStream(file);
 		if (stream == null) {
 			System.err.println("Couldn't find file: " + file);
-			return null;
+			throw new RuntimeException();
 		}
 		InputStream bufferedInput = new BufferedInputStream(stream);
 		AudioInputStream audioStream;
