@@ -2,8 +2,8 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos2_server.logic.WorldUpdater;
+import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.config.Config;
-import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
@@ -29,8 +29,8 @@ public class Server implements Runnable {
 	private volatile boolean running;
 	private final ServerConfig config;
 	private final PlayerManager playerManager;
-	private final Map<Integer, Team> teams;
-	private final Map<Team, String> teamSpawnPoints;
+	private final TeamManager teamManager;
+	private final ProjectileManager projectileManager;
 	private final World world;
 	private final WorldUpdater worldUpdater;
 
@@ -41,13 +41,14 @@ public class Server implements Runnable {
 		this.datagramSocket = new DatagramSocket(config.port);
 		this.datagramSocket.setReuseAddress(true);
 		this.playerManager = new PlayerManager(this);
+		this.teamManager = new TeamManager(this);
+		this.projectileManager = new ProjectileManager(this);
 		this.worldUpdater = new WorldUpdater(this, config.ticksPerSecond);
 		this.world = Worlds.testingWorld();
-		this.teams = new HashMap<>();
-		this.teamSpawnPoints = new HashMap<>();
-		// TODO: Add some way to configure teams with config files.
-		teams.put(1, new Team(1, "Red", new Vector3f(0.8f, 0, 0), world.getSpawnPoint("first")));
-		teams.put(2, new Team(2, "Blue", new Vector3f(0, 0, 0.8f), world.getSpawnPoint("first")));
+
+		// TODO: Add some way to configure teams with config files or commands.
+		teamManager.addTeam("Red", new Vector3f(0.8f, 0, 0), "A");
+		teamManager.addTeam("Blue", new Vector3f(0, 0, 0.8f), "B");
 	}
 
 	@Override
@@ -121,16 +122,12 @@ public class Server implements Runnable {
 		return playerManager;
 	}
 
-	public Map<Integer, Team> getTeams() {
-		return teams;
+	public TeamManager getTeamManager() {
+		return teamManager;
 	}
 
-	public String getSpawnPoint(Team team) {
-		return teamSpawnPoints.get(team);
-	}
-
-	public Collection<ServerPlayer> getPlayersInTeam(Team team) {
-		return playerManager.getPlayers().stream().filter(p -> Objects.equals(p.getTeam(), team)).toList();
+	public ProjectileManager getProjectileManager() {
+		return projectileManager;
 	}
 
 	public static void main(String[] args) throws IOException {

@@ -1,7 +1,7 @@
 package nl.andrewl.aos2_server.logic;
 
 import nl.andrewl.aos2_server.Server;
-import nl.andrewl.aos2_server.ServerPlayer;
+import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos_core.model.item.*;
 import nl.andrewl.aos_core.model.world.World;
@@ -18,7 +18,7 @@ import org.joml.Vector3i;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nl.andrewl.aos2_server.ServerPlayer.*;
+import static nl.andrewl.aos2_server.model.ServerPlayer.*;
 
 /**
  * Component that manages a server player's current actions and movement.
@@ -62,9 +62,8 @@ public class PlayerActionManager {
 		return updated;
 	}
 
-	public void tick(float dt, World world, Server server) {
+	public void tick(long now, float dt, World world, Server server) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
-		long now = System.currentTimeMillis();
 		if (player.getInventory().getSelectedIndex() != lastInputState.selectedInventoryIndex()) {
 			player.getInventory().setSelectedIndex(lastInputState.selectedInventoryIndex());
 			// Tell the client that their inventory slot has been updated properly.
@@ -100,12 +99,7 @@ public class PlayerActionManager {
 				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
 				(gun.isAutomatic() || !gunNeedsReCock)
 		) {
-			// TODO: trace a ray from gun to see if players intersect with it.
-			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 100);
-			if (hit != null) {
-				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
-				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
-			}
+			server.getProjectileManager().spawnBullet(player);
 			g.setBulletCount(g.getBulletCount() - 1);
 			gunLastShotAt = now;
 			if (!gun.isAutomatic()) {

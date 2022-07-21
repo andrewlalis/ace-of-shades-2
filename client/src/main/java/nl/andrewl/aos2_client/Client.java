@@ -12,6 +12,7 @@ import nl.andrewl.aos2_client.sound.SoundManager;
 import nl.andrewl.aos2_client.sound.SoundSource;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.world.ChunkDataMessage;
@@ -43,12 +44,14 @@ public class Client implements Runnable {
 	private ClientWorld world;
 	private ClientPlayer myPlayer;
 	private final Map<Integer, OtherPlayer> players;
+	private final Map<Integer, Projectile> projectiles;
 	private Map<Integer, Team> teams;
 
 	public Client(ClientConfig config) {
 		this.config = config;
 		this.players = new ConcurrentHashMap<>();
 		this.teams = new ConcurrentHashMap<>();
+		this.projectiles = new ConcurrentHashMap<>();
 		this.communicationHandler = new CommunicationHandler(this);
 		this.inputHandler = new InputHandler(this, communicationHandler);
 	}
@@ -96,6 +99,7 @@ public class Client implements Runnable {
 			world.processQueuedChunkUpdates();
 			gameRenderer.getCamera().interpolatePosition(dt);
 			interpolatePlayers(dt);
+			interpolateProjectiles(dt);
 			gameRenderer.draw();
 			lastFrameAt = now;
 		}
@@ -120,7 +124,9 @@ public class Client implements Runnable {
 				if (gameRenderer != null) {
 					gameRenderer.getCamera().setToPlayer(myPlayer);
 				}
-				soundManager.updateListener(myPlayer.getPosition(), myPlayer.getVelocity());
+				if (soundManager != null) {
+					soundManager.updateListener(myPlayer.getPosition(), myPlayer.getVelocity());
+				}
 				lastPlayerUpdate = playerUpdate.timestamp();
 			} else {
 				OtherPlayer p = players.get(playerUpdate.clientId());
@@ -151,6 +157,18 @@ public class Client implements Runnable {
 			players.remove(leaveMessage.id());
 		} else if (msg instanceof SoundMessage soundMessage) {
 			playerSource.play(soundManager.getSoundBuffer(soundMessage.name()));
+		} else if (msg instanceof ProjectileMessage pm) {
+			Projectile p = projectiles.get(pm.id());
+			if (p == null && !pm.destroyed()) {
+				p = new Projectile(pm.id(), new Vector3f(pm.px(), pm.py(), pm.pz()), new Vector3f(pm.vx(), pm.vy(), pm.vz()), pm.type());
+				projectiles.put(p.getId(), p);
+			} else if (p != null) {
+				p.getPosition().set(pm.px(), pm.py(), pm.pz()); // Don't update position, it's too short of a timeframe to matter.
+				p.getVelocity().set(pm.vx(), pm.vy(), pm.vz());
+				if (pm.destroyed()) {
+					projectiles.remove(p.getId());
+				}
+			}
 		}
 	}
 
@@ -174,12 +192,24 @@ public class Client implements Runnable {
 		return players;
 	}
 
+	public Map<Integer, Projectile> getProjectiles() {
+		return projectiles;
+	}
+
 	public void interpolatePlayers(float dt) {
 		Vector3f movement = new Vector3f();
 		for (var player : players.values()) {
 			movement.set(player.getVelocity()).mul(dt);
 			player.getPosition().add(movement);
 			player.updateModelTransform();
+		}
+	}
+
+	public void interpolateProjectiles(float dt) {
+		Vector3f movement = new Vector3f();
+		for (var proj : projectiles.values()) {
+			movement.set(proj.getVelocity()).mul(dt);
+			proj.getPosition().add(movement);
 		}
 	}
 

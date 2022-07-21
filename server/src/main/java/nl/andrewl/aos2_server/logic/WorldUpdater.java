@@ -52,12 +52,14 @@ public class WorldUpdater implements Runnable {
 		}
 	}
 
+	/**
+	 * The main server update method, that runs once on each game tick, and
+	 * performs all game state updates.
+	 * @param currentTimeMillis The current timestamp for the tick. This may
+	 *                          be needed for certain functions in logic.
+	 */
 	private void tick(long currentTimeMillis) {
-		for (var player : server.getPlayerManager().getPlayers()) {
-			player.getActionManager().tick(secondsPerTick, server.getWorld(), server);
-			if (player.getActionManager().isUpdated()) {
-				server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage(currentTimeMillis));
-			}
-		}
+		server.getPlayerManager().tick(currentTimeMillis, secondsPerTick);
+		server.getProjectileManager().tick(secondsPerTick);
 	}
 }

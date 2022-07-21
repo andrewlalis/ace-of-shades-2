@@ -1,4 +1,4 @@
-package nl.andrewl.aos2_server;
+package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
@@ -26,8 +26,9 @@ public class ServerPlayer extends Player {
 		super(id, username);
 		this.inventory = new Inventory(new ArrayList<>(), 0);
 		this.actionManager = new PlayerActionManager(this);
-		inventory.getItemStacks().add(new GunItemStack(ItemTypes.get("Rifle")));
-		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.get("Block"), 50, (byte) 1));
+		inventory.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
+		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
+		inventory.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
 	}
 
 	public PlayerActionManager getActionManager() {

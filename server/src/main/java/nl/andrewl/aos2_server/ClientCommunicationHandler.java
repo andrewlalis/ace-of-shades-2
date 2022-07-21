@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.Chunk;
@@ -163,7 +164,7 @@ public class ClientCommunicationHandler {
 		WorldIO.write(server.getWorld(), out);
 
 		// Team data.
-		var teams = server.getTeams().values();
+		var teams = server.getTeamManager().getTeams();
 		out.writeInt(teams.size());
 		for (var team : teams) {
 			out.writeInt(team.getId());

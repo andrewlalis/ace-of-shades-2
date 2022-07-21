@@ -45,6 +45,7 @@ public class GameRenderer {
 	private Model playerModel;
 	private Model rifleModel;
 	private Model blockModel;
+	private Model bulletModel;
 
 	// Standard GUI textures.
 	private GUITexture crosshairTexture;
@@ -132,6 +133,7 @@ public class GameRenderer {
 			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
 			rifleModel = new Model("model/rifle.obj", "model/rifle.png");
 			blockModel = new Model("model/block.obj", "model/block.png");
+			bulletModel = new Model("model/bullet.obj", "model/bullet.png");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -215,6 +217,16 @@ public class GameRenderer {
 			}
 		}
 		blockModel.unbind();
+
+		bulletModel.bind();
+		Matrix4f projectileTransform = new Matrix4f();
+		for (var projectile : client.getProjectiles().values()) {
+			projectileTransform.identity()
+					.translate(projectile.getPosition())
+					.rotateTowards(projectile.getVelocity(), Camera.UP);
+			modelRenderer.render(bulletModel, projectileTransform);
+		}
+		bulletModel.unbind();
 
 		modelRenderer.end();
 

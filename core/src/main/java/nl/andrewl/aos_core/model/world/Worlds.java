@@ -129,7 +129,8 @@ public final class Worlds {
 			}
 		}
 
-		world.setSpawnPoint("first", new Vector3f(0.5f, 0f, 0.5f));
+		world.setSpawnPoint("A", new Vector3f(0.5f, 0f, 0.5f));
+		world.setSpawnPoint("B", new Vector3f(20.5f, 0f, 20.5f));
 
 		return world;
 	}

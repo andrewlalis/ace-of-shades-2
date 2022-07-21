@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
@@ -78,6 +79,15 @@ public class PlayerManager {
 		return Collections.unmodifiableCollection(clientHandlers.values());
 	}
 
+	public void tick(long currentTimeMillis, float dt) {
+		for (var player : players.values()) {
+			player.getActionManager().tick(currentTimeMillis, dt, server.getWorld(), server);
+			if (player.getActionManager().isUpdated()) {
+				broadcastUdpMessage(player.getUpdateMessage(currentTimeMillis));
+			}
+		}
+	}
+
 	/**
 	 * Finds the team that's best suited for adding a new player. This is the
 	 * team that has the minimum (or tied for minimum) number of players.
@@ -86,7 +96,7 @@ public class PlayerManager {
 	private Team findBestTeamForNewPlayer() {
 		Team minTeam = null;
 		int minCount = Integer.MAX_VALUE;
-		for (var team : server.getTeams().values()) {
+		for (var team : server.getTeamManager().getTeams()) {
 			int playerCount = (int) players.values().stream()
 							.filter(p -> Objects.equals(p.getTeam(), team))
 							.count();
