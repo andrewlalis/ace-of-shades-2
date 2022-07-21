@@ -3,6 +3,8 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.model.ServerProjectile;
 import nl.andrewl.aos_core.model.Projectile;
+import nl.andrewl.aos_core.model.world.Hit;
+import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
@@ -46,9 +48,14 @@ public class ProjectileManager {
 		projectile.getVelocity().y -= server.getConfig().physics.gravity * dt;
 		// TODO: Check if bullet will hit anything, like blocks or players, if it follows current velocity.
 		Vector3f movement = new Vector3f(projectile.getVelocity()).mul(dt);
-
+		Vector3f movementDir = new Vector3f(movement).normalize();
+//		Hit hit = server.getWorld().getLookingAtPos(projectile.getPosition(), movementDir, movement.length());
 		projectile.getPosition().add(movement);
 		if (projectile.getDistanceTravelled() > 500) {
+//			if (hit != null) {
+//				server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
+//				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
+//			}
 			removalQueue.add(projectile);
 			server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(true));
 		} else {
