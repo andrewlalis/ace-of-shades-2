@@ -9,12 +9,14 @@ import java.util.ArrayList;
 
 public class ClientPlayer extends Player {
 	private final Inventory inventory;
+	private float health;
 
 	private final Matrix4f heldItemTransform = new Matrix4f();
 	private final float[] heldItemTransformData = new float[16];
 
 	public ClientPlayer(int id, String username) {
 		super(id, username);
+		this.health = 1;
 		this.inventory = new Inventory(new ArrayList<>(), 0);
 	}
 
@@ -26,6 +28,14 @@ public class ClientPlayer extends Player {
 		this.inventory.getItemStacks().clear();
 		this.inventory.getItemStacks().addAll(inv.getItemStacks());
 		this.inventory.setSelectedIndex(inv.getSelectedIndex());
+	}
+
+	public float getHealth() {
+		return health;
+	}
+
+	public void setHealth(float health) {
+		this.health = health;
 	}
 
 	public void updateHeldItemTransform(Camera cam) {

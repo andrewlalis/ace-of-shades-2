@@ -51,6 +51,8 @@ public class GameRenderer {
 	private GUITexture crosshairTexture;
 	private GUITexture clipTexture;
 	private GUITexture bulletTexture;
+	private GUITexture healthBarRedTexture;
+	private GUITexture healthBarGreenTexture;
 
 	private long windowHandle;
 	private int screenWidth = 800;
@@ -123,9 +125,13 @@ public class GameRenderer {
 		crosshairTexture = new GUITexture("gui/crosshair.png");
 		clipTexture = new GUITexture("gui/clip.png");
 		bulletTexture = new GUITexture("gui/bullet.png");
+		healthBarRedTexture = new GUITexture("gui/health-red.png");
+		healthBarGreenTexture = new GUITexture("gui/health-green.png");
 		guiRenderer.addTexture("crosshair", crosshairTexture);
 		guiRenderer.addTexture("clip", clipTexture);
 		guiRenderer.addTexture("bullet", bulletTexture);
+		guiRenderer.addTexture("health-red", healthBarRedTexture);
+		guiRenderer.addTexture("health-green", healthBarGreenTexture);
 		log.debug("Initialized GUI renderer.");
 
 		this.modelRenderer = new ModelRenderer();
@@ -255,6 +261,21 @@ public class GameRenderer {
 				);
 			}
 		}
+		// Render the player's health.
+		guiRenderer.draw(
+				healthBarRedTexture,
+				healthBarRedTexture.getIdealScaleX(64, screenWidth),
+				healthBarRedTexture.getIdealScaleY(16, screenHeight),
+				-0.90f,
+				-0.90f
+		);
+		guiRenderer.draw(
+				healthBarGreenTexture,
+				healthBarGreenTexture.getIdealScaleX(64 * client.getMyPlayer().getHealth(), screenWidth),
+				healthBarGreenTexture.getIdealScaleY(16, screenHeight),
+				-0.90f,
+				-0.90f
+		);
 		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);

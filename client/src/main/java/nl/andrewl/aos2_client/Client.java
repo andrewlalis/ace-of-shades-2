@@ -169,6 +169,8 @@ public class Client implements Runnable {
 					projectiles.remove(p.getId());
 				}
 			}
+		} else if (msg instanceof ClientHealthMessage healthMessage) {
+			myPlayer.setHealth(healthMessage.health());
 		}
 	}
 

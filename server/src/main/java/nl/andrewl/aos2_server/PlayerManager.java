@@ -76,6 +76,10 @@ public class PlayerManager {
 		return clientHandlers.get(id);
 	}
 
+	public ClientCommunicationHandler getHandler(ServerPlayer player) {
+		return clientHandlers.get(player.getId());
+	}
+
 	public Collection<ClientCommunicationHandler> getHandlers() {
 		return Collections.unmodifiableCollection(clientHandlers.values());
 	}

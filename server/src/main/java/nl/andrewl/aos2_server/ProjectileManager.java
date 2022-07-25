@@ -6,6 +6,7 @@ import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.world.Hit;
+import nl.andrewl.aos_core.net.client.ClientHealthMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -122,6 +123,8 @@ public class ProjectileManager {
 			if (hitPlayer.getHealth() == 0) {
 				System.out.println("Player killed!!!");
 				server.getPlayerManager().playerKilled(hitPlayer);
+			} else {
+				server.getPlayerManager().getHandler(hitPlayer).sendDatagramPacket(new ClientHealthMessage(hitPlayer.getHealth()));
 			}
 			deleteProjectile(projectile);
 		} else {
