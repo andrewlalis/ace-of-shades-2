@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.model.world;
 
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector3ic;
 
@@ -9,5 +10,6 @@ import org.joml.Vector3ic;
  */
 public record Hit (
 		Vector3i pos,
-		Vector3ic norm
+		Vector3ic norm,
+		Vector3f rawPos
 ) {}

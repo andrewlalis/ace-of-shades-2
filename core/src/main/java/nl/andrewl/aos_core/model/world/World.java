@@ -17,7 +17,7 @@ import java.util.Map;
  * that players can interact in.
  */
 public class World {
-	private static final float DELTA = 0.00001f;
+	private static final float DELTA = 0.0001f;
 
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 	protected ColorPalette palette;
@@ -160,7 +160,7 @@ public class World {
 					System.err.println("Invalid hit!");
 				}
 
-				return new Hit(hitPos, hitNorm);
+				return new Hit(hitPos, hitNorm, pos);
 			}
 		}
 		return null;
@@ -189,7 +189,7 @@ public class World {
 	}
 
 	private static float factorToNextValue(float n, float dir) {
-		if (dir == 0) return 0;
+		if (dir == 0) return Float.MAX_VALUE;
 		float nextValue;
 		if (dir > 0) {
 			nextValue = (Math.ceil(n) == n) ? n + 1 : Math.ceil(n);
@@ -197,6 +197,11 @@ public class World {
 			nextValue = Math.floor(n) - DELTA;
 		}
 		float diff = nextValue - n;
+		// Testing code!
+		if (diff == 0) {
+			System.out.printf("n = %.8f, nextValue = %.8f, floor(n) - DELTA = %.8f%n", n, nextValue, Math.floor(n) - DELTA);
+			throw new RuntimeException("EEK");
+		}
 		return Math.abs(diff / dir);
 	}
 

@@ -1,8 +1,13 @@
 package nl.andrewl.aos_core.model;
 
 import nl.andrewl.aos_core.MathUtils;
+import org.joml.Math;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.joml.Math.*;
 
@@ -161,5 +166,36 @@ public class Player {
 
 	public float getCurrentHeight() {
 		return crouching ? HEIGHT_CROUCH : HEIGHT;
+	}
+
+	public List<Vector3i> getBlockSpaceOccupied() {
+		float playerBodyMinZ = position.z - RADIUS;
+		float playerBodyMaxZ = position.z + RADIUS;
+		float playerBodyMinX = position.x - RADIUS;
+		float playerBodyMaxX = position.x + RADIUS;
+		float playerBodyMinY = position.y;
+		float playerBodyMaxY = position.y + getCurrentHeight();
+
+		// Compute the bounds of all blocks the player is intersecting with.
+		int minX = (int) Math.floor(playerBodyMinX);
+		int minZ = (int) Math.floor(playerBodyMinZ);
+		int minY = (int) Math.floor(playerBodyMinY);
+		int maxX = (int) Math.floor(playerBodyMaxX);
+		int maxZ = (int) Math.floor(playerBodyMaxZ);
+		int maxY = (int) Math.floor(playerBodyMaxY);
+
+		List<Vector3i> vectors = new ArrayList<>(8);
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				for (int z = minZ; z <= maxZ; z++) {
+					vectors.add(new Vector3i(x, y, z));
+				}
+			}
+		}
+		return vectors;
+	}
+
+	public boolean isSpaceOccupied(Vector3i pos) {
+		return getBlockSpaceOccupied().contains(pos);
 	}
 }

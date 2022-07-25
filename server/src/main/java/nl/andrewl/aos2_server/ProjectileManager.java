@@ -2,9 +2,12 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.model.ServerProjectile;
+import nl.andrewl.aos_core.Directions;
+import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.world.Hit;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
@@ -12,7 +15,13 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
+/**
+ * Component that manages the set of all active projectiles in the world, and
+ * performs tick updates for them.
+ */
 public class ProjectileManager {
+	public static final float MOVEMENT_FACTOR = 1f;
+
 	private final Server server;
 	private int nextProjectileId = 1;
 	private final Map<Integer, ServerProjectile> projectiles;
@@ -27,8 +36,15 @@ public class ProjectileManager {
 	public void spawnBullet(ServerPlayer player) {
 		int id = nextProjectileId++;
 		if (nextProjectileId == Integer.MAX_VALUE) nextProjectileId = 1;
-		Vector3f pos = new Vector3f(player.getEyePosition());
-		Vector3f vel = new Vector3f(player.getViewVector()).normalize().mul(300);
+		Vector3f pos = new Vector3f();
+		Matrix4f bulletTransform = new Matrix4f()
+				.translate(player.getEyePosition())
+				.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
+				.translate(-0.35f, -0.4f, 0.35f);
+		bulletTransform.transformPosition(pos);
+		Vector3f vel = new Vector3f(player.getViewVector()).normalize()
+				.mul(200 * MOVEMENT_FACTOR)
+				.add(player.getVelocity());
 		ServerProjectile bullet = new ServerProjectile(id, pos, vel, Projectile.Type.BULLET, player);
 		projectiles.put(bullet.getId(), bullet);
 		server.getPlayerManager().broadcastUdpMessage(bullet.toMessage(false));
@@ -45,21 +61,82 @@ public class ProjectileManager {
 	}
 
 	private void tickProjectile(ServerProjectile projectile, float dt) {
-		projectile.getVelocity().y -= server.getConfig().physics.gravity * dt;
-		// TODO: Check if bullet will hit anything, like blocks or players, if it follows current velocity.
+		projectile.getVelocity().y -= server.getConfig().physics.gravity * dt * MOVEMENT_FACTOR;
+
+		// Check for if the bullet will move close enough to a player to hit them.
 		Vector3f movement = new Vector3f(projectile.getVelocity()).mul(dt);
-		Vector3f movementDir = new Vector3f(movement).normalize();
-//		Hit hit = server.getWorld().getLookingAtPos(projectile.getPosition(), movementDir, movement.length());
-		projectile.getPosition().add(movement);
-		if (projectile.getDistanceTravelled() > 500) {
-//			if (hit != null) {
-//				server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
-//				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
-//			}
-			removalQueue.add(projectile);
-			server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(true));
-		} else {
-			server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(false));
+
+		// Check first to see if we'll hit a player this tick.
+		Vector3f testPos = new Vector3f();
+		Vector3f testMovement = new Vector3f(movement).normalize(0.1f);
+		Vector3f playerHit = null;
+		ServerPlayer hitPlayer = null;
+		int playerHitType = -1;
+		for (ServerPlayer player : server.getPlayerManager().getPlayers()) {
+			// Don't allow players to shoot themselves.
+			if (projectile.getPlayer() != null && projectile.getPlayer().equals(player)) continue;
+
+			Vector3f headPos = player.getEyePosition();
+			Vector3f bodyPos = new Vector3f(player.getPosition());
+			bodyPos.y += 1.0f;
+
+			// Do a really shitty collision detection... check in 10cm increments if we're close to the player.
+			// TODO: Come up with a better collision system.
+			testPos.set(projectile.getPosition());
+			while (testPos.distanceSquared(projectile.getPosition()) < movement.lengthSquared() && playerHit == null) {
+				if (testPos.distanceSquared(headPos) < Player.RADIUS * Player.RADIUS) {
+					playerHitType = 1;
+					playerHit = new Vector3f(testPos);
+					hitPlayer = player;
+				} else if (testPos.distanceSquared(bodyPos) < Player.RADIUS * Player.RADIUS) {
+					playerHitType = 2;
+					playerHit = new Vector3f(testPos);
+					hitPlayer = player;
+				}
+				testPos.add(testMovement);
+			}
 		}
+
+		// Then check to see if we'll hit the world during this tick.
+		Vector3f movementDir = new Vector3f(movement).normalize();
+		Hit hit = server.getWorld().getLookingAtPos(projectile.getPosition(), movementDir, movement.length());
+
+		float playerHitDist = Float.MAX_VALUE;
+		if (playerHit != null) playerHitDist = projectile.getPosition().distanceSquared(playerHit);
+		float worldHitDist = Float.MAX_VALUE;
+		if (hit != null) worldHitDist = projectile.getPosition().distanceSquared(hit.rawPos());
+
+		// If we hit the world before the player,
+		if (hit != null && (playerHit == null || worldHitDist < playerHitDist)) {
+			// Bullet struck the world first.
+			server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
+			server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
+			deleteProjectile(projectile);
+		} else if (playerHit != null && (hit == null || playerHitDist < worldHitDist)) {
+			// Bullet struck the player first.
+			System.out.println("Player hit: " + playerHitType);
+			float damage = 0.4f;
+			if (playerHitType == 1) damage *= 2;
+			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
+			System.out.println(hitPlayer.getHealth());
+			if (hitPlayer.getHealth() == 0) {
+				System.out.println("Player killed!!!");
+				server.getPlayerManager().playerKilled(hitPlayer);
+			}
+			deleteProjectile(projectile);
+		} else {
+			// Bullet struck nothing.
+			projectile.getPosition().add(movement);
+			if (projectile.getDistanceTravelled() > 500) {
+				deleteProjectile(projectile);
+			} else {
+				server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(false));
+			}
+		}
+	}
+
+	private void deleteProjectile(ServerProjectile p) {
+		removalQueue.add(p);
+		server.getPlayerManager().broadcastUdpMessage(p.toMessage(true));
 	}
 }

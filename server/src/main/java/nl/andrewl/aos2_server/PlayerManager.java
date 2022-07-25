@@ -3,6 +3,7 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Team;
+import nl.andrewl.aos_core.net.client.ClientHealthMessage;
 import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
 import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
@@ -119,6 +120,21 @@ public class PlayerManager {
 	private Vector3f getBestSpawnPoint(ServerPlayer player) {
 		if (player.getTeam() != null) return player.getTeam().getSpawnPoint();
 		return server.getWorld().getSpawnPoints().values().stream().findAny().orElse(new Vector3f(0, 0, 0));
+	}
+
+	/**
+	 * This method is invoked by the server's logic if a player has been
+	 * determined to be killed somehow. We will reset their inventory, health,
+	 * and respawn them.
+	 * @param player The player that died.
+	 */
+	public void playerKilled(ServerPlayer player) {
+		player.setPosition(getBestSpawnPoint(player));
+		player.setVelocity(new Vector3f(0));
+		player.setHealth(1);
+		getHandler(player.getId()).sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
+		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
+		// TODO: Team points or something.
 	}
 
 	public void handleUdpInit(DatagramInit init, DatagramPacket packet) {

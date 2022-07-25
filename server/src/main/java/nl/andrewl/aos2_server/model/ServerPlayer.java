@@ -22,9 +22,16 @@ public class ServerPlayer extends Player {
 	private final PlayerActionManager actionManager;
 	private final Inventory inventory;
 
+	/**
+	 * The player's health, from 0 to 1, where <= 0 means death, and 1 means
+	 * full health.
+	 */
+	private float health;
+
 	public ServerPlayer(int id, String username) {
 		super(id, username);
 		this.inventory = new Inventory(new ArrayList<>(), 0);
+		this.health = 1f;
 		this.actionManager = new PlayerActionManager(this);
 		inventory.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
 		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
@@ -37,6 +44,16 @@ public class ServerPlayer extends Player {
 
 	public Inventory getInventory() {
 		return inventory;
+	}
+
+	public float getHealth() {
+		return health;
+	}
+
+	public void setHealth(float health) {
+		if (health > 1) health = 1;
+		if (health < 0) health = 0;
+		this.health = health;
 	}
 
 	/**
