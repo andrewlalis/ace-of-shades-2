@@ -3,7 +3,12 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Team;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.Gun;
+import nl.andrewl.aos_core.model.item.GunItemStack;
+import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.net.client.ClientHealthMessage;
+import nl.andrewl.aos_core.net.client.ItemStackMessage;
 import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
 import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
@@ -136,7 +141,19 @@ public class PlayerManager {
 		player.setPosition(getBestSpawnPoint(player));
 		player.setVelocity(new Vector3f(0));
 		player.setHealth(1);
-		getHandler(player.getId()).sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
+		var handler = getHandler(player.getId());
+		for (int i = 0; i < player.getInventory().getItemStacks().size(); i++) {
+			ItemStack stack = player.getInventory().getItemStacks().get(i);
+			if (stack instanceof GunItemStack g) {
+				Gun gun = (Gun) g.getType();
+				g.setBulletCount(gun.getMaxBulletCount());
+				g.setClipCount(gun.getMaxClipCount());
+			} else if (stack instanceof BlockItemStack b) {
+				b.setAmount(50);
+			}
+			handler.sendTcpMessage(new ItemStackMessage(i, stack));
+		}
+		handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
 		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		// TODO: Team points or something.
 	}
