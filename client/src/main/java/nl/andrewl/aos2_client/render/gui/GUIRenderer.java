@@ -19,6 +19,7 @@ public class GUIRenderer {
 	private final int vertexCount;
 	private final ShaderProgram shaderProgram;
 	private final int transformUniformLocation;
+	private final int textureSamplerUniform;
 	private final Matrix4f transformMatrix;
 	private final float[] transformMatrixData;
 
@@ -47,6 +48,7 @@ public class GUIRenderer {
 				.withShader("shader/gui/fragment.glsl", GL_FRAGMENT_SHADER)
 				.build();
 		transformUniformLocation = shaderProgram.getUniform("transform");
+		textureSamplerUniform = shaderProgram.getUniform("guiTexture");
 		shaderProgram.bindAttribute(0, "position");
 		this.transformMatrix = new Matrix4f();
 		this.transformMatrixData = new float[16];
@@ -67,6 +69,7 @@ public class GUIRenderer {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
+		glUniform1i(textureSamplerUniform, 0);
 	}
 
 	public void draw(String name, float scaleX, float scaleY, float x, float y) {

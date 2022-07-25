@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client.model;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.ItemTypes;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -22,14 +23,15 @@ public class OtherPlayer extends Player {
 	 */
 	private byte selectedBlockValue;
 
-	/**
-	 * The transformation used to render this player in the world.
-	 */
 	private final Matrix4f modelTransform = new Matrix4f();
 	private final float[] modelTransformData = new float[16];
+	private final Matrix3f normalTransform = new Matrix3f();
+	private final float[] normalTransformData = new float[9];
 
 	private final Matrix4f heldItemTransform = new Matrix4f();
 	private final float[] heldItemTransformData = new float[16];
+	private final Matrix3f heldItemNormalTransform = new Matrix3f();
+	private final float[] heldItemNormalTransformData = new float[9];
 
 	public OtherPlayer(int id, String username) {
 		super(id, username);
@@ -61,17 +63,32 @@ public class OtherPlayer extends Player {
 				.translate(position)
 				.rotate(orientation.x, Camera.UP);
 		modelTransform.get(modelTransformData);
+
+		modelTransform.normal(normalTransform);
+		normalTransform.get(normalTransformData);
+
 		heldItemTransform.set(modelTransform)
 				.translate(0.5f, 1.1f, -0.5f)
 				.rotate((float) Math.PI, Camera.UP);
 		heldItemTransform.get(heldItemTransformData);
+
+		heldItemTransform.normal(heldItemNormalTransform);
+		heldItemNormalTransform.get(heldItemNormalTransformData);
 	}
 
 	public float[] getModelTransformData() {
 		return modelTransformData;
 	}
 
+	public float[] getNormalTransformData() {
+		return normalTransformData;
+	}
+
 	public float[] getHeldItemTransformData() {
 		return heldItemTransformData;
+	}
+
+	public float[] getHeldItemNormalTransformData() {
+		return heldItemNormalTransformData;
 	}
 }

@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client.model;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.Inventory;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -13,6 +14,9 @@ public class ClientPlayer extends Player {
 
 	private final Matrix4f heldItemTransform = new Matrix4f();
 	private final float[] heldItemTransformData = new float[16];
+
+	private final Matrix3f heldItemNormalTransform = new Matrix3f();
+	private final float[] heldItemNormalTransformData = new float[9];
 
 	public ClientPlayer(int id, String username) {
 		super(id, username);
@@ -45,9 +49,16 @@ public class ClientPlayer extends Player {
 				.rotate(-cam.getOrientation().y + (float) Math.PI / 2, Camera.RIGHT)
 				.translate(-0.35f, -0.4f, 0.5f);
 		heldItemTransform.get(heldItemTransformData);
+
+		heldItemTransform.normal(heldItemNormalTransform);
+		heldItemNormalTransform.get(heldItemNormalTransformData);
 	}
 
 	public float[] getHeldItemTransformData() {
 		return heldItemTransformData;
+	}
+
+	public float[] getHeldItemNormalTransformData() {
+		return heldItemNormalTransformData;
 	}
 }

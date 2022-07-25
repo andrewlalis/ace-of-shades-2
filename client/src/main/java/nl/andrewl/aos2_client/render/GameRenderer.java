@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client.render;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.config.ClientConfig;
+import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
@@ -11,10 +12,12 @@ import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemTypes;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,9 +187,11 @@ public class GameRenderer {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
 
+		ClientPlayer myPlayer = client.getMyPlayer();
+
 		// Draw models. Use one texture at a time for efficiency.
 		modelRenderer.start(camera.getViewTransformData());
-		client.getMyPlayer().updateHeldItemTransform(camera);
+		myPlayer.updateHeldItemTransform(camera);
 
 		playerModel.bind();
 		for (var player : client.getPlayers().values()) {
@@ -195,17 +200,17 @@ public class GameRenderer {
 			} else {
 				modelRenderer.setAspectColor(new Vector3f(0.3f, 0.3f, 0.3f));
 			}
-			modelRenderer.render(playerModel, player.getModelTransformData());
+			modelRenderer.render(playerModel, player.getModelTransformData(), player.getNormalTransformData());
 		}
 		playerModel.unbind();
 
 		rifleModel.bind();
-		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
-			modelRenderer.render(rifleModel, client.getMyPlayer().getHeldItemTransformData());
+		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
+			modelRenderer.render(rifleModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
 			if (player.getHeldItemId() == ItemTypes.RIFLE.getId()) {
-				modelRenderer.render(rifleModel, player.getHeldItemTransformData());
+				modelRenderer.render(rifleModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
 		}
 		rifleModel.unbind();
@@ -214,23 +219,26 @@ public class GameRenderer {
 		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
 			BlockItemStack stack = (BlockItemStack) client.getMyPlayer().getInventory().getSelectedItemStack();
 			modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(stack.getSelectedValue()));
-			modelRenderer.render(blockModel, client.getMyPlayer().getHeldItemTransformData());
+			modelRenderer.render(blockModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		modelRenderer.setAspectColor(new Vector3f(0.5f, 0.5f, 0.5f));
 		for (var player : client.getPlayers().values()) {
 			if (player.getHeldItemId() == ItemTypes.BLOCK.getId()) {
-				modelRenderer.render(blockModel, player.getHeldItemTransformData());
+				modelRenderer.render(blockModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
 		}
 		blockModel.unbind();
 
 		bulletModel.bind();
 		Matrix4f projectileTransform = new Matrix4f();
+		Matrix3f projectileNormalTransform = new Matrix3f();
 		for (var projectile : client.getProjectiles().values()) {
 			projectileTransform.identity()
 					.translate(projectile.getPosition())
-					.rotateTowards(projectile.getVelocity(), Camera.UP);
-			modelRenderer.render(bulletModel, projectileTransform);
+					.rotateTowards(projectile.getVelocity(), Camera.UP)
+					.scale(1, 1, projectile.getVelocity().length() / 5);
+			projectileTransform.normal(projectileNormalTransform);
+			modelRenderer.render(bulletModel, projectileTransform, projectileNormalTransform);
 		}
 		bulletModel.unbind();
 
