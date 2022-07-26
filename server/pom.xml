@@ -20,7 +20,7 @@
         <dependency>
             <groupId>nl.andrewl</groupId>
             <artifactId>aos2-core</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>info.picocli</groupId>

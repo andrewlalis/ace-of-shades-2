@@ -1,5 +1,6 @@
 .idea/
 target/
+client-builds/
 
 # Ignore the ./config directory so that developers can put their config files
 # there for server and client apps.
