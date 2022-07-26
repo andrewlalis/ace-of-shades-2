@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * This component is responsible for managing the set of players connected to
@@ -71,6 +72,21 @@ public class PlayerManager {
 
 	public ServerPlayer getPlayer(int id) {
 		return players.get(id);
+	}
+
+	public Optional<ServerPlayer> findByIdOrName(String text) {
+		Pattern p = Pattern.compile("\\d+");
+		if (p.matcher(text).matches() && text.length() < 8) {
+			int id = Integer.parseInt(text);
+			return Optional.ofNullable(getPlayer(id));
+		} else {
+			String finalText = text.trim().toLowerCase();
+			List<ServerPlayer> matches = getPlayers().stream()
+					.filter(player -> player.getUsername().trim().toLowerCase().equals(finalText))
+					.toList();
+			if (matches.size() == 1) return Optional.of(matches.get(0));
+			return Optional.empty();
+		}
 	}
 
 	public Collection<ServerPlayer> getPlayers() {

@@ -93,7 +93,7 @@ public class Client implements Runnable {
 		playerSource = new SoundSource();
 
 		long lastFrameAt = System.currentTimeMillis();
-		while (!gameRenderer.windowShouldClose()) {
+		while (!gameRenderer.windowShouldClose() && !communicationHandler.isDone()) {
 			long now = System.currentTimeMillis();
 			float dt = (now - lastFrameAt) / 1000f;
 			world.processQueuedChunkUpdates();

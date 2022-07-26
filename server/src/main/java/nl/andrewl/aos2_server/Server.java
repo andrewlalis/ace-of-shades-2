@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.cli.ServerCli;
 import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos2_server.logic.WorldUpdater;
 import nl.andrewl.aos2_server.model.ServerPlayer;
@@ -60,6 +61,7 @@ public class Server implements Runnable {
 		while (running) {
 			acceptClientConnection();
 		}
+		log.info("Shutting down the server.");
 		playerManager.deregisterAll();
 		worldUpdater.shutdown();
 		datagramSocket.close(); // Shuts down the UdpReceiver.
@@ -67,6 +69,20 @@ public class Server implements Runnable {
 			serverSocket.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+		log.info("Shutdown complete.");
+	}
+
+	public boolean isRunning() {
+		return running;
+	}
+
+	public void shutdown() {
+		running = false;
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -136,6 +152,8 @@ public class Server implements Runnable {
 			configPaths.add(Path.of(args[0].trim()));
 		}
 		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig());
-		new Server(cfg).run();
+		Server server = new Server(cfg);
+		new Thread(server).start();
+		ServerCli.start(server);
 	}
 }

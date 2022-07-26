@@ -18,10 +18,16 @@ public class UdpReceiver implements Runnable {
 
 	private final DatagramSocket socket;
 	private final UdpMessageHandler handler;
+	private final Runnable shutdownHook;
 
 	public UdpReceiver(DatagramSocket socket, UdpMessageHandler handler) {
+		this(socket, handler, null);
+	}
+
+	public UdpReceiver(DatagramSocket socket, UdpMessageHandler handler, Runnable shutdownHook) {
 		this.socket = socket;
 		this.handler = handler;
+		this.shutdownHook = shutdownHook;
 	}
 
 	@Override
@@ -39,12 +45,11 @@ public class UdpReceiver implements Runnable {
 				}
 				e.printStackTrace();
 			} catch (EOFException e) {
-				System.out.println("EOF!");
 				break;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("UDP receiver shut down.");
+		if (shutdownHook != null) shutdownHook.run();
 	}
 }

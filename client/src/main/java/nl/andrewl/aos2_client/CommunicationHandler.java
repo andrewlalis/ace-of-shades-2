@@ -39,6 +39,7 @@ public class CommunicationHandler {
 	private ExtendedDataOutputStream out;
 	private ExtendedDataInputStream in;
 	private int clientId;
+	private boolean done;
 
 	public CommunicationHandler(Client client) {
 		this.client = client;
@@ -71,7 +72,7 @@ public class CommunicationHandler {
 			log.debug("Initial data received.");
 			establishDatagramConnection();
 			log.info("Connection to server established. My client id is {}.", clientId);
-			new Thread(new TcpReceiver(in, client::onMessageReceived)).start();
+			new Thread(new TcpReceiver(in, client::onMessageReceived).withShutdownHook(this::shutdown)).start();
 			new Thread(new UdpReceiver(datagramSocket, (msg, packet) -> client.onMessageReceived(msg))).start();
 		} else {
 			throw new IOException("Server returned an unexpected message: " + response);
@@ -84,7 +85,13 @@ public class CommunicationHandler {
 			datagramSocket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			done = true;
 		}
+	}
+
+	public boolean isDone() {
+		return done;
 	}
 
 	public void sendMessage(Message msg) {

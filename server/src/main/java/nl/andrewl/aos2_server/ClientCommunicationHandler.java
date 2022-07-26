@@ -2,6 +2,7 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.UsernameChecker;
 import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.model.world.WorldIO;
@@ -91,6 +92,18 @@ public class ClientCommunicationHandler {
 				Message msg = Net.read(in);
 				if (msg instanceof ConnectRequestMessage connectMsg) {
 					log.debug("Received connect request from player \"{}\"", connectMsg.username());
+					// Ensure the connection is valid.
+					if (!UsernameChecker.isValid(connectMsg.username())) {
+						Net.write(new ConnectRejectMessage("Invalid username."), out);
+						socket.close();
+						return;
+					}
+					if (server.getPlayerManager().getPlayers().stream().anyMatch(p -> p.getUsername().equals(connectMsg.username()))) {
+						Net.write(new ConnectRejectMessage("Username is already taken."), out);
+						socket.close();
+						return;
+					}
+
 					// Try to set the TCP timeout back to 0 now that we've got the correct request.
 					socket.setSoTimeout(0);
 					this.clientAddress = socket.getInetAddress();
