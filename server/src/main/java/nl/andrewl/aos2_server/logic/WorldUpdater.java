@@ -60,6 +60,6 @@ public class WorldUpdater implements Runnable {
 	 */
 	private void tick(long currentTimeMillis) {
 		server.getPlayerManager().tick(currentTimeMillis, secondsPerTick);
-		server.getProjectileManager().tick(secondsPerTick);
+		server.getProjectileManager().tick(currentTimeMillis, secondsPerTick);
 	}
 }

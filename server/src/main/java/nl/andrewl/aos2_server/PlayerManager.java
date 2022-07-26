@@ -154,8 +154,9 @@ public class PlayerManager {
 	 * determined to be killed somehow. We will reset their inventory, health,
 	 * and respawn them.
 	 * @param player The player that died.
+	 * @param killedBy The player that killed them. Can be null.
 	 */
-	public void playerKilled(ServerPlayer player) {
+	public void playerKilled(ServerPlayer player, ServerPlayer killedBy) {
 		Vector3f deathPosition = new Vector3f(player.getPosition());
 		player.setPosition(getBestSpawnPoint(player));
 		player.setVelocity(new Vector3f(0));

@@ -22,8 +22,11 @@ public class ServerConfig {
 		public float blockPlaceCooldown = 0.1f;
 		public float blockBreakReach = 5;
 		public float blockPlaceReach = 5;
+		public float blockBulletDamageResistance = 3;
+		public float blockBulletDamageCooldown = 10;
 		public float resupplyCooldown = 30;
 		public float resupplyRadius = 3;
+		public float teamSpawnProtection = 10;
 		public float movementAccuracyDecreaseFactor = 0.01f;
 		public boolean friendlyFire = false;
 	}

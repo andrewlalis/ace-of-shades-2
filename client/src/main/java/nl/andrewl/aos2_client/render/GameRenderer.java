@@ -50,6 +50,7 @@ public class GameRenderer {
 	private Model blockModel;
 	private Model bulletModel;
 	private Model smgModel;
+	private Model shotgunModel;
 	private Model flagModel;
 
 	// Standard GUI textures.
@@ -149,6 +150,7 @@ public class GameRenderer {
 			blockModel = new Model("model/block.obj", "model/block.png");
 			bulletModel = new Model("model/bullet.obj", "model/bullet.png");
 			flagModel = new Model("model/flag.obj", "model/flag.png");
+			shotgunModel = new Model("model/shotgun.obj", "model/shotgun.png");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -231,6 +233,17 @@ public class GameRenderer {
 			}
 		}
 		smgModel.unbind();
+		shotgunModel.bind();
+		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.WINCHESTER.getId()) {
+			modelRenderer.render(shotgunModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
+		}
+		for (var player : client.getPlayers().values()) {
+			if (player.getHeldItemId() == ItemTypes.WINCHESTER.getId()) {
+				modelRenderer.render(shotgunModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
+			}
+		}
+		shotgunModel.unbind();
+
 		blockModel.bind();
 		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
 			BlockItemStack stack = (BlockItemStack) myPlayer.getInventory().getSelectedItemStack();

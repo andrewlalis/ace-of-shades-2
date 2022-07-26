@@ -11,10 +11,7 @@ import nl.andrewl.aos_core.model.item.gun.Ak47;
 import nl.andrewl.aos_core.model.item.gun.Rifle;
 import nl.andrewl.aos_core.model.item.gun.Winchester;
 import nl.andrewl.aos_core.model.world.World;
-import nl.andrewl.aos_core.net.client.ClientInputState;
-import nl.andrewl.aos_core.net.client.InventorySelectedStackMessage;
-import nl.andrewl.aos_core.net.client.ItemStackMessage;
-import nl.andrewl.aos_core.net.client.SoundMessage;
+import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Math;
 import org.joml.Vector2i;
@@ -23,6 +20,7 @@ import org.joml.Vector3i;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static nl.andrewl.aos2_server.model.ServerPlayer.RADIUS;
 
@@ -100,7 +98,7 @@ public class PlayerActionManager {
 			updated = true;
 		}
 
-		tickMovement(dt, world, server.getConfig().physics);
+		tickMovement(dt, server, world, server.getConfig().physics);
 	}
 
 	private void tickGunAction(long now, Server server, World world, GunItemStack g) {
@@ -110,7 +108,8 @@ public class PlayerActionManager {
 				g.getBulletCount() > 0 &&
 				!gunReloading &&
 				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
-				(gun.isAutomatic() || !gunNeedsReCock)
+				(gun.isAutomatic() || !gunNeedsReCock) &&
+				!server.getTeamManager().isProtected(player) // Don't allow players to shoot from within their own team's protected zones.
 		) {
 			server.getProjectileManager().spawnBullets(player, gun);
 			g.setBulletCount(g.getBulletCount() - 1);
@@ -165,7 +164,7 @@ public class PlayerActionManager {
 				now - lastBlockRemovedAt > server.getConfig().actions.blockBreakCooldown * 1000
 		) {
 			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), server.getConfig().actions.blockBreakReach);
-			if (hit != null) {
+			if (hit != null && !server.getTeamManager().isProtected(hit.pos())) {
 				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
 				stack.incrementAmount();
@@ -181,7 +180,7 @@ public class PlayerActionManager {
 				now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000
 		) {
 			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), server.getConfig().actions.blockPlaceReach);
-			if (hit != null) {
+			if (hit != null && !server.getTeamManager().isProtected(hit.pos())) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());
 				if (!isSpaceOccupied(placePos)) { // Ensure that we can't place blocks in space we're occupying.
@@ -196,7 +195,7 @@ public class PlayerActionManager {
 		}
 	}
 
-	private void tickMovement(float dt, World world, ServerConfig.PhysicsConfig config) {
+	private void tickMovement(float dt, Server server, World world, ServerConfig.PhysicsConfig config) {
 		var velocity = player.getVelocity();
 		var position = player.getPosition();
 		boolean grounded = isGrounded(world);
@@ -216,9 +215,18 @@ public class PlayerActionManager {
 		if (velocity.lengthSquared() > 0) {
 			Vector3f movement = new Vector3f(velocity).mul(dt);
 			// Check for collisions if we try to move according to what the player wants.
-			checkBlockCollisions(movement, world);
+			checkBlockCollisions(movement, server, world);
 			position.add(movement);
 			updated = true;
+		}
+
+		// Finally, check to see if the player is outside the world, and kill them if so.
+		if (
+				player.getPosition().x < world.getMinX() - 5 || player.getPosition().x > world.getMaxX() + 6 ||
+				player.getPosition().z < world.getMinZ() - 5 || player.getPosition().z > world.getMaxZ() + 6 ||
+				player.getPosition().y < world.getMinY() - 50 || player.getPosition().y > world.getMaxY() + 500
+		) {
+			server.getPlayerManager().playerKilled(player, null);
 		}
 	}
 
@@ -319,7 +327,7 @@ public class PlayerActionManager {
 		return pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY && pos.z >= minZ && pos.z <= maxZ;
 	}
 
-	private void checkBlockCollisions(Vector3f movement, World world) {
+	private void checkBlockCollisions(Vector3f movement, Server server, World world) {
 		var position = player.getPosition();
 		var velocity = player.getVelocity();
 		final Vector3f nextTickPosition = new Vector3f(position).add(movement);
@@ -430,6 +438,19 @@ public class PlayerActionManager {
 						 */
 						boolean collidingWithFloor = playerBodyPrevMinY >= blockMaxY && playerBodyMinY < blockMaxY && world.getBlockAt(x, y + 1, z) <= 0;
 						if (collidingWithFloor) {
+							// This is a special case! We need to check for fall damage.
+							if (velocity.y < -20) {
+								float damage = velocity.y / 200f;
+								player.setHealth(player.getHealth() + damage);
+								if (player.getHealth() <= 0) {
+									server.getPlayerManager().playerKilled(player, player);
+								} else {
+									var handler = server.getPlayerManager().getHandler(player.getId());
+									handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
+									int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
+									handler.sendDatagramPacket(new SoundMessage("hurt_" + soundVariant, 1, player.getPosition()));
+								}
+							}
 							position.y = blockMaxY;
 							velocity.y = 0;
 							movement.y = 0;

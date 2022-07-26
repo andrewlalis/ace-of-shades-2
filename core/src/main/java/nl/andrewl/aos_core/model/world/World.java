@@ -118,6 +118,30 @@ public class World {
 		return Collections.unmodifiableMap(spawnPoints);
 	}
 
+	public int getMinX() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().x * Chunk.SIZE).min().orElse(0);
+	}
+
+	public int getMinY() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().y * Chunk.SIZE).min().orElse(0);
+	}
+
+	public int getMinZ() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().z * Chunk.SIZE).min().orElse(0);
+	}
+
+	public int getMaxX() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().x * Chunk.SIZE + Chunk.SIZE - 1).max().orElse(0);
+	}
+
+	public int getMaxY() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().y * Chunk.SIZE + Chunk.SIZE - 1).max().orElse(0);
+	}
+
+	public int getMaxZ() {
+		return chunkMap.values().stream().mapToInt(c -> c.getPosition().z * Chunk.SIZE + Chunk.SIZE - 1).max().orElse(0);
+	}
+
 	/**
 	 * Clears all data from the world.
 	 */

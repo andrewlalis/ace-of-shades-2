@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_server;
 
+import nl.andrewl.aos2_server.model.BlockHitTracker;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.model.ServerProjectile;
 import nl.andrewl.aos_core.Directions;
@@ -12,6 +13,7 @@ import nl.andrewl.aos_core.net.client.SoundMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,11 +29,13 @@ public class ProjectileManager {
 	private int nextProjectileId = 1;
 	private final Map<Integer, ServerProjectile> projectiles;
 	private final Queue<ServerProjectile> removalQueue;
+	private final Map<Vector3i, BlockHitTracker> blockHitTrackers;
 
 	public ProjectileManager(Server server) {
 		this.server = server;
 		this.projectiles = new HashMap<>();
 		this.removalQueue = new LinkedList<>();
+		this.blockHitTrackers = new HashMap<>();
 	}
 
 	/**
@@ -68,23 +72,25 @@ public class ProjectileManager {
 					.mul(200 * MOVEMENT_FACTOR)
 					.add(player.getVelocity());
 
-			ServerProjectile bullet = new ServerProjectile(id, new Vector3f(pos), vel, Projectile.Type.BULLET, player);
+			ServerProjectile bullet = new ServerProjectile(id, new Vector3f(pos), vel, Projectile.Type.BULLET, player, gun);
 			projectiles.put(bullet.getId(), bullet);
 			server.getPlayerManager().broadcastUdpMessage(bullet.toMessage(false));
 		}
 	}
 
-	public void tick(float dt) {
+	public void tick(long now, float dt) {
 		for (var projectile : projectiles.values()) {
-			tickProjectile(projectile, dt);
+			tickProjectile(projectile, now, dt);
 		}
 		while (!removalQueue.isEmpty()) {
 			ServerProjectile projectile = removalQueue.remove();
 			projectiles.remove(projectile.getId());
 		}
+		// Remove any block hit trackers for blocks whose cooldown period has passed.
+		blockHitTrackers.entrySet().removeIf(entry -> now - entry.getValue().getLastHitAt() > server.getConfig().actions.blockBulletDamageCooldown * 1000);
 	}
 
-	private void tickProjectile(ServerProjectile projectile, float dt) {
+	private void tickProjectile(ServerProjectile projectile, long now, float dt) {
 		projectile.getVelocity().y -= server.getConfig().physics.gravity * dt * MOVEMENT_FACTOR;
 
 		// Check for if the bullet will move close enough to a player to hit them.
@@ -139,7 +145,7 @@ public class ProjectileManager {
 		// If we hit the world before the player,
 		if (hit != null && (playerHit == null || worldHitDist < playerHitDist)) {
 			// Bullet struck the world first.
-			handleProjectileBlockHit(hit, projectile);
+			handleProjectileBlockHit(hit, projectile, now);
 		} else if (playerHit != null && (hit == null || playerHitDist < worldHitDist)) {
 			// Bullet struck the player first.
 			handleProjectilePlayerHit(playerHitType, hitPlayer, projectile);
@@ -154,24 +160,37 @@ public class ProjectileManager {
 		}
 	}
 
-	private void handleProjectileBlockHit(Hit hit, ServerProjectile projectile) {
-		server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
-		server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
-		int soundVariant = ThreadLocalRandom.current().nextInt(1, 6);
-		server.getPlayerManager().broadcastUdpMessage(new SoundMessage("bullet_impact_" + soundVariant, 1, hit.rawPos()));
+	private void handleProjectileBlockHit(Hit hit, ServerProjectile projectile, long now) {
+		if (!server.getTeamManager().isProtected(hit.pos())) {
+			Gun gun = (Gun) projectile.getSourceItem();
+			float damage = gun.getBaseDamage();
+			BlockHitTracker blockHitTracker = blockHitTrackers.computeIfAbsent(hit.pos(), p -> new BlockHitTracker(now, damage));
+			if (blockHitTracker.getDamageAccumulated() >= server.getConfig().actions.blockBulletDamageResistance) {
+				server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
+				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
+				blockHitTrackers.remove(hit.pos());
+			} else {
+				blockHitTracker.doHit(now, damage);
+			}
+			int soundVariant = ThreadLocalRandom.current().nextInt(1, 6);
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("bullet_impact_" + soundVariant, 1, hit.rawPos()));
+		}
 		deleteProjectile(projectile);
 	}
 
 	private void handleProjectilePlayerHit(int playerHitType, ServerPlayer hitPlayer, ServerProjectile projectile) {
-		float damage = 0.4f;
-		if (playerHitType == 1) damage *= 2;
-		hitPlayer.setHealth(hitPlayer.getHealth() - damage);
-		int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
-		server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
-		if (hitPlayer.getHealth() == 0) {
-			server.getPlayerManager().playerKilled(hitPlayer);
-		} else {
-			server.getPlayerManager().getHandler(hitPlayer).sendDatagramPacket(new ClientHealthMessage(hitPlayer.getHealth()));
+		if (!server.getTeamManager().isProtected(hitPlayer)) {
+			Gun gun = (Gun) projectile.getSourceItem();
+			float damage = gun.getBaseDamage();
+			if (playerHitType == 1) damage *= 2;
+			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
+			int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
+			if (hitPlayer.getHealth() == 0) {
+				server.getPlayerManager().playerKilled(hitPlayer, projectile.getPlayer());
+			} else {
+				server.getPlayerManager().getHandler(hitPlayer).sendDatagramPacket(new ClientHealthMessage(hitPlayer.getHealth()));
+			}
 		}
 		deleteProjectile(projectile);
 	}

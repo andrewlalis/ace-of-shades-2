@@ -1,6 +1,8 @@
 package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos_core.model.Projectile;
+import nl.andrewl.aos_core.model.item.Gun;
+import nl.andrewl.aos_core.model.item.Item;
 import nl.andrewl.aos_core.net.client.ProjectileMessage;
 import org.joml.Vector3f;
 
@@ -11,12 +13,14 @@ import org.joml.Vector3f;
  */
 public class ServerProjectile extends Projectile {
 	private final ServerPlayer player;
+	private final Item sourceItem;
 	private final Vector3f origin;
 
-	public ServerProjectile(int id, Vector3f position, Vector3f velocity, Type type, ServerPlayer player) {
+	public ServerProjectile(int id, Vector3f position, Vector3f velocity, Type type, ServerPlayer player, Item sourceItem) {
 		super(id, position, velocity, type);
 		this.player = player;
 		this.origin = new Vector3f(position);
+		this.sourceItem = sourceItem;
 	}
 
 	public ServerPlayer getPlayer() {
@@ -38,5 +42,9 @@ public class ServerProjectile extends Projectile {
 				velocity.x, velocity.y, velocity.z,
 				destroyed
 		);
+	}
+
+	public Item getSourceItem() {
+		return sourceItem;
 	}
 }

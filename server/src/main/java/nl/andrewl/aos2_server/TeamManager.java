@@ -3,6 +3,7 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.model.Team;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -45,5 +46,17 @@ public class TeamManager {
 		Team team = getTeam(id);
 		if (team == null) return Collections.emptyList();
 		return getPlayers(team);
+	}
+
+	public boolean isProtected(Vector3i pos) {
+		float prot = server.getConfig().actions.teamSpawnProtection;
+		return prot > 0 &&
+				getTeams().stream().anyMatch(t -> t.getSpawnPoint().distance(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f) <= prot);
+	}
+
+	public boolean isProtected(ServerPlayer player) {
+		float prot = server.getConfig().actions.teamSpawnProtection;
+		return prot > 0 &&
+				getTeams().stream().anyMatch(t -> t.equals(player.getTeam()) && player.getPosition().distance(t.getSpawnPoint()) <= prot);
 	}
 }
