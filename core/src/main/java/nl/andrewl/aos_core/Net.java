@@ -45,6 +45,7 @@ public final class Net {
 		serializer.registerType(16, SoundMessage.class);
 		serializer.registerType(17, ProjectileMessage.class);
 		serializer.registerType(18, ClientHealthMessage.class);
+		serializer.registerType(19, BlockColorMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

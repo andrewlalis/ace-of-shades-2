@@ -77,7 +77,8 @@ public class GameRenderer {
 	public void setupWindow(
 			GLFWCursorPosCallbackI viewCursorCallback,
 			GLFWKeyCallbackI inputKeyCallback,
-			GLFWMouseButtonCallbackI mouseButtonCallback
+			GLFWMouseButtonCallbackI mouseButtonCallback,
+			GLFWScrollCallbackI scrollCallback
 	) {
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
@@ -105,6 +106,7 @@ public class GameRenderer {
 		glfwSetKeyCallback(windowHandle, inputKeyCallback);
 		glfwSetCursorPosCallback(windowHandle, viewCursorCallback);
 		glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback);
+		glfwSetScrollCallback(windowHandle, scrollCallback);
 		if (config.captureCursor) {
 			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}

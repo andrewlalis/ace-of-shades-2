@@ -1,10 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.config.ClientConfig;
-import nl.andrewl.aos2_client.control.InputHandler;
-import nl.andrewl.aos2_client.control.PlayerInputKeyCallback;
-import nl.andrewl.aos2_client.control.PlayerInputMouseClickCallback;
-import nl.andrewl.aos2_client.control.PlayerViewCursorCallback;
+import nl.andrewl.aos2_client.control.*;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
@@ -84,7 +81,8 @@ public class Client implements Runnable {
 		gameRenderer.setupWindow(
 				new PlayerViewCursorCallback(config.input, this, gameRenderer.getCamera(), communicationHandler),
 				new PlayerInputKeyCallback(inputHandler),
-				new PlayerInputMouseClickCallback(inputHandler)
+				new PlayerInputMouseClickCallback(inputHandler),
+				new PlayerInputMouseScrollCallback(this, communicationHandler)
 		);
 		soundManager = new SoundManager();
 		log.debug("Sound system initialized.");

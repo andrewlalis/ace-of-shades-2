@@ -111,7 +111,7 @@ public class PlayerActionManager {
 				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
 				(gun.isAutomatic() || !gunNeedsReCock)
 		) {
-			server.getProjectileManager().spawnBullet(player);
+			server.getProjectileManager().spawnBullet(player, gun);
 			g.setBulletCount(g.getBulletCount() - 1);
 			gunLastShotAt = now;
 			if (!gun.isAutomatic()) {
@@ -159,9 +159,9 @@ public class PlayerActionManager {
 		if (
 				lastInputState.hitting() &&
 				stack.getAmount() < stack.getType().getMaxAmount() &&
-				now - lastBlockRemovedAt > server.getConfig().actions.blockRemoveCooldown * 1000
+				now - lastBlockRemovedAt > server.getConfig().actions.blockBreakCooldown * 1000
 		) {
-			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 10);
+			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), server.getConfig().actions.blockBreakReach);
 			if (hit != null) {
 				world.setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 				lastBlockRemovedAt = now;
@@ -177,7 +177,7 @@ public class PlayerActionManager {
 				stack.getAmount() > 0 &&
 				now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000
 		) {
-			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), 10);
+			var hit = world.getLookingAtPos(player.getEyePosition(), player.getViewVector(), server.getConfig().actions.blockPlaceReach);
 			if (hit != null) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());

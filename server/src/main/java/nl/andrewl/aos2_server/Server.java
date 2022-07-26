@@ -5,9 +5,11 @@ import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos2_server.logic.WorldUpdater;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.config.Config;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
+import nl.andrewl.aos_core.net.client.BlockColorMessage;
 import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos_core.net.client.ClientOrientationState;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
@@ -102,6 +104,12 @@ public class Server implements Runnable {
 			if (player != null) {
 				player.setOrientation(orientationState.x(), orientationState.y());
 				playerManager.broadcastUdpMessageToAllBut(player.getUpdateMessage(now), player);
+			}
+		} else if (msg instanceof BlockColorMessage blockColorMessage) {
+			ServerPlayer player = playerManager.getPlayer(blockColorMessage.clientId());
+			if (player != null && player.getInventory().getSelectedItemStack() instanceof BlockItemStack stack) {
+				stack.setSelectedValue(blockColorMessage.block());
+				playerManager.broadcastUdpMessageToAllBut(blockColorMessage, player);
 			}
 		}
 	}

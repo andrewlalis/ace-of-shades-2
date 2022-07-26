@@ -18,9 +18,12 @@ public class ServerConfig {
 	}
 
 	public static class ActionsConfig {
-		public float blockRemoveCooldown = 0.25f;
+		public float blockBreakCooldown = 0.25f;
 		public float blockPlaceCooldown = 0.1f;
+		public float blockBreakReach = 5;
+		public float blockPlaceReach = 5;
 		public float resupplyCooldown = 30;
 		public float resupplyRadius = 3;
+		public float movementAccuracyDecreaseFactor = 0.01f;
 	}
 }

@@ -5,6 +5,7 @@ import nl.andrewl.aos2_server.model.ServerProjectile;
 import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
+import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.world.Hit;
 import nl.andrewl.aos_core.net.client.ClientHealthMessage;
 import nl.andrewl.aos_core.net.client.SoundMessage;
@@ -12,10 +13,7 @@ import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -36,18 +34,30 @@ public class ProjectileManager {
 		this.removalQueue = new LinkedList<>();
 	}
 
-	public void spawnBullet(ServerPlayer player) {
+	public void spawnBullet(ServerPlayer player, Gun gun) {
 		int id = nextProjectileId++;
 		if (nextProjectileId == Integer.MAX_VALUE) nextProjectileId = 1;
+		Random rand = ThreadLocalRandom.current();
+
 		Vector3f pos = new Vector3f();
 		Matrix4f bulletTransform = new Matrix4f()
 				.translate(player.getEyePosition())
 				.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
 				.translate(-0.35f, -0.4f, 0.35f);
 		bulletTransform.transformPosition(pos);
-		Vector3f vel = new Vector3f(player.getViewVector()).normalize()
+
+		Vector3f direction = new Vector3f(player.getViewVector()).normalize();
+		float accuracy = gun.getAccuracy();
+		accuracy -= server.getConfig().actions.movementAccuracyDecreaseFactor * player.getVelocity().length();
+		float perturbationFactor = (1 - accuracy) / 8;
+		direction.x += rand.nextGaussian(0, perturbationFactor);
+		direction.y += rand.nextGaussian(0, perturbationFactor);
+		direction.z += rand.nextGaussian(0, perturbationFactor);
+
+		Vector3f vel = new Vector3f(direction).normalize()
 				.mul(200 * MOVEMENT_FACTOR)
 				.add(player.getVelocity());
+
 		ServerProjectile bullet = new ServerProjectile(id, pos, vel, Projectile.Type.BULLET, player);
 		projectiles.put(bullet.getId(), bullet);
 		server.getPlayerManager().broadcastUdpMessage(bullet.toMessage(false));

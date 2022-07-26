@@ -1,8 +1,12 @@
 package nl.andrewl.aos2_client.control;
 
-import nl.andrewl.aos2_client.CommunicationHandler;
-import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos2_client.Client;
+import nl.andrewl.aos2_client.CommunicationHandler;
+import nl.andrewl.aos2_client.model.ClientPlayer;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.world.Hit;
+import nl.andrewl.aos_core.net.client.BlockColorMessage;
+import nl.andrewl.aos_core.net.client.ClientInputState;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -45,6 +49,20 @@ public class InputHandler {
 		if (!currentInputState.equals(lastInputState)) {
 			comm.sendDatagramPacket(currentInputState);
 			lastInputState = currentInputState;
+		}
+
+		ClientPlayer player = client.getMyPlayer();
+
+		// Check for "pick block" functionality.
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS && player.getInventory().getSelectedItemStack() instanceof BlockItemStack stack) {
+			Hit hit = client.getWorld().getLookingAtPos(player.getEyePosition(), player.getViewVector(), 50);
+			if (hit != null) {
+				byte selectedBlock = client.getWorld().getBlockAt(hit.pos().x, hit.pos().y, hit.pos().z);
+				if (selectedBlock > 0) {
+					stack.setSelectedValue(selectedBlock);
+					comm.sendDatagramPacket(new BlockColorMessage(player.getId(), selectedBlock));
+				}
+			}
 		}
 	}
 }
