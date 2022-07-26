@@ -26,7 +26,7 @@ import static org.lwjgl.openal.ALC10.*;
 public class SoundManager {
 	private static final Logger log = LoggerFactory.getLogger(SoundManager.class);
 
-	private static final int SOURCE_COUNT = 16;
+	private static final int SOURCE_COUNT = 32;
 
 	private final long alContext;
 	private final Map<String, Integer> audioBuffers = new HashMap<>();

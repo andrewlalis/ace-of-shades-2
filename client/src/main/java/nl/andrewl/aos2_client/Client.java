@@ -100,6 +100,7 @@ public class Client implements Runnable {
 			gameRenderer.draw();
 			lastFrameAt = now;
 		}
+		soundManager.free();
 		gameRenderer.freeWindow();
 		communicationHandler.shutdown();
 	}
@@ -139,6 +140,11 @@ public class Client implements Runnable {
 			myPlayer.getInventory().setSelectedIndex(selectedStackMessage.index());
 		} else if (msg instanceof ItemStackMessage itemStackMessage) {
 			myPlayer.getInventory().getItemStacks().set(itemStackMessage.index(), itemStackMessage.stack());
+		} else if (msg instanceof BlockColorMessage blockColorMessage) {
+			OtherPlayer player = players.get(blockColorMessage.clientId());
+			if (player != null) {
+				player.setSelectedBlockValue(blockColorMessage.block());
+			}
 		} else if (msg instanceof PlayerJoinMessage joinMessage) {
 			Player p = joinMessage.toPlayer();
 			OtherPlayer op = new OtherPlayer(p.getId(), p.getUsername());
@@ -149,11 +155,19 @@ public class Client implements Runnable {
 			op.getVelocity().set(p.getVelocity());
 			op.getOrientation().set(p.getOrientation());
 			op.setHeldItemId(joinMessage.selectedItemId());
+			op.setSelectedBlockValue(joinMessage.selectedBlockValue());
 			players.put(op.getId(), op);
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {
 			players.remove(leaveMessage.id());
 		} else if (msg instanceof SoundMessage soundMessage) {
-			soundManager.play(soundMessage.name(), soundMessage.gain(), new Vector3f(soundMessage.px(), soundMessage.py(), soundMessage.pz()));
+			if (soundManager != null) {
+				soundManager.play(
+						soundMessage.name(),
+						soundMessage.gain(),
+						new Vector3f(soundMessage.px(), soundMessage.py(), soundMessage.pz()),
+						new Vector3f(soundMessage.vx(), soundMessage.vy(), soundMessage.vz())
+				);
+			}
 		} else if (msg instanceof ProjectileMessage pm) {
 			Projectile p = projectiles.get(pm.id());
 			if (p == null && !pm.destroyed()) {

@@ -17,7 +17,7 @@ import java.util.Map;
  * that players can interact in.
  */
 public class World {
-	private static final float DELTA = 0.0001f;
+	private static final float DELTA = 0.01f;
 
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 	protected ColorPalette palette;

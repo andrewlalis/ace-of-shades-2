@@ -14,19 +14,9 @@ public record PlayerJoinMessage(
 		float vx, float vy, float vz,
 		float ox, float oy,
 		boolean crouching,
-		int selectedItemId
+		int selectedItemId,
+		byte selectedBlockValue
 ) implements Message {
-	public PlayerJoinMessage(Player player) {
-		this(
-				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
-				player.getPosition().x, player.getPosition().y, player.getPosition().z,
-				player.getVelocity().x, player.getVelocity().y, player.getVelocity().z,
-				player.getOrientation().x, player.getOrientation().y,
-				player.isCrouching(),
-				ItemTypes.BLOCK.getId()
-		);
-	}
-
 	public Player toPlayer() {
 		Player p = new Player(id, username);
 		p.getPosition().set(px, py, pz);

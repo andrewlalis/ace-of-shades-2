@@ -1,6 +1,7 @@
 package nl.andrewl.aos_core.model.item;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents the contents and current state of a player's inventory.
@@ -37,5 +38,21 @@ public class Inventory {
 		if (newIndex < 0) newIndex = 0;
 		if (newIndex > itemStacks.size() - 1) newIndex = itemStacks.size() - 1;
 		this.selectedIndex = newIndex;
+	}
+
+	public Optional<ItemStack> getItemStack(Item itemType) {
+		for (var stack : itemStacks) {
+			if (stack.getType().equals(itemType)) return Optional.of(stack);
+		}
+		return Optional.empty();
+	}
+
+	public byte getSelectedBlockValue() {
+		for (var stack : itemStacks) {
+			if (stack instanceof BlockItemStack b) {
+				return b.getSelectedValue();
+			}
+		}
+		return 1;
 	}
 }

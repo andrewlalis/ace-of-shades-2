@@ -18,7 +18,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,16 +231,16 @@ public class GameRenderer {
 			}
 		}
 		smgModel.unbind();
-
 		blockModel.bind();
-		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
-			BlockItemStack stack = (BlockItemStack) client.getMyPlayer().getInventory().getSelectedItemStack();
+		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
+			BlockItemStack stack = (BlockItemStack) myPlayer.getInventory().getSelectedItemStack();
 			modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(stack.getSelectedValue()));
 			modelRenderer.render(blockModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		modelRenderer.setAspectColor(new Vector3f(0.5f, 0.5f, 0.5f));
 		for (var player : client.getPlayers().values()) {
 			if (player.getHeldItemId() == ItemTypes.BLOCK.getId()) {
+				modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(player.getSelectedBlockValue()));
 				modelRenderer.render(blockModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
 		}
@@ -319,7 +318,12 @@ public class GameRenderer {
 	}
 
 	public void freeWindow() {
+		if (rifleModel != null) rifleModel.free();
+		if (smgModel != null) smgModel.free();
+		if (flagModel != null) flagModel.free();
+		if (bulletModel != null) bulletModel.free();
 		if (playerModel != null) playerModel.free();
+		if (blockModel != null) blockModel.free();
 		if (modelRenderer != null) modelRenderer.free();
 		if (guiRenderer != null) guiRenderer.free();
 		if (chunkRenderer != null) chunkRenderer.free();

@@ -19,6 +19,18 @@ public class InputHandler {
 
 	private ClientInputState lastInputState = null;
 
+	private boolean forward;
+	private boolean backward;
+	private boolean left;
+	private boolean right;
+	private boolean jumping;
+	private boolean crouching;
+	private boolean sprinting;
+	private boolean hitting;
+	private boolean interacting;
+	private boolean reloading;
+
+
 	public InputHandler(Client client, CommunicationHandler comm) {
 		this.client = client;
 		this.comm = comm;

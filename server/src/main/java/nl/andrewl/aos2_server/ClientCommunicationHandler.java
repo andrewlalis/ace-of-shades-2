@@ -220,6 +220,7 @@ public class ClientCommunicationHandler {
 
 			out.writeBoolean(player.isCrouching());
 			out.writeInt(player.getInventory().getSelectedItemStack().getType().getId());
+			out.writeByte(player.getInventory().getSelectedBlockValue());
 		}
 
 		// Send the player's own inventory data.

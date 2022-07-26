@@ -3,10 +3,7 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Team;
-import nl.andrewl.aos_core.model.item.BlockItemStack;
-import nl.andrewl.aos_core.model.item.Gun;
-import nl.andrewl.aos_core.model.item.GunItemStack;
-import nl.andrewl.aos_core.model.item.ItemStack;
+import nl.andrewl.aos_core.model.item.*;
 import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
@@ -47,7 +44,15 @@ public class PlayerManager {
 		}
 		player.setPosition(getBestSpawnPoint(player));
 		// Tell all other players that this one has joined.
-		broadcastTcpMessageToAllBut(new PlayerJoinMessage(player), player);
+		broadcastTcpMessageToAllBut(new PlayerJoinMessage(
+				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
+				player.getPosition().x(), player.getPosition().y(), player.getPosition().z(),
+				player.getVelocity().x(), player.getVelocity().y(), player.getVelocity().z(),
+				player.getOrientation().x(), player.getOrientation().y(),
+				player.isCrouching(),
+				player.getInventory().getSelectedItemStack().getType().getId(),
+				player.getInventory().getSelectedBlockValue()
+		), player);
 		return player;
 	}
 

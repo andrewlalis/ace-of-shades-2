@@ -19,7 +19,7 @@ public class ColorPalette {
 	}
 
 	public Vector3f getColor(byte value) {
-		if (value < 0) return null;
+		if (value <= 0) return null;
 		return colors[value - 1];
 	}
 

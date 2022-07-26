@@ -46,6 +46,14 @@ public class OtherPlayer extends Player {
 		this.heldItemId = heldItemId;
 	}
 
+	public byte getSelectedBlockValue() {
+		return selectedBlockValue;
+	}
+
+	public void setSelectedBlockValue(byte selectedBlockValue) {
+		this.selectedBlockValue = selectedBlockValue;
+	}
+
 	@Override
 	public void setPosition(Vector3f position) {
 		super.setPosition(position);

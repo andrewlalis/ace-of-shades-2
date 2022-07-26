@@ -181,6 +181,7 @@ public class CommunicationHandler {
 			player.getOrientation().set(in.readFloat(), in.readFloat());
 			player.setCrouching(in.readBoolean());
 			player.setHeldItemId(in.readInt());
+			player.setSelectedBlockValue(in.readByte());
 			client.getPlayers().put(player.getId(), player);
 		}
 
