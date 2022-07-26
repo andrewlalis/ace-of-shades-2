@@ -31,6 +31,7 @@ public class InputHandler {
 		if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) selectedInventoryIndex = 0;
 		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) selectedInventoryIndex = 1;
 		if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) selectedInventoryIndex = 2;
+		if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS) selectedInventoryIndex = 3;
 
 		ClientInputState currentInputState = new ClientInputState(
 				comm.getClientId(),

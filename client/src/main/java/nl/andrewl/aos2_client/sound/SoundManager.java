@@ -66,6 +66,7 @@ public class SoundManager {
 		load("footsteps_4", "sound/m_footsteps_4.wav");
 		load("shot_m1-garand_1", "sound/m_shot_m1-garand_1.wav");
 		load("shot_ak-47_1", "sound/m_shot_ak-47_1.wav");
+		load("shot_winchester_1", "sound/m_shot_winchester_1.wav");
 		load("bullet_impact_1", "sound/m_bullet_impact_1.wav");
 		load("bullet_impact_2", "sound/m_bullet_impact_2.wav");
 		load("bullet_impact_3", "sound/m_bullet_impact_3.wav");

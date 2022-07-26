@@ -34,33 +34,39 @@ public class ProjectileManager {
 		this.removalQueue = new LinkedList<>();
 	}
 
-	public void spawnBullet(ServerPlayer player, Gun gun) {
-		int id = nextProjectileId++;
-		if (nextProjectileId == Integer.MAX_VALUE) nextProjectileId = 1;
+	public void spawnBullets(ServerPlayer player, Gun gun) {
 		Random rand = ThreadLocalRandom.current();
-
 		Vector3f pos = new Vector3f();
-		Matrix4f bulletTransform = new Matrix4f()
-				.translate(player.getEyePosition())
-				.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
-				.translate(-0.35f, -0.4f, 0.35f);
-		bulletTransform.transformPosition(pos);
+		Vector3f direction = new Vector3f();
+		Matrix4f bulletTransform = new Matrix4f();
 
-		Vector3f direction = new Vector3f(player.getViewVector()).normalize();
-		float accuracy = gun.getAccuracy();
-		accuracy -= server.getConfig().actions.movementAccuracyDecreaseFactor * player.getVelocity().length();
-		float perturbationFactor = (1 - accuracy) / 8;
-		direction.x += rand.nextGaussian(0, perturbationFactor);
-		direction.y += rand.nextGaussian(0, perturbationFactor);
-		direction.z += rand.nextGaussian(0, perturbationFactor);
+		for (int i = 0; i < gun.getBulletsPerRound(); i++) {
+			int id = nextProjectileId++;
+			if (nextProjectileId == Integer.MAX_VALUE) nextProjectileId = 1;
 
-		Vector3f vel = new Vector3f(direction).normalize()
-				.mul(200 * MOVEMENT_FACTOR)
-				.add(player.getVelocity());
+			pos.set(0);
+			bulletTransform.identity()
+					.translate(player.getEyePosition())
+					.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
+					.translate(-0.35f, -0.4f, 0.35f);
+			bulletTransform.transformPosition(pos);
 
-		ServerProjectile bullet = new ServerProjectile(id, pos, vel, Projectile.Type.BULLET, player);
-		projectiles.put(bullet.getId(), bullet);
-		server.getPlayerManager().broadcastUdpMessage(bullet.toMessage(false));
+			direction.set(player.getViewVector()).normalize();
+			float accuracy = gun.getAccuracy();
+			accuracy -= server.getConfig().actions.movementAccuracyDecreaseFactor * player.getVelocity().length();
+			float perturbationFactor = (1 - accuracy) / 8;
+			direction.x += rand.nextGaussian(0, perturbationFactor);
+			direction.y += rand.nextGaussian(0, perturbationFactor);
+			direction.z += rand.nextGaussian(0, perturbationFactor);
+
+			Vector3f vel = new Vector3f(direction).normalize()
+					.mul(200 * MOVEMENT_FACTOR)
+					.add(player.getVelocity());
+
+			ServerProjectile bullet = new ServerProjectile(id, new Vector3f(pos), vel, Projectile.Type.BULLET, player);
+			projectiles.put(bullet.getId(), bullet);
+			server.getPlayerManager().broadcastUdpMessage(bullet.toMessage(false));
+		}
 	}
 
 	public void tick(float dt) {

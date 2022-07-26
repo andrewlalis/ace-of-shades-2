@@ -2,6 +2,7 @@ package nl.andrewl.aos_core.model.item;
 
 import nl.andrewl.aos_core.model.item.gun.Ak47;
 import nl.andrewl.aos_core.model.item.gun.Rifle;
+import nl.andrewl.aos_core.model.item.gun.Winchester;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,11 +17,13 @@ public final class ItemTypes {
 	public static final BlockItem BLOCK = new BlockItem(1);
 	public static final Rifle RIFLE = new Rifle(2);
 	public static final Ak47 AK_47 = new Ak47(3);
+	public static final Winchester WINCHESTER = new Winchester(4);
 
 	static {
 		registerType(BLOCK);
 		registerType(RIFLE);
 		registerType(AK_47);
+		registerType(WINCHESTER);
 	}
 
 	public static void registerType(Item type) {

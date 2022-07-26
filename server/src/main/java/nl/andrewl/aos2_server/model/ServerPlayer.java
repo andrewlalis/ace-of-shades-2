@@ -6,6 +6,7 @@ import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;
 import nl.andrewl.aos_core.model.item.ItemTypes;
+import nl.andrewl.aos_core.model.item.gun.Winchester;
 import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +35,9 @@ public class ServerPlayer extends Player {
 		this.health = 1f;
 		this.actionManager = new PlayerActionManager(this);
 		inventory.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
-		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
 		inventory.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
+		inventory.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
+		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
 	}
 
 	public PlayerActionManager getActionManager() {

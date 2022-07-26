@@ -9,6 +9,7 @@ import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.item.gun.Ak47;
 import nl.andrewl.aos_core.model.item.gun.Rifle;
+import nl.andrewl.aos_core.model.item.gun.Winchester;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos_core.net.client.InventorySelectedStackMessage;
@@ -111,7 +112,7 @@ public class PlayerActionManager {
 				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
 				(gun.isAutomatic() || !gunNeedsReCock)
 		) {
-			server.getProjectileManager().spawnBullet(player, gun);
+			server.getProjectileManager().spawnBullets(player, gun);
 			g.setBulletCount(g.getBulletCount() - 1);
 			gunLastShotAt = now;
 			if (!gun.isAutomatic()) {
@@ -123,6 +124,8 @@ public class PlayerActionManager {
 				shotSound = "shot_m1-garand_1";
 			} else if (gun instanceof Ak47) {
 				shotSound = "shot_ak-47_1";
+			} else if (gun instanceof Winchester) {
+				shotSound = "shot_winchester_1";
 			}
 			server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, player.getPosition(), player.getVelocity()));
 		}
