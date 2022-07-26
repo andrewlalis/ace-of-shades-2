@@ -25,5 +25,6 @@ public class ServerConfig {
 		public float resupplyCooldown = 30;
 		public float resupplyRadius = 3;
 		public float movementAccuracyDecreaseFactor = 0.01f;
+		public boolean friendlyFire = false;
 	}
 }

@@ -34,6 +34,11 @@ public class ProjectileManager {
 		this.removalQueue = new LinkedList<>();
 	}
 
+	/**
+	 * Spawns any bullets necessary as a result of firing a gun.
+	 * @param player The player that fired the gun.
+	 * @param gun The gun that is firing the bullet(s).
+	 */
 	public void spawnBullets(ServerPlayer player, Gun gun) {
 		Random rand = ThreadLocalRandom.current();
 		Vector3f pos = new Vector3f();
@@ -94,6 +99,12 @@ public class ProjectileManager {
 		for (ServerPlayer player : server.getPlayerManager().getPlayers()) {
 			// Don't allow players to shoot themselves.
 			if (projectile.getPlayer() != null && projectile.getPlayer().equals(player)) continue;
+			// Don't check for collisions with team players, if friendly fire is disabled.
+			if (
+					!server.getConfig().actions.friendlyFire &&
+					projectile.getPlayer() != null && projectile.getPlayer().getTeam() != null &&
+					projectile.getPlayer().getTeam().equals(player.getTeam())
+			) continue;
 
 			Vector3f headPos = player.getEyePosition();
 			Vector3f bodyPos = new Vector3f(player.getPosition());
@@ -128,25 +139,10 @@ public class ProjectileManager {
 		// If we hit the world before the player,
 		if (hit != null && (playerHit == null || worldHitDist < playerHitDist)) {
 			// Bullet struck the world first.
-			server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
-			server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
-			int soundVariant = ThreadLocalRandom.current().nextInt(1, 6);
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("bullet_impact_" + soundVariant, 1, hit.rawPos()));
-			deleteProjectile(projectile);
+			handleProjectileBlockHit(hit, projectile);
 		} else if (playerHit != null && (hit == null || playerHitDist < worldHitDist)) {
 			// Bullet struck the player first.
-			float damage = 0.4f;
-			if (playerHitType == 1) damage *= 2;
-			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
-			int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
-			if (hitPlayer.getHealth() == 0) {
-				System.out.println("Player killed!!!");
-				server.getPlayerManager().playerKilled(hitPlayer);
-			} else {
-				server.getPlayerManager().getHandler(hitPlayer).sendDatagramPacket(new ClientHealthMessage(hitPlayer.getHealth()));
-			}
-			deleteProjectile(projectile);
+			handleProjectilePlayerHit(playerHitType, hitPlayer, projectile);
 		} else {
 			// Bullet struck nothing.
 			projectile.getPosition().add(movement);
@@ -156,6 +152,28 @@ public class ProjectileManager {
 				server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(false));
 			}
 		}
+	}
+
+	private void handleProjectileBlockHit(Hit hit, ServerProjectile projectile) {
+		server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
+		server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
+		int soundVariant = ThreadLocalRandom.current().nextInt(1, 6);
+		server.getPlayerManager().broadcastUdpMessage(new SoundMessage("bullet_impact_" + soundVariant, 1, hit.rawPos()));
+		deleteProjectile(projectile);
+	}
+
+	private void handleProjectilePlayerHit(int playerHitType, ServerPlayer hitPlayer, ServerProjectile projectile) {
+		float damage = 0.4f;
+		if (playerHitType == 1) damage *= 2;
+		hitPlayer.setHealth(hitPlayer.getHealth() - damage);
+		int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
+		server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
+		if (hitPlayer.getHealth() == 0) {
+			server.getPlayerManager().playerKilled(hitPlayer);
+		} else {
+			server.getPlayerManager().getHandler(hitPlayer).sendDatagramPacket(new ClientHealthMessage(hitPlayer.getHealth()));
+		}
+		deleteProjectile(projectile);
 	}
 
 	private void deleteProjectile(ServerProjectile p) {
