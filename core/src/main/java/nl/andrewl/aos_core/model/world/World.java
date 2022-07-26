@@ -84,6 +84,16 @@ public class World {
 		setBlockAt(new Vector3f(x, y, z), block);
 	}
 
+	public void setBlocksAt(int x1, int y1, int z1, int x2, int y2, int z2, byte block) {
+		for (int x = x1; x <= x2; x++) {
+			for (int y = y1; y <= y2; y++) {
+				for (int z = z1; z <= z2; z++) {
+					setBlockAt(x, y, z, block);
+				}
+			}
+		}
+	}
+
 	public Chunk getChunkAt(Vector3i chunkPos) {
 		return chunkMap.get(chunkPos);
 	}

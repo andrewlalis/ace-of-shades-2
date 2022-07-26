@@ -7,10 +7,7 @@ import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemStack;
-import nl.andrewl.aos_core.net.client.ClientHealthMessage;
-import nl.andrewl.aos_core.net.client.ItemStackMessage;
-import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
-import nl.andrewl.aos_core.net.client.PlayerLeaveMessage;
+import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
@@ -154,6 +151,7 @@ public class PlayerManager {
 	 * @param player The player that died.
 	 */
 	public void playerKilled(ServerPlayer player) {
+		Vector3f deathPosition = new Vector3f(player.getPosition());
 		player.setPosition(getBestSpawnPoint(player));
 		player.setVelocity(new Vector3f(0));
 		player.setHealth(1);
@@ -171,6 +169,7 @@ public class PlayerManager {
 		}
 		handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
 		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
+		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
 		// TODO: Team points or something.
 	}
 

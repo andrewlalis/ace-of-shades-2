@@ -1,9 +1,14 @@
 package nl.andrewl.aos2_server.logic;
 
 import nl.andrewl.aos2_server.Server;
-import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.config.ServerConfig;
-import nl.andrewl.aos_core.model.item.*;
+import nl.andrewl.aos2_server.model.ServerPlayer;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.Gun;
+import nl.andrewl.aos_core.model.item.GunItemStack;
+import nl.andrewl.aos_core.model.item.ItemStack;
+import nl.andrewl.aos_core.model.item.gun.Ak47;
+import nl.andrewl.aos_core.model.item.gun.Rifle;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.net.client.ClientInputState;
 import nl.andrewl.aos_core.net.client.InventorySelectedStackMessage;
@@ -18,7 +23,7 @@ import org.joml.Vector3i;
 import java.util.ArrayList;
 import java.util.List;
 
-import static nl.andrewl.aos2_server.model.ServerPlayer.*;
+import static nl.andrewl.aos2_server.model.ServerPlayer.RADIUS;
 
 /**
  * Component that manages a server player's current actions and movement.
@@ -106,7 +111,13 @@ public class PlayerActionManager {
 				gunNeedsReCock = true;
 			}
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("rifle", player.getPosition().x(), player.getPosition().y(), player.getPosition().z()));
+			String shotSound = null;
+			if (gun instanceof Rifle) {
+				shotSound = "shot_m1-garand_1";
+			} else if (gun instanceof Ak47) {
+				shotSound = "shot_ak-47_1";
+			}
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, player.getPosition(), player.getVelocity()));
 		}
 
 		if (// Check to see if the player is reloading.
@@ -118,6 +129,7 @@ public class PlayerActionManager {
 			gunReloadingStartedAt = now;
 			gunReloading = true;
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("reload", 1, player.getPosition(), player.getVelocity()));
 		}
 
 		if (// Check to see if reloading is done.

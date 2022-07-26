@@ -134,4 +134,21 @@ public final class Worlds {
 
 		return world;
 	}
+
+	public static World flatWorld() {
+		World world = new World(ColorPalette.rainbow());
+		for (int x = 0; x < 5; x++) {
+			for (int y = 0; y < 5; y++) {
+				for (int z = 0; z < 12; z++) {
+					world.addChunk(new Chunk(x, y, z));
+				}
+			}
+		}
+		world.setBlocksAt(0, 0, 0, 5 * Chunk.SIZE, 2 * Chunk.SIZE, 12 * Chunk.SIZE, (byte) 80);
+
+		world.setSpawnPoint("A", new Vector3f(5, 34, 5));
+		world.setSpawnPoint("B", new Vector3f(5 * Chunk.SIZE - 5, 34, 12 * Chunk.SIZE - 5));
+
+		return world;
+	}
 }

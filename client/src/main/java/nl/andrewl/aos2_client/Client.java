@@ -9,7 +9,6 @@ import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos2_client.sound.SoundManager;
-import nl.andrewl.aos2_client.sound.SoundSource;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
@@ -38,14 +37,13 @@ public class Client implements Runnable {
 	private final InputHandler inputHandler;
 	private GameRenderer gameRenderer;
 	private SoundManager soundManager;
-	private SoundSource playerSource;
 	private long lastPlayerUpdate = 0;
 
 	private ClientWorld world;
 	private ClientPlayer myPlayer;
 	private final Map<Integer, OtherPlayer> players;
 	private final Map<Integer, Projectile> projectiles;
-	private Map<Integer, Team> teams;
+	private final Map<Integer, Team> teams;
 
 	public Client(ClientConfig config) {
 		this.config = config;
@@ -89,17 +87,18 @@ public class Client implements Runnable {
 				new PlayerInputMouseClickCallback(inputHandler)
 		);
 		soundManager = new SoundManager();
-		soundManager.load("rifle", "sound/m1garand-shot1.wav");
-		playerSource = new SoundSource();
+		log.debug("Sound system initialized.");
 
 		long lastFrameAt = System.currentTimeMillis();
 		while (!gameRenderer.windowShouldClose() && !communicationHandler.isDone()) {
 			long now = System.currentTimeMillis();
 			float dt = (now - lastFrameAt) / 1000f;
 			world.processQueuedChunkUpdates();
+			soundManager.updateListener(myPlayer.getPosition(), myPlayer.getVelocity());
 			gameRenderer.getCamera().interpolatePosition(dt);
-			interpolatePlayers(dt);
+			interpolatePlayers(now, dt);
 			interpolateProjectiles(dt);
+			soundManager.playWalkingSounds(myPlayer, now);
 			gameRenderer.draw();
 			lastFrameAt = now;
 		}
@@ -156,7 +155,7 @@ public class Client implements Runnable {
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {
 			players.remove(leaveMessage.id());
 		} else if (msg instanceof SoundMessage soundMessage) {
-			playerSource.play(soundManager.getSoundBuffer(soundMessage.name()));
+			soundManager.play(soundMessage.name(), soundMessage.gain(), new Vector3f(soundMessage.px(), soundMessage.py(), soundMessage.pz()));
 		} else if (msg instanceof ProjectileMessage pm) {
 			Projectile p = projectiles.get(pm.id());
 			if (p == null && !pm.destroyed()) {
@@ -186,10 +185,6 @@ public class Client implements Runnable {
 		return teams;
 	}
 
-	public void setTeams(Map<Integer, Team> teams) {
-		this.teams = teams;
-	}
-
 	public Map<Integer, OtherPlayer> getPlayers() {
 		return players;
 	}
@@ -198,12 +193,13 @@ public class Client implements Runnable {
 		return projectiles;
 	}
 
-	public void interpolatePlayers(float dt) {
+	public void interpolatePlayers(long now, float dt) {
 		Vector3f movement = new Vector3f();
 		for (var player : players.values()) {
 			movement.set(player.getVelocity()).mul(dt);
 			player.getPosition().add(movement);
 			player.updateModelTransform();
+			soundManager.playWalkingSounds(player, now);
 		}
 	}
 

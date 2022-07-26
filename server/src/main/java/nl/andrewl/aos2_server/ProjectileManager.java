@@ -7,6 +7,7 @@ import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.world.Hit;
 import nl.andrewl.aos_core.net.client.ClientHealthMessage;
+import nl.andrewl.aos_core.net.client.SoundMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Component that manages the set of all active projectiles in the world, and
@@ -112,14 +114,16 @@ public class ProjectileManager {
 			// Bullet struck the world first.
 			server.getWorld().setBlockAt(hit.pos().x, hit.pos().y, hit.pos().z, (byte) 0);
 			server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), server.getWorld()));
+			int soundVariant = ThreadLocalRandom.current().nextInt(1, 6);
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("bullet_impact_" + soundVariant, 1, hit.rawPos()));
 			deleteProjectile(projectile);
 		} else if (playerHit != null && (hit == null || playerHitDist < worldHitDist)) {
 			// Bullet struck the player first.
-			System.out.println("Player hit: " + playerHitType);
 			float damage = 0.4f;
 			if (playerHitType == 1) damage *= 2;
 			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
-			System.out.println(hitPlayer.getHealth());
+			int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
 			if (hitPlayer.getHealth() == 0) {
 				System.out.println("Player killed!!!");
 				server.getPlayerManager().playerKilled(hitPlayer);
