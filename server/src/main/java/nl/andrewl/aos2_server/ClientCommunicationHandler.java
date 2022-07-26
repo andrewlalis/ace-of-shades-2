@@ -151,8 +151,12 @@ public class ClientCommunicationHandler {
 	}
 
 	public void sendDatagramPacket(byte[] data) {
-		DatagramPacket packet = new DatagramPacket(data, data.length, clientAddress, clientUdpPort);
-		sendDatagramPacket(packet);
+		if (clientUdpPort != -1) {
+			DatagramPacket packet = new DatagramPacket(data, data.length, clientAddress, clientUdpPort);
+			sendDatagramPacket(packet);
+		} else {
+			log.warn("Can't send datagram packet because we don't know the client's UDP port yet.");
+		}
 	}
 
 	public void sendDatagramPacket(DatagramPacket packet) {

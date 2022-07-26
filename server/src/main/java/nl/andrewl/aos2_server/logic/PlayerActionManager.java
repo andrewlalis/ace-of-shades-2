@@ -35,6 +35,8 @@ public class PlayerActionManager {
 	private long lastBlockRemovedAt = 0;
 	private long lastBlockPlacedAt = 0;
 
+	private long lastResupplyAt = System.currentTimeMillis();
+
 	private long gunLastShotAt = 0;
 	private boolean gunNeedsReCock = false;
 	private boolean gunReloading = false;
@@ -80,11 +82,16 @@ public class PlayerActionManager {
 		if (selectedStack instanceof BlockItemStack b) {
 			tickBlockAction(now, server, world, b);
 		} else if (selectedStack instanceof GunItemStack g) {
-			try {
-				tickGunAction(now, server, world, g);
-			} catch (Exception e) {
-				System.out.println("bleh");
-			}
+			tickGunAction(now, server, world, g);
+		}
+
+		if (
+				now - lastResupplyAt > server.getConfig().actions.resupplyCooldown * 1000 &&
+				player.getTeam() != null &&
+				player.getPosition().distance(player.getTeam().getSpawnPoint()) < server.getConfig().actions.resupplyRadius
+		) {
+			server.getPlayerManager().resupply(player);
+			lastResupplyAt = now;
 		}
 
 		if (player.isCrouching() != lastInputState.crouching()) {
@@ -161,6 +168,7 @@ public class PlayerActionManager {
 				stack.incrementAmount();
 				server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
 				server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(hit.pos(), world));
+				server.getPlayerManager().broadcastUdpMessage(new SoundMessage("block_break_1", 1, player.getPosition()));
 			}
 		}
 		// Check for placing blocks.
@@ -179,6 +187,7 @@ public class PlayerActionManager {
 					stack.decrementAmount();
 					server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
 					server.getPlayerManager().broadcastUdpMessage(ChunkUpdateMessage.fromWorld(placePos, world));
+					server.getPlayerManager().broadcastUdpMessage(new SoundMessage("block_place_1", 1, player.getPosition()));
 				}
 			}
 		}

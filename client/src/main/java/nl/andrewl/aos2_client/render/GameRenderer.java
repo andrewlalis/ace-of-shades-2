@@ -8,6 +8,7 @@ import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GUIRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos2_client.render.model.Model;
+import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.item.GunItemStack;
@@ -49,6 +50,8 @@ public class GameRenderer {
 	private Model rifleModel;
 	private Model blockModel;
 	private Model bulletModel;
+	private Model smgModel;
+	private Model flagModel;
 
 	// Standard GUI textures.
 	private GUITexture crosshairTexture;
@@ -141,8 +144,10 @@ public class GameRenderer {
 		try {
 			playerModel = new Model("model/player_simple.obj", "model/simple_player.png");
 			rifleModel = new Model("model/rifle.obj", "model/rifle.png");
+			smgModel = new Model("model/smg.obj", "model/smg.png");
 			blockModel = new Model("model/block.obj", "model/block.png");
 			bulletModel = new Model("model/bullet.obj", "model/bullet.png");
+			flagModel = new Model("model/flag.obj", "model/flag.png");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -204,6 +209,7 @@ public class GameRenderer {
 		}
 		playerModel.unbind();
 
+		// Render guns!
 		rifleModel.bind();
 		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
 			modelRenderer.render(rifleModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
@@ -214,6 +220,16 @@ public class GameRenderer {
 			}
 		}
 		rifleModel.unbind();
+		smgModel.bind();
+		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.AK_47.getId()) {
+			modelRenderer.render(smgModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
+		}
+		for (var player : client.getPlayers().values()) {
+			if (player.getHeldItemId() == ItemTypes.AK_47.getId()) {
+				modelRenderer.render(smgModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
+			}
+		}
+		smgModel.unbind();
 
 		blockModel.bind();
 		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
@@ -230,17 +246,27 @@ public class GameRenderer {
 		blockModel.unbind();
 
 		bulletModel.bind();
-		Matrix4f projectileTransform = new Matrix4f();
-		Matrix3f projectileNormalTransform = new Matrix3f();
+		Matrix4f modelTransform = new Matrix4f();
+		Matrix3f normalTransform = new Matrix3f();
 		for (var projectile : client.getProjectiles().values()) {
-			projectileTransform.identity()
+			modelTransform.identity()
 					.translate(projectile.getPosition())
 					.rotateTowards(projectile.getVelocity(), Camera.UP)
 					.scale(1, 1, projectile.getVelocity().length() / 5);
-			projectileTransform.normal(projectileNormalTransform);
-			modelRenderer.render(bulletModel, projectileTransform, projectileNormalTransform);
+			modelTransform.normal(normalTransform);
+			modelRenderer.render(bulletModel, modelTransform, normalTransform);
 		}
 		bulletModel.unbind();
+		// Draw team bases.
+		flagModel.bind();
+		for (Team team : client.getTeams().values()) {
+			modelTransform.identity()
+					.translate(team.getSpawnPoint());
+			modelTransform.normal(normalTransform);
+			modelRenderer.setAspectColor(team.getColor());
+			modelRenderer.render(flagModel, modelTransform, normalTransform);
+		}
+		flagModel.unbind();
 
 		modelRenderer.end();
 

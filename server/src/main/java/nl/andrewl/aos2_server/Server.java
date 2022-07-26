@@ -45,7 +45,7 @@ public class Server implements Runnable {
 		this.teamManager = new TeamManager(this);
 		this.projectileManager = new ProjectileManager(this);
 		this.worldUpdater = new WorldUpdater(this, config.ticksPerSecond);
-		this.world = Worlds.flatWorld();
+		this.world = Worlds.testingWorld();
 
 		// TODO: Add some way to configure teams with config files or commands.
 		teamManager.addTeam("Red", new Vector3f(0.8f, 0, 0), "A");

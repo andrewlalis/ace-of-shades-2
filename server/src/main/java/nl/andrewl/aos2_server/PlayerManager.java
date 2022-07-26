@@ -154,8 +154,15 @@ public class PlayerManager {
 		Vector3f deathPosition = new Vector3f(player.getPosition());
 		player.setPosition(getBestSpawnPoint(player));
 		player.setVelocity(new Vector3f(0));
-		player.setHealth(1);
+		resupply(player);
+		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
+		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
+		// TODO: Team points or something.
+	}
+
+	public void resupply(ServerPlayer player) {
 		var handler = getHandler(player.getId());
+		player.setHealth(1);
 		for (int i = 0; i < player.getInventory().getItemStacks().size(); i++) {
 			ItemStack stack = player.getInventory().getItemStacks().get(i);
 			if (stack instanceof GunItemStack g) {
@@ -168,9 +175,6 @@ public class PlayerManager {
 			handler.sendTcpMessage(new ItemStackMessage(i, stack));
 		}
 		handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
-		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
-		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
-		// TODO: Team points or something.
 	}
 
 	public void handleUdpInit(DatagramInit init, DatagramPacket packet) {

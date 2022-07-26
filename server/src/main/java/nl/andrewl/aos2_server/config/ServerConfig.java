@@ -20,5 +20,7 @@ public class ServerConfig {
 	public static class ActionsConfig {
 		public float blockRemoveCooldown = 0.25f;
 		public float blockPlaceCooldown = 0.1f;
+		public float resupplyCooldown = 30;
+		public float resupplyRadius = 3;
 	}
 }
