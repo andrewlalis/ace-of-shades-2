@@ -32,7 +32,7 @@ void main() {
     mkdir(outDir);
     foreach (profile; profiles) {
         print("Building profile: %s", profile);
-        string cmd = format!"mvn -B -Plwjgl-natives-%s --projects client --also-make clean package"(profile);
+        string cmd = format!"mvn -B -Plwjgl-natives-%s clean package"(profile);
         new ProcessBuilder()
             .outputTo(buildPath(outDir, "output-" ~ profile ~ ".txt"))
             .run(cmd);
