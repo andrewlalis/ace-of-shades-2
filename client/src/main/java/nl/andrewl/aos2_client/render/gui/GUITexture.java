@@ -1,5 +1,6 @@
 package nl.andrewl.aos2_client.render.gui;
 
+import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.ImageUtils;
 import org.joml.Vector2f;
 
@@ -23,23 +24,21 @@ public class GUITexture {
 	 */
 	private final int height;
 
-	public GUITexture(String location) {
-		try (var in = GUITexture.class.getClassLoader().getResourceAsStream(location)) {
-			if (in == null) throw new IOException("Couldn't load texture image from " + location);
-			BufferedImage img = ImageIO.read(in);
-			width = img.getWidth();
-			height = img.getHeight();
+	public GUITexture(String location) throws IOException {
+		this(FileUtils.readClasspathImage(location));
+	}
 
-			textureId = glGenTextures();
-			glBindTexture(GL_TEXTURE_2D, textureId);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			var buf = ImageUtils.decodePng(img);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to load GUI texture.", e);
-		}
+	public GUITexture(BufferedImage img) {
+		width = img.getWidth();
+		height = img.getHeight();
+
+		textureId = glGenTextures();
+		glBindTexture(GL_TEXTURE_2D, textureId);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		var buf = ImageUtils.decodePng(img);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	}
 
 	public int getWidth() {

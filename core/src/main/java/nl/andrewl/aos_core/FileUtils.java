@@ -1,5 +1,7 @@
 package nl.andrewl.aos_core;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -18,6 +20,13 @@ public final class FileUtils {
 		try (InputStream in = FileUtils.class.getClassLoader().getResourceAsStream(resource)) {
 			if (in == null) throw new IOException("Could not load classpath resource: " + resource);
 			return new String(in.readAllBytes());
+		}
+	}
+
+	public static BufferedImage readClasspathImage(String resource) throws IOException {
+		try (var in = FileUtils.class.getClassLoader().getResourceAsStream(resource)) {
+			if (in == null) throw new IOException("Couldn't load texture image from " + resource);
+			return ImageIO.read(in);
 		}
 	}
 

@@ -6,12 +6,9 @@ import nl.andrewl.aos2_client.config.ClientConfig;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GuiRenderer;
-import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos2_client.render.model.Model;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
-import nl.andrewl.aos_core.model.item.Gun;
-import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemTypes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -52,13 +49,6 @@ public class GameRenderer {
 	private Model smgModel;
 	private Model shotgunModel;
 	private Model flagModel;
-
-	// Standard GUI textures.
-	private GUITexture crosshairTexture;
-	private GUITexture clipTexture;
-	private GUITexture bulletTexture;
-	private GUITexture healthBarRedTexture;
-	private GUITexture healthBarGreenTexture;
 
 	private long windowHandle;
 	private int screenWidth = 800;
@@ -134,16 +124,6 @@ public class GameRenderer {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		crosshairTexture = new GUITexture("gui/crosshair.png");
-		clipTexture = new GUITexture("gui/clip.png");
-		bulletTexture = new GUITexture("gui/bullet.png");
-		healthBarRedTexture = new GUITexture("gui/health-red.png");
-		healthBarGreenTexture = new GUITexture("gui/health-green.png");
-		guiRenderer.addTexture("crosshair", crosshairTexture);
-		guiRenderer.addTexture("clip", clipTexture);
-		guiRenderer.addTexture("bullet", bulletTexture);
-		guiRenderer.addTexture("health-red", healthBarRedTexture);
-		guiRenderer.addTexture("health-green", healthBarGreenTexture);
 		log.debug("Initialized GUI renderer.");
 
 		this.modelRenderer = new ModelRenderer();
@@ -181,10 +161,6 @@ public class GameRenderer {
 		perspectiveTransform.get(data);
 		if (chunkRenderer != null) chunkRenderer.setPerspective(data);
 		if (modelRenderer != null) modelRenderer.setPerspective(data);
-	}
-
-	public Matrix4f getPerspectiveTransform() {
-		return perspectiveTransform;
 	}
 
 	public boolean windowShouldClose() {
@@ -290,45 +266,7 @@ public class GameRenderer {
 
 		// GUI rendering
 		guiRenderer.start();
-		guiRenderer.draw(crosshairTexture, crosshairTexture.getIdealScaleX(32, screenWidth), crosshairTexture.getIdealScaleY(32, screenHeight), 0, 0);
-		// If we're holding a gun, draw clip and bullet graphics.
-		if (client.getMyPlayer().getInventory().getSelectedItemStack().getType() instanceof Gun) {
-			GunItemStack stack = (GunItemStack) client.getMyPlayer().getInventory().getSelectedItemStack();
-			for (int i = 0; i < stack.getClipCount(); i++) {
-				guiRenderer.draw(
-						clipTexture,
-						clipTexture.getIdealScaleX(64, screenWidth),
-						clipTexture.getIdealScaleY(clipTexture.getIdealHeight(64), screenHeight),
-						0.90f,
-						-0.90f + (i * 0.15f)
-				);
-			}
-			for (int i = 0; i < stack.getBulletCount(); i++) {
-				guiRenderer.draw(
-						bulletTexture,
-						bulletTexture.getIdealScaleX(16, screenWidth),
-						bulletTexture.getIdealScaleY(bulletTexture.getIdealHeight(16), screenHeight),
-						0.80f - (i * 0.05f),
-						-0.90f
-				);
-			}
-		}
-		// Render the player's health.
-		guiRenderer.draw(
-				healthBarRedTexture,
-				healthBarRedTexture.getIdealScaleX(64, screenWidth),
-				healthBarRedTexture.getIdealScaleY(16, screenHeight),
-				-0.90f,
-				-0.90f
-		);
-		guiRenderer.draw(
-				healthBarGreenTexture,
-				healthBarGreenTexture.getIdealScaleX(64 * client.getMyPlayer().getHealth(), screenWidth),
-				healthBarGreenTexture.getIdealScaleY(16, screenHeight),
-				-0.90f,
-				-0.90f
-		);
-		guiRenderer.drawNvg(screenWidth, screenHeight);
+		guiRenderer.drawNvg(screenWidth, screenHeight, myPlayer);
 		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);
