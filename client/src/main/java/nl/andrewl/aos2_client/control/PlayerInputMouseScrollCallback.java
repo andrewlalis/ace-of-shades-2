@@ -17,7 +17,6 @@ public class PlayerInputMouseScrollCallback implements GLFWScrollCallbackI {
 
 	@Override
 	public void invoke(long window, double xoffset, double yoffset) {
-		System.out.println(yoffset);
 		if (client.getMyPlayer().getInventory().getSelectedItemStack() instanceof BlockItemStack stack) {
 			if (yoffset < 0) {
 				stack.setSelectedValue((byte) (stack.getSelectedValue() - 1));
