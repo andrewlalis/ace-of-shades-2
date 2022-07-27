@@ -24,8 +24,17 @@ public class ColorPalette {
 	}
 
 	public void setColor(byte value, float r, float g, float b) {
-		if (value < 0) return;
+		if (value <= 0) return;
 		colors[value - 1].set(r, g, b);
+	}
+
+	public void setColor(byte value, Color color) {
+		if (value <= 0) return;
+		colors[value - 1].set(
+				color.getRed() / 255f,
+				color.getGreen() / 255f,
+				color.getBlue() / 255f
+		);
 	}
 
 	public float[] toArray() {

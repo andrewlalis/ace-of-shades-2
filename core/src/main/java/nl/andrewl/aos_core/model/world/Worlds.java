@@ -3,7 +3,9 @@ package nl.andrewl.aos_core.model.world;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.awt.*;
 import java.util.Collections;
+import java.util.Random;
 
 /**
  * Simple container for a bunch of static methods for creating pre-made worlds
@@ -25,7 +27,9 @@ public final class Worlds {
 				}
 			}
 		}
-		return new World(ColorPalette.rainbow(), Collections.singleton(chunk));
+		World world = new World(ColorPalette.rainbow(), Collections.singleton(chunk));
+		world.setSpawnPoint("A", new Vector3f(Chunk.SIZE / 2f, Chunk.SIZE / 2f, Chunk.SIZE / 2f));
+		return world;
 	}
 
 	/**
@@ -148,6 +152,52 @@ public final class Worlds {
 
 		world.setSpawnPoint("A", new Vector3f(5, 34, 5));
 		world.setSpawnPoint("B", new Vector3f(5 * Chunk.SIZE - 5, 34, 12 * Chunk.SIZE - 5));
+
+		return world;
+	}
+
+	/**
+	 * A square arena for up to 4 teams, with spawn points A, B, C, and D.
+	 * @return The world.
+	 */
+	public static World arena() {
+		World world = new World();
+		ColorPalette palette = new ColorPalette();
+		palette.setColor((byte) 1, Color.BLACK);
+		palette.setColor((byte) 2, Color.WHITE);
+		palette.setColor((byte) 3, Color.GRAY);
+		palette.setColor((byte) 4, Color.DARK_GRAY);
+		palette.setColor((byte) 5, new Color(79, 58, 0));
+		palette.setColor((byte) 6, new Color(133, 118, 78));
+		palette.setColor((byte) 7, new Color(69, 59, 32));
+		palette.setColor((byte) 8, new Color(38, 77, 30));
+		palette.setColor((byte) 9, new Color(4, 107, 40));
+		palette.setColor((byte) 10, Color.RED.darker());
+		palette.setColor((byte) 11, Color.GREEN.darker());
+		palette.setColor((byte) 12, Color.BLUE.darker());
+		world.setPalette(palette);
+		Random rand = new Random(1L);
+		for (int cx = 0; cx < 9; cx++) {
+			for (int cz = 0; cz < 9; cz++) {
+				for (int cy = 0; cy < 5; cy++) {
+					world.addChunk(new Chunk(cx, cy, cz));
+				}
+			}
+		}
+		int surface = 3 * Chunk.SIZE;
+		for (int x = world.getMinX(); x < world.getMaxX(); x++) {
+			for (int z = world.getMinZ(); z < world.getMaxZ(); z++) {
+				for (int y = 0; y < surface - 1; y++) {
+					world.setBlockAt(x, y, z, (byte) rand.nextInt(5, 8));
+				}
+				world.setBlockAt(x, surface - 1, z, (byte) rand.nextInt(8, 10));
+			}
+		}
+
+		world.setSpawnPoint("A", new Vector3f(5.5f, surface, 5.5f));
+		world.setSpawnPoint("C", new Vector3f(world.getMaxX() - 5.5f, surface, 5.5f));
+		world.setSpawnPoint("D", new Vector3f(5.5f, surface, world.getMaxZ() - 5.5f));
+		world.setSpawnPoint("B", new Vector3f(world.getMaxX() - 5.5f, surface, world.getMaxZ() - 5.5f));
 
 		return world;
 	}

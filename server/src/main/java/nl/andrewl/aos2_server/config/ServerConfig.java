@@ -4,8 +4,13 @@ public class ServerConfig {
 	public int port = 25565;
 	public int connectionBacklog = 5;
 	public float ticksPerSecond = 20.0f;
+	public String world = "worlds.redfort";
 	public PhysicsConfig physics = new PhysicsConfig();
 	public ActionsConfig actions = new ActionsConfig();
+	public TeamConfig[] teams = new TeamConfig[]{
+			new TeamConfig("Red", new float[]{0.8f, 0, 0}, "A"),
+			new TeamConfig("Blue", new float[]{0, 0, 0.8f}, "B")
+	};
 
 	public static class PhysicsConfig {
 		public float gravity = 9.81f * 3;
@@ -29,5 +34,19 @@ public class ServerConfig {
 		public float teamSpawnProtection = 10;
 		public float movementAccuracyDecreaseFactor = 0.01f;
 		public boolean friendlyFire = false;
+	}
+
+	public static class TeamConfig {
+		public String name;
+		public float[] color;
+		public String spawnPoint;
+
+		public TeamConfig() {}
+
+		public TeamConfig(String name, float[] color, String spawnPoint) {
+			this.name = name;
+			this.color = color;
+			this.spawnPoint = spawnPoint;
+		}
 	}
 }

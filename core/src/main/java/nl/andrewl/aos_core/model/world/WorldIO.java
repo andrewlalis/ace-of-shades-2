@@ -3,6 +3,8 @@ package nl.andrewl.aos_core.model.world;
 import org.joml.Vector3f;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -43,6 +45,12 @@ public final class WorldIO {
 		}
 	}
 
+	public static void write(World world, Path filePath) throws IOException {
+		try (var out = Files.newOutputStream(filePath)) {
+			write(world, out);
+		}
+	}
+
 	/**
 	 * Reads a world from an input stream.
 	 * @param in The input stream to read from.
@@ -77,5 +85,11 @@ public final class WorldIO {
 			world.addChunk(chunk);
 		}
 		return world;
+	}
+
+	public static World read(Path filePath) throws IOException {
+		try (var in = Files.newInputStream(filePath)) {
+			return read(in);
+		}
 	}
 }

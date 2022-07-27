@@ -29,6 +29,14 @@ Setting up a server is quite easy. Just go to the [releases page](https://github
 port: 25565
 connectionBacklog: 5
 ticksPerSecond: 20.0
+world: worlds.redfort
+teams:
+  - name: Red
+    color: [0.8, 0, 0]
+    spawnPoint: A
+  - name: Blue
+    color: [0, 0, 0.8]
+    spawnPoint: B
 physics:
   gravity: 29.43
   walkingSpeed: 4

@@ -4,9 +4,11 @@ import nl.andrewl.aos2_server.cli.ServerCli;
 import nl.andrewl.aos2_server.config.ServerConfig;
 import nl.andrewl.aos2_server.logic.WorldUpdater;
 import nl.andrewl.aos2_server.model.ServerPlayer;
+import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.world.World;
+import nl.andrewl.aos_core.model.world.WorldIO;
 import nl.andrewl.aos_core.model.world.Worlds;
 import nl.andrewl.aos_core.net.UdpReceiver;
 import nl.andrewl.aos_core.net.client.BlockColorMessage;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
@@ -47,11 +50,29 @@ public class Server implements Runnable {
 		this.teamManager = new TeamManager(this);
 		this.projectileManager = new ProjectileManager(this);
 		this.worldUpdater = new WorldUpdater(this, config.ticksPerSecond);
-		this.world = Worlds.testingWorld();
 
-		// TODO: Add some way to configure teams with config files or commands.
-		teamManager.addTeam("Red", new Vector3f(0.8f, 0, 0), "A");
-		teamManager.addTeam("Blue", new Vector3f(0, 0, 0.8f), "B");
+		if (config.world.startsWith("worlds.")) {
+			String worldName = config.world.substring("worlds.".length());
+			this.world = switch (worldName) {
+				case "testing" -> Worlds.testingWorld();
+				case "flat" -> Worlds.flatWorld();
+				case "cube" -> Worlds.smallCube();
+				case "arena" -> Worlds.arena();
+				default -> WorldIO.read(FileUtils.getClasspathResource("redfort.wld"));
+			};
+		} else {
+			Path worldFile = Path.of(config.world);
+			if (Files.isReadable(worldFile)) {
+				this.world = WorldIO.read(worldFile);
+			} else {
+				log.error("Cannot read world file: {}", worldFile.toAbsolutePath());
+				this.world = Worlds.arena();
+			}
+		}
+
+		for (var teamConfig : config.teams) {
+			teamManager.addTeam(teamConfig.name, new Vector3f(teamConfig.color), teamConfig.spawnPoint);
+		}
 	}
 
 	@Override

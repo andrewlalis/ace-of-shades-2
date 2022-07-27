@@ -22,7 +22,7 @@ import java.nio.file.Path;
 		name = "",
 		description = "Interactive shell for server commands.",
 		footer = {"", "Press Ctrl-D to exit."},
-		subcommands = {StopCommand.class, PlayersCommand.class}
+		subcommands = {StopCommand.class, PlayersCommand.class, SaveWorldCommand.class}
 )
 public class ServerCli implements Runnable {
 	final Server server;
