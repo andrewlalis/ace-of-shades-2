@@ -1,6 +1,8 @@
 # Ace of Shades 2
 A simple 3D voxel-based shooter inspired by Ace of Spades. With some basic weapons and tools, fight against players in other teams!
 
+![screenshot](/design/gameplay_screenshot.png?raw=true "Test")
+
 ## Quick-Start Guide
 _Read this guide to get started and join a server in just a minute or two!_
 
