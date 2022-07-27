@@ -10,10 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -131,6 +128,10 @@ public class SoundManager {
 			play("footsteps_" + choice, 0.5f, player.getPosition(), player.getVelocity());
 			lastPlayerWalkingSounds.put(player, now);
 		}
+	}
+
+	public Collection<SoundSource> getSources() {
+		return Collections.unmodifiableCollection(availableSources);
 	}
 
 	private SoundSource getNextAvailableSoundSource() {

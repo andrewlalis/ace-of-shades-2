@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client.render;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.config.ClientConfig;
+import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GuiRenderer;
@@ -56,8 +57,8 @@ public class GameRenderer {
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(ClientConfig.DisplayConfig config, Client client) {
-		this.config = config;
+	public GameRenderer(Client client) {
+		this.config = client.getConfig().display;
 		this.client = client;
 		this.camera = new Camera();
 		camera.setToPlayer(client.getMyPlayer());
@@ -65,6 +66,7 @@ public class GameRenderer {
 	}
 
 	public void setupWindow(
+			InputHandler inputHandler,
 			GLFWCursorPosCallbackI viewCursorCallback,
 			GLFWKeyCallbackI inputKeyCallback,
 			GLFWMouseButtonCallbackI mouseButtonCallback,
@@ -90,6 +92,7 @@ public class GameRenderer {
 			windowHandle = glfwCreateWindow(screenWidth, screenHeight, "Ace of Shades 2", 0, 0);
 		}
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
+		inputHandler.setWindowId(windowHandle);
 		log.debug("Initialized GLFW window.");
 
 		// Setup callbacks.
@@ -110,7 +113,7 @@ public class GameRenderer {
 
 		GL.createCapabilities();
 //		GLUtil.setupDebugMessageCallback(System.out);
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
@@ -259,7 +262,7 @@ public class GameRenderer {
 		flagModel.bind();
 		for (Team team : client.getTeams().values()) {
 			modelTransform.identity()
-					.translate(team.getSpawnPoint());
+					.translate(team.getSpawnPoint().x() - 0.25f, team.getSpawnPoint().y(), team.getSpawnPoint().z() - 0.25f);
 			modelTransform.normal(normalTransform);
 			modelRenderer.setAspectColor(team.getColor());
 			modelRenderer.render(flagModel, modelTransform, normalTransform);
@@ -271,7 +274,7 @@ public class GameRenderer {
 		// GUI rendering
 		guiRenderer.start();
 		guiRenderer.drawNameplates(myPlayer, camera.getViewTransformData(), perspectiveTransform.get(new float[16]));
-		guiRenderer.drawNvg(screenWidth, screenHeight, myPlayer, client.getChat());
+		guiRenderer.drawNvg(screenWidth, screenHeight, client);
 		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);

@@ -1,10 +1,12 @@
 package nl.andrewl.aos2_client.render.gui;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.ShaderProgram;
+import nl.andrewl.aos2_client.sound.SoundSource;
 import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.BlockItem;
@@ -216,14 +218,17 @@ public class GuiRenderer {
 		shaderProgram.use();
 	}
 
-	public void drawNvg(float width, float height, ClientPlayer player, Chat chat) {
+	public void drawNvg(float width, float height, Client client) {
 		nvgBeginFrame(vgId, width, height, width / height);
 		nvgSave(vgId);
 
 		drawCrosshair(width, height);
-		drawChat(width, height, chat);
-		drawHealthBar(width, height, player);
-		drawHeldItemStackInfo(width, height, player);
+		drawChat(width, height, client.getChat());
+		drawHealthBar(width, height, client.getMyPlayer());
+		drawHeldItemStackInfo(width, height, client.getMyPlayer());
+		if (client.getInputHandler().isDebugEnabled()) {
+			drawDebugInfo(width, height, client);
+		}
 
 		nvgRestore(vgId);
 		nvgEndFrame(vgId);
@@ -345,5 +350,31 @@ public class GuiRenderer {
 
 			y -= 16;
 		}
+	}
+
+	private void drawDebugInfo(float w, float h, Client client) {
+		float y = h / 4 + 10;
+		nvgFontSize(vgId, 12f);
+		nvgFontFaceId(vgId, jetbrainsMonoFont);
+		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
+		var pos = client.getMyPlayer().getPosition();
+		nvgText(vgId, 5, y, String.format("Pos: x=%.3f, y=%.3f, z=%.3f", pos.x, pos.y, pos.z));
+		y += 12;
+		var vel = client.getMyPlayer().getVelocity();
+		nvgText(vgId, 5, y, String.format("Vel: x=%.3f, y=%.3f, z=%.3f, speed=%.3f", vel.x, vel.y, vel.z, vel.length()));
+		y += 12;
+		var view = client.getMyPlayer().getOrientation();
+		nvgText(vgId, 5, y, String.format("View: horizontal=%.3f, vertical=%.3f", Math.toDegrees(view.x), Math.toDegrees(view.y)));
+		y += 12;
+		var soundSources = client.getSoundManager().getSources();
+		int activeCount = (int) soundSources.stream().filter(SoundSource::isPlaying).count();
+		nvgText(vgId, 5, y, String.format("Sounds: %d / %d playing", activeCount, soundSources.size()));
+		y += 12;
+		nvgText(vgId, 5, y, String.format("Projectiles: %d", client.getProjectiles().size()));
+		y += 12;
+		nvgText(vgId, 5, y, String.format("Players: %d", client.getPlayers().size()));
+		y += 12;
+		nvgText(vgId, 5, y, String.format("Chunks: %d", client.getWorld().getChunkMap().size()));
 	}
 }
