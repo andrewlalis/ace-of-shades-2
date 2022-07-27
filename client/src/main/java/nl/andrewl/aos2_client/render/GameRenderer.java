@@ -5,7 +5,7 @@ import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.config.ClientConfig;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
-import nl.andrewl.aos2_client.render.gui.GUIRenderer;
+import nl.andrewl.aos2_client.render.gui.GuiRenderer;
 import nl.andrewl.aos2_client.render.gui.GUITexture;
 import nl.andrewl.aos2_client.render.model.Model;
 import nl.andrewl.aos_core.model.Team;
@@ -39,7 +39,7 @@ public class GameRenderer {
 
 	private final ClientConfig.DisplayConfig config;
 	private ChunkRenderer chunkRenderer;
-	private GUIRenderer guiRenderer;
+	private GuiRenderer guiRenderer;
 	private ModelRenderer modelRenderer;
 	private final Camera camera;
 	private final Client client;
@@ -129,7 +129,11 @@ public class GameRenderer {
 		this.chunkRenderer = new ChunkRenderer();
 		log.debug("Initialized chunk renderer.");
 
-		this.guiRenderer = new GUIRenderer();
+		try {
+			this.guiRenderer = new GuiRenderer();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		crosshairTexture = new GUITexture("gui/crosshair.png");
 		clipTexture = new GUITexture("gui/clip.png");
 		bulletTexture = new GUITexture("gui/bullet.png");
@@ -192,7 +196,7 @@ public class GameRenderer {
 	}
 
 	public void draw() {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
 
 		ClientPlayer myPlayer = client.getMyPlayer();
@@ -324,6 +328,7 @@ public class GameRenderer {
 				-0.90f,
 				-0.90f
 		);
+		guiRenderer.drawNvg(screenWidth, screenHeight);
 		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);

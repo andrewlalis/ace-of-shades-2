@@ -1,19 +1,40 @@
 package nl.andrewl.aos2_client.render.gui;
 
 import nl.andrewl.aos2_client.render.ShaderProgram;
+import nl.andrewl.aos2_client.util.ResourceUtils;
+import nl.andrewl.aos_core.FileUtils;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NVGPaint;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVGGL3.*;
 import static org.lwjgl.opengl.GL46.*;
+import static org.lwjgl.system.MemoryUtil.memFree;
 
 /**
  * Manages rendering of 2D GUI components like cross-hairs, inventory stuff, etc.
  */
-public class GUIRenderer {
+public class GuiRenderer {
+	private final long vgId;
+	private final int jetbrainsMonoFont;
+	private final ByteBuffer jetbrainsMonoFontData;
+
+	private static final NVGColor colorA = NVGColor.create();
+	private static final NVGColor colorB = NVGColor.create();
+	private static final NVGColor colorC = NVGColor.create();
+
+	private static final NVGPaint paintA = NVGPaint.create();
+	private static final NVGPaint paintB = NVGPaint.create();
+	private static final NVGPaint paintC = NVGPaint.create();
+
 	private final int vaoId;
 	private final int vboId;
 	private final int vertexCount;
@@ -25,7 +46,16 @@ public class GUIRenderer {
 
 	private final Map<String, GUITexture> textures = new HashMap<>();
 
-	public GUIRenderer() {
+	public GuiRenderer() throws IOException {
+		vgId = nvgCreate(NVG_ANTIALIAS);
+		jetbrainsMonoFontData = FileUtils.readClasspathResourceAsDirectByteBuffer("text/JetBrainsMono-Regular.ttf");
+		jetbrainsMonoFont = nvgCreateFontMem(
+				vgId,
+				"jetbrains-mono",
+				jetbrainsMonoFontData,
+				0
+		);
+
 		vaoId = glGenVertexArrays();
 		vboId = glGenBuffers();
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(8);
@@ -87,6 +117,17 @@ public class GUIRenderer {
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
 	}
 
+	public void drawNvg(float width, float height) {
+		nvgBeginFrame(vgId, width, height, width / height);
+		nvgSave(vgId);
+		nvgFontSize(vgId, 60f);
+		nvgFontFaceId(vgId, jetbrainsMonoFont);
+		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		nvgText(vgId, 50, 50, "Hello world!");
+		nvgRestore(vgId);
+		nvgEndFrame(vgId);
+	}
+
 	public void end() {
 		glDisable(GL_BLEND);
 		glEnable(GL_DEPTH_TEST);
@@ -96,9 +137,13 @@ public class GUIRenderer {
 	}
 
 	public void free() {
+		memFree(jetbrainsMonoFontData);
+		nvgDelete(vgId);
 		for (var tex : textures.values()) tex.free();
 		glDeleteBuffers(vboId);
 		glDeleteVertexArrays(vaoId);
 		shaderProgram.free();
 	}
+
+
 }

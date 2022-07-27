@@ -20,10 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.net.*;
 import java.util.LinkedList;
 
 /**
@@ -118,6 +115,8 @@ public class ClientCommunicationHandler {
 							.withShutdownHook(() -> server.getPlayerManager().deregister(this.player));
 					new Thread(tcpReceiver).start();
 				}
+			} catch (SocketTimeoutException e) {
+				// Ignore this one, since this will happen if the client doesn't send data properly.
 			} catch (IOException e) {
 				log.warn("An IOException occurred while attempting to establish a connection to a client.", e);
 			}
