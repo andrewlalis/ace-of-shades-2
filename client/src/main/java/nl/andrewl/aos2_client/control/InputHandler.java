@@ -59,18 +59,6 @@ public class InputHandler {
 		}
 
 		ClientPlayer player = client.getMyPlayer();
-
-		// Check for "pick block" functionality.
-		if (glfwGetMouseButton(windowId, GLFW_MOUSE_BUTTON_3) == GLFW_PRESS && player.getInventory().getSelectedItemStack() instanceof BlockItemStack stack) {
-			Hit hit = client.getWorld().getLookingAtPos(player.getEyePosition(), player.getViewVector(), 50);
-			if (hit != null) {
-				byte selectedBlock = client.getWorld().getBlockAt(hit.pos().x, hit.pos().y, hit.pos().z);
-				if (selectedBlock > 0) {
-					stack.setSelectedValue(selectedBlock);
-					comm.sendDatagramPacket(new BlockColorMessage(player.getId(), selectedBlock));
-				}
-			}
-		}
 	}
 
 	public boolean isForward() {
@@ -178,5 +166,19 @@ public class InputHandler {
 
 	public void toggleDebugEnabled() {
 		this.debugEnabled = !debugEnabled;
+	}
+
+	public void pickBlock() {
+		var player = client.getMyPlayer();
+		if (player.getInventory().getSelectedItemStack() instanceof BlockItemStack stack) {
+			Hit hit = client.getWorld().getLookingAtPos(player.getEyePosition(), player.getViewVector(), 50);
+			if (hit != null) {
+				byte selectedBlock = client.getWorld().getBlockAt(hit.pos().x, hit.pos().y, hit.pos().z);
+				if (selectedBlock > 0) {
+					stack.setSelectedValue(selectedBlock);
+					comm.sendDatagramPacket(new BlockColorMessage(player.getId(), selectedBlock));
+				}
+			}
+		}
 	}
 }

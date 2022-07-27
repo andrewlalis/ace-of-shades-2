@@ -20,6 +20,7 @@ public class PlayerInputMouseClickCallback implements GLFWMouseButtonCallbackI {
 			switch (button) {
 				case GLFW_MOUSE_BUTTON_1 -> inputHandler.setHitting(true);
 				case GLFW_MOUSE_BUTTON_2 -> inputHandler.setInteracting(true);
+				case GLFW_MOUSE_BUTTON_3 -> inputHandler.pickBlock();
 			}
 		} else if (action == GLFW_RELEASE) {
 			switch (button) {
