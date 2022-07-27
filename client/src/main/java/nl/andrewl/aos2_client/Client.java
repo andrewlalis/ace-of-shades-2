@@ -7,6 +7,7 @@ import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos2_client.sound.SoundManager;
+import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
@@ -20,7 +21,6 @@ import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -271,7 +271,7 @@ public class Client implements Runnable {
 		if (args.length > 0) {
 			configPaths.add(Path.of(args[0].trim()));
 		}
-		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig());
+		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig(), FileUtils.readClasspathFile("default-config.yaml"));
 		Client client = new Client(clientConfig);
 		client.run();
 	}

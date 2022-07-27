@@ -180,7 +180,7 @@ public class Server implements Runnable {
 		if (args.length > 0) {
 			configPaths.add(Path.of(args[0].trim()));
 		}
-		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig());
+		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig(), null);
 		Server server = new Server(cfg);
 		new Thread(server).start();
 		ServerCli.start(server);
