@@ -213,6 +213,7 @@ public class Client implements Runnable {
 			player.updateModelTransform();
 			soundManager.playWalkingSounds(player, now);
 		}
+		gameRenderer.getGuiRenderer().updateNamePlates(players.values());
 	}
 
 	public void interpolateProjectiles(float dt) {

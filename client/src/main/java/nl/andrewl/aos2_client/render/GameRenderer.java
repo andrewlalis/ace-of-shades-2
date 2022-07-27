@@ -171,6 +171,10 @@ public class GameRenderer {
 		return camera;
 	}
 
+	public GuiRenderer getGuiRenderer() {
+		return guiRenderer;
+	}
+
 	public void draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
@@ -266,6 +270,7 @@ public class GameRenderer {
 
 		// GUI rendering
 		guiRenderer.start();
+		guiRenderer.drawNameplates(myPlayer, camera.getViewTransformData(), perspectiveTransform.get(new float[16]));
 		guiRenderer.drawNvg(screenWidth, screenHeight, myPlayer);
 		guiRenderer.end();
 

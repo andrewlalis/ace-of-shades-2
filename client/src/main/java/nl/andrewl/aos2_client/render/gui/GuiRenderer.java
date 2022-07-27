@@ -1,8 +1,11 @@
 package nl.andrewl.aos2_client.render.gui;
 
+import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.model.ClientPlayer;
+import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.ShaderProgram;
 import nl.andrewl.aos_core.FileUtils;
+import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.BlockItem;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
@@ -12,11 +15,12 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 import static org.lwjgl.nanovg.NanoVGGL3.*;
@@ -49,7 +53,13 @@ public class GuiRenderer {
 	private final Matrix4f transformMatrix;
 	private final float[] transformMatrixData;
 
-	private final Map<String, GUITexture> textures = new HashMap<>();
+	private final ShaderProgram namePlateShaderProgram;
+	private final int namePlateTransformUniform;
+	private final int namePlateViewTransformUniform;
+	private final int namePlatePerspectiveTransformUniform;
+	private final int namePlateTextureSamplerUniform;
+	private final Font namePlateFont;
+	private final Map<OtherPlayer, GUITexture> playerNamePlates = new HashMap<>();
 
 	public GuiRenderer() throws IOException {
 		vgId = nvgCreate(NVG_ANTIALIAS);
@@ -85,20 +95,26 @@ public class GuiRenderer {
 		transformUniformLocation = shaderProgram.getUniform("transform");
 		textureSamplerUniform = shaderProgram.getUniform("guiTexture");
 		shaderProgram.bindAttribute(0, "position");
-		this.transformMatrix = new Matrix4f();
-		this.transformMatrixData = new float[16];
-	}
 
-	public void loadTexture(String name, String resource) {
-		try {
-			textures.put(name, new GUITexture(resource));
-		} catch (IOException e) {
+		// Shader program for rendering name plates.
+		namePlateShaderProgram = new ShaderProgram.Builder()
+				.withShader("shader/gui/nameplate_vertex.glsl", GL_VERTEX_SHADER)
+				.withShader("shader/gui/nameplate_fragement.glsl", GL_FRAGMENT_SHADER)
+				.build();
+		namePlateTransformUniform = namePlateShaderProgram.getUniform("transform");
+		namePlateViewTransformUniform = namePlateShaderProgram.getUniform("viewTransform");
+		namePlatePerspectiveTransformUniform = namePlateShaderProgram.getUniform("perspectiveTransform");
+		namePlateTextureSamplerUniform = namePlateShaderProgram.getUniform("guiTexture");
+		namePlateShaderProgram.bindAttribute(0, "vertexPosition");
+
+		try (var in = FileUtils.getClasspathResource("text/JetBrainsMono-Regular.ttf")) {
+			namePlateFont = Font.createFont(Font.TRUETYPE_FONT, in).deriveFont(84f);
+		} catch (FontFormatException e) {
 			throw new RuntimeException(e);
 		}
-	}
 
-	public void addTexture(String name, GUITexture texture) {
-		textures.put(name, texture);
+		this.transformMatrix = new Matrix4f();
+		this.transformMatrixData = new float[16];
 	}
 
 	public void start() {
@@ -122,14 +138,86 @@ public class GuiRenderer {
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
 	}
 
+	private void addNamePlate(OtherPlayer player) {
+		GUITexture texture = new GUITexture(generateNameplateImage(player.getUsername()));
+		playerNamePlates.put(player, texture);
+	}
+
+	private void removeNamePlate(OtherPlayer player) {
+		GUITexture texture = playerNamePlates.remove(player);
+		texture.free();
+	}
+
+	private void retainNamePlates(Collection<OtherPlayer> players) {
+		Set<OtherPlayer> removalSet = new HashSet<>(playerNamePlates.keySet());
+		removalSet.removeAll(players);
+		for (OtherPlayer playerToRemove : removalSet) {
+			removeNamePlate(playerToRemove);
+		}
+	}
+
+	public void updateNamePlates(Collection<OtherPlayer> players) {
+		for (OtherPlayer player : players) {
+			if (!playerNamePlates.containsKey(player)) {
+				addNamePlate(player);
+			}
+		}
+		retainNamePlates(players);
+	}
+
+	private BufferedImage generateNameplateImage(String username) {
+		BufferedImage testImg = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D testGraphics = testImg.createGraphics();
+		testGraphics.setFont(namePlateFont);
+		int textWidth = testGraphics.getFontMetrics(namePlateFont).stringWidth(username);
+		int textHeight = testGraphics.getFontMetrics(namePlateFont).getHeight();
+
+		int w = textWidth + 20;
+		int h = textHeight + 10;
+		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = img.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g.setBackground(new Color(0, 0, 0, 0.5f));
+		g.clearRect(0, 0, w, h);
+		g.setColor(Color.WHITE);
+		g.setFont(namePlateFont);
+		g.drawString(username, 10, h - 15);
+		return img;
+	}
+
+	public void drawNameplates(ClientPlayer myPlayer, float[] viewTransformData, float[] perspectiveTransformData) {
+		shaderProgram.stopUsing();
+		namePlateShaderProgram.use();
+		glEnable(GL_DEPTH_TEST);
+		glActiveTexture(0);
+		glUniform1i(namePlateTextureSamplerUniform, 0);
+		glUniformMatrix4fv(namePlateViewTransformUniform, false, viewTransformData);
+		glUniformMatrix4fv(namePlatePerspectiveTransformUniform, false, perspectiveTransformData);
+		for (var entry : playerNamePlates.entrySet()) {
+			OtherPlayer player = entry.getKey();
+			// Skip rendering far-away nameplates.
+			if (player.getPosition().distance(myPlayer.getPosition()) > 50) continue;
+			GUITexture texture = entry.getValue();
+			float aspectRatio = (float) texture.getHeight() / (float) texture.getWidth();
+			transformMatrix.identity()
+					.translate(player.getPosition().x(), player.getPosition().y() + Player.HEIGHT + 1f, player.getPosition().z())
+					.rotate(myPlayer.getOrientation().x, Camera.UP)
+					.scale(1f, aspectRatio, 0f)
+					.get(transformMatrixData);
+			glUniformMatrix4fv(namePlateTransformUniform, false, transformMatrixData);
+			glBindTexture(GL_TEXTURE_2D, texture.getTextureId());
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
+		}
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_DEPTH_TEST);
+		namePlateShaderProgram.stopUsing();
+		shaderProgram.use();
+	}
+
 	public void drawNvg(float width, float height, ClientPlayer player) {
 		nvgBeginFrame(vgId, width, height, width / height);
 		nvgSave(vgId);
-		nvgFontSize(vgId, 60f);
-		nvgFontFaceId(vgId, jetbrainsMonoFont);
-		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-		nvgFillColor(vgId, GuiUtils.rgba(1, 0, 0, 1, colorA));
-		nvgText(vgId, 5, 5, "Hello world!");
 
 		drawCrosshair(width, height);
 		drawHealthBar(width, height, player);
@@ -150,7 +238,9 @@ public class GuiRenderer {
 	public void free() {
 		memFree(jetbrainsMonoFontData);
 		nvgDelete(vgId);
-		for (var tex : textures.values()) tex.free();
+		for (var texture : playerNamePlates.values()) {
+			texture.free();
+		}
 		glDeleteBuffers(vboId);
 		glDeleteVertexArrays(vaoId);
 		shaderProgram.free();

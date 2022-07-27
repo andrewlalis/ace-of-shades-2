@@ -47,4 +47,10 @@ public final class FileUtils {
 			return buffer;
 		}
 	}
+
+	public static InputStream getClasspathResource(String resource) throws IOException {
+		InputStream in = FileUtils.class.getClassLoader().getResourceAsStream(resource);
+		if (in == null) throw new IOException("Resource not found: " + resource);
+		return in;
+	}
 }
