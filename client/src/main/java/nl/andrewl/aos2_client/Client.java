@@ -2,6 +2,7 @@ package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.config.ClientConfig;
 import nl.andrewl.aos2_client.control.*;
+import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
@@ -41,6 +42,7 @@ public class Client implements Runnable {
 	private final Map<Integer, OtherPlayer> players;
 	private final Map<Integer, Projectile> projectiles;
 	private final Map<Integer, Team> teams;
+	private final Chat chat;
 
 	public Client(ClientConfig config) {
 		this.config = config;
@@ -49,6 +51,7 @@ public class Client implements Runnable {
 		this.projectiles = new ConcurrentHashMap<>();
 		this.communicationHandler = new CommunicationHandler(this);
 		this.inputHandler = new InputHandler(this, communicationHandler);
+		this.chat = new Chat();
 	}
 
 	public ClientConfig getConfig() {
@@ -182,6 +185,11 @@ public class Client implements Runnable {
 			}
 		} else if (msg instanceof ClientHealthMessage healthMessage) {
 			myPlayer.setHealth(healthMessage.health());
+		} else if (msg instanceof ChatMessage chatMessage) {
+			chat.chatReceived(chatMessage);
+			if (soundManager != null) {
+				soundManager.play("chat", 1, myPlayer.getPosition(), myPlayer.getVelocity());
+			}
 		}
 	}
 
@@ -203,6 +211,10 @@ public class Client implements Runnable {
 
 	public Map<Integer, Projectile> getProjectiles() {
 		return projectiles;
+	}
+
+	public Chat getChat() {
+		return chat;
 	}
 
 	public void interpolatePlayers(long now, float dt) {

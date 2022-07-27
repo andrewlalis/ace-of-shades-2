@@ -46,6 +46,8 @@ public final class Net {
 		serializer.registerType(17, ProjectileMessage.class);
 		serializer.registerType(18, ClientHealthMessage.class);
 		serializer.registerType(19, BlockColorMessage.class);
+		serializer.registerType(20, ChatMessage.class);
+		serializer.registerType(21, ChatWrittenMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

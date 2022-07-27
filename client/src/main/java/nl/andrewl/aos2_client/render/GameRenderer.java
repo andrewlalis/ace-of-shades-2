@@ -271,7 +271,7 @@ public class GameRenderer {
 		// GUI rendering
 		guiRenderer.start();
 		guiRenderer.drawNameplates(myPlayer, camera.getViewTransformData(), perspectiveTransform.get(new float[16]));
-		guiRenderer.drawNvg(screenWidth, screenHeight, myPlayer);
+		guiRenderer.drawNvg(screenWidth, screenHeight, myPlayer, client.getChat());
 		guiRenderer.end();
 
 		glfwSwapBuffers(windowHandle);

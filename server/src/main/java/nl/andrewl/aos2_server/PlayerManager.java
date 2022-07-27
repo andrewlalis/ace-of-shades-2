@@ -3,7 +3,10 @@ package nl.andrewl.aos2_server;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.Team;
-import nl.andrewl.aos_core.model.item.*;
+import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.Gun;
+import nl.andrewl.aos_core.model.item.GunItemStack;
+import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
@@ -37,10 +40,14 @@ public class PlayerManager {
 		log.info("Registered player \"{}\" with id {}", player.getUsername(), player.getId());
 		players.put(player.getId(), player);
 		clientHandlers.put(player.getId(), handler);
+		String joinMessage;
 		Team team = findBestTeamForNewPlayer();
 		if (team != null) {
 			player.setTeam(team);
 			log.info("Player \"{}\" joined the \"{}\" team.", player.getUsername(), team.getName());
+			joinMessage = String.format("%s joined the %s team.", username, team.getName());
+		} else {
+			joinMessage = username + " joined the game.";
 		}
 		player.setPosition(getBestSpawnPoint(player));
 		// Tell all other players that this one has joined.
@@ -53,6 +60,7 @@ public class PlayerManager {
 				player.getInventory().getSelectedItemStack().getType().getId(),
 				player.getInventory().getSelectedBlockValue()
 		), player);
+		broadcastTcpMessageToAllBut(ChatMessage.announce(joinMessage), player);
 		return player;
 	}
 
@@ -63,6 +71,7 @@ public class PlayerManager {
 		clientHandlers.remove(player.getId());
 		broadcastTcpMessage(new PlayerLeaveMessage(player.getId()));
 		log.info("Deregistered player \"{}\" with id {}", player.getUsername(), player.getId());
+		broadcastTcpMessage(ChatMessage.announce(player.getUsername() + " left the game."));
 	}
 
 	public synchronized void deregisterAll() {
@@ -163,6 +172,13 @@ public class PlayerManager {
 		resupply(player);
 		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
+		String deathMessage;
+		if (killedBy != null) {
+			deathMessage = player.getUsername() + " was killed by " + killedBy.getUsername() + ".";
+		} else {
+			deathMessage = player.getUsername() + " died.";
+		}
+		broadcastTcpMessage(ChatMessage.announce(deathMessage));
 		// TODO: Team points or something.
 	}
 
@@ -181,6 +197,7 @@ public class PlayerManager {
 			handler.sendTcpMessage(new ItemStackMessage(i, stack));
 		}
 		handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
+		handler.sendTcpMessage(ChatMessage.privateMessage("You've been resupplied at your team base."));
 	}
 
 	public void handleUdpInit(DatagramInit init, DatagramPacket packet) {

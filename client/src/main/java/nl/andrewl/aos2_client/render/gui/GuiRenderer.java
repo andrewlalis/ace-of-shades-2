@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client.render.gui;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.ShaderProgram;
@@ -59,7 +60,7 @@ public class GuiRenderer {
 	private final int namePlatePerspectiveTransformUniform;
 	private final int namePlateTextureSamplerUniform;
 	private final Font namePlateFont;
-	private final Map<OtherPlayer, GUITexture> playerNamePlates = new HashMap<>();
+	private final Map<OtherPlayer, GuiTexture> playerNamePlates = new HashMap<>();
 
 	public GuiRenderer() throws IOException {
 		vgId = nvgCreate(NVG_ANTIALIAS);
@@ -127,7 +128,7 @@ public class GuiRenderer {
 		glUniform1i(textureSamplerUniform, 0);
 	}
 
-	public void draw(GUITexture texture, float scaleX, float scaleY, float x, float y) {
+	public void draw(GuiTexture texture, float scaleX, float scaleY, float x, float y) {
 		glActiveTexture(0);
 		transformMatrix.identity()
 						.translate(x, y, 0)
@@ -139,12 +140,12 @@ public class GuiRenderer {
 	}
 
 	private void addNamePlate(OtherPlayer player) {
-		GUITexture texture = new GUITexture(generateNameplateImage(player.getUsername()));
+		GuiTexture texture = new GuiTexture(generateNameplateImage(player.getUsername()));
 		playerNamePlates.put(player, texture);
 	}
 
 	private void removeNamePlate(OtherPlayer player) {
-		GUITexture texture = playerNamePlates.remove(player);
+		GuiTexture texture = playerNamePlates.remove(player);
 		texture.free();
 	}
 
@@ -197,7 +198,7 @@ public class GuiRenderer {
 			OtherPlayer player = entry.getKey();
 			// Skip rendering far-away nameplates.
 			if (player.getPosition().distance(myPlayer.getPosition()) > 50) continue;
-			GUITexture texture = entry.getValue();
+			GuiTexture texture = entry.getValue();
 			float aspectRatio = (float) texture.getHeight() / (float) texture.getWidth();
 			transformMatrix.identity()
 					.translate(player.getPosition().x(), player.getPosition().y() + Player.HEIGHT + 1f, player.getPosition().z())
@@ -215,11 +216,12 @@ public class GuiRenderer {
 		shaderProgram.use();
 	}
 
-	public void drawNvg(float width, float height, ClientPlayer player) {
+	public void drawNvg(float width, float height, ClientPlayer player, Chat chat) {
 		nvgBeginFrame(vgId, width, height, width / height);
 		nvgSave(vgId);
 
 		drawCrosshair(width, height);
+		drawChat(width, height, chat);
 		drawHealthBar(width, height, player);
 		drawHeldItemStackInfo(width, height, player);
 
@@ -314,5 +316,34 @@ public class GuiRenderer {
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 		nvgText(vgId, w - 140, h - 30, String.format("%d / %d Blocks", stack.getAmount(), block.getMaxAmount()));
+	}
+
+	private void drawChat(float w, float h, Chat chat) {
+		float chatWidth = w / 3;
+		float chatHeight = h / 4;
+
+		nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.25f, colorA));
+		nvgBeginPath(vgId);
+		nvgRect(vgId, 0, 0, chatWidth, chatHeight);
+		nvgFill(vgId);
+
+		nvgFontSize(vgId, 12f);
+		nvgFontFaceId(vgId, jetbrainsMonoFont);
+		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		float y = chatHeight - 12;
+		for (var msg : chat.getMessages()) {
+			if (msg.author().equals("_ANNOUNCE")) {
+				nvgFillColor(vgId, GuiUtils.rgba(0.7f, 0, 0, 1, colorA));
+				nvgText(vgId, 5, y, msg.message());
+			} else if (msg.author().equals("_PRIVATE")) {
+				nvgFillColor(vgId, GuiUtils.rgba(0.3f, 0.3f, 0.3f, 1, colorA));
+				nvgText(vgId, 5, y, msg.message());
+			} else {
+				nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
+				nvgText(vgId, 5, y, msg.author() + ": " + msg.message());
+			}
+
+			y -= 16;
+		}
 	}
 }

@@ -2,9 +2,7 @@ package nl.andrewl.aos2_client.render.gui;
 
 import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.ImageUtils;
-import org.joml.Vector2f;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -13,7 +11,7 @@ import static org.lwjgl.opengl.GL46.*;
 /**
  * Represents a texture loaded onto the GPU.
  */
-public class GUITexture {
+public class GuiTexture {
 	private final int textureId;
 	/**
 	 * The original image's width.
@@ -24,11 +22,11 @@ public class GUITexture {
 	 */
 	private final int height;
 
-	public GUITexture(String location) throws IOException {
+	public GuiTexture(String location) throws IOException {
 		this(FileUtils.readClasspathImage(location));
 	}
 
-	public GUITexture(BufferedImage img) {
+	public GuiTexture(BufferedImage img) {
 		width = img.getWidth();
 		height = img.getHeight();
 
