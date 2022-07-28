@@ -29,8 +29,8 @@ import static nl.andrewl.aos2_server.model.ServerPlayer.RADIUS;
  */
 public class PlayerActionManager {
 	private final ServerPlayer player;
+	private final PlayerInputTracker input;
 
-	private ClientInputState lastInputState;
 	private long lastBlockRemovedAt = 0;
 	private long lastBlockPlacedAt = 0;
 
@@ -45,23 +45,15 @@ public class PlayerActionManager {
 
 	public PlayerActionManager(ServerPlayer player) {
 		this.player = player;
-		lastInputState = new ClientInputState(
-				player.getId(),
-				false, false, false, false,
-				false, false, false,
-				false, false, false,
-				player.getInventory().getSelectedIndex()
-		);
+		this.input = new PlayerInputTracker(player);
 	}
 
-	public ClientInputState getLastInputState() {
-		return lastInputState;
+	public PlayerInputTracker getInput() {
+		return input;
 	}
 
 	public boolean setLastInputState(ClientInputState lastInputState) {
-		boolean change = !lastInputState.equals(this.lastInputState);
-		if (change) this.lastInputState = lastInputState;
-		return change;
+		return input.setLastInputState(lastInputState);
 	}
 
 	public boolean isUpdated() {
@@ -70,8 +62,8 @@ public class PlayerActionManager {
 
 	public void tick(long now, float dt, World world, Server server) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
-		if (player.getInventory().getSelectedIndex() != lastInputState.selectedInventoryIndex()) {
-			player.getInventory().setSelectedIndex(lastInputState.selectedInventoryIndex());
+		if (player.getInventory().getSelectedIndex() != input.selectedInventoryIndex()) {
+			player.getInventory().setSelectedIndex(input.selectedInventoryIndex());
 			// Tell the client that their inventory slot has been updated properly.
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new InventorySelectedStackMessage(player.getInventory().getSelectedIndex()));
 			updated = true; // Tell everyone else that this player's selected item has changed.
@@ -81,7 +73,7 @@ public class PlayerActionManager {
 		if (selectedStack instanceof BlockItemStack b) {
 			tickBlockAction(now, server, world, b);
 		} else if (selectedStack instanceof GunItemStack g) {
-			tickGunAction(now, server, world, g);
+			tickGunAction(now, server, g);
 		}
 
 		if (
@@ -93,18 +85,19 @@ public class PlayerActionManager {
 			lastResupplyAt = now;
 		}
 
-		if (player.isCrouching() != lastInputState.crouching()) {
-			player.setCrouching(lastInputState.crouching());
+		if (player.isCrouching() != input.crouching()) {
+			player.setCrouching(input.crouching());
 			updated = true;
 		}
 
 		tickMovement(dt, server, world, server.getConfig().physics);
+		input.reset();
 	}
 
-	private void tickGunAction(long now, Server server, World world, GunItemStack g) {
+	private void tickGunAction(long now, Server server, GunItemStack g) {
 		Gun gun = (Gun) g.getType();
 		if (// Check to see if the player is shooting.
-				lastInputState.hitting() &&
+				input.hitting() &&
 				g.getBulletCount() > 0 &&
 				!gunReloading &&
 				now - gunLastShotAt > gun.getShotCooldownTime() * 1000 &&
@@ -126,11 +119,14 @@ public class PlayerActionManager {
 			} else if (gun instanceof Winchester) {
 				shotSound = "shot_winchester_1";
 			}
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, player.getPosition(), player.getVelocity()));
+			Vector3f soundLocation = new Vector3f(player.getPosition());
+			soundLocation.y += 1.4f;
+			soundLocation.add(player.getViewVector());
+			server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, soundLocation, player.getVelocity()));
 		}
 
 		if (// Check to see if the player is reloading.
-				lastInputState.reloading() &&
+				input.reloading() &&
 				!gunReloading &&
 				g.getClipCount() > 0
 		) {
@@ -151,7 +147,7 @@ public class PlayerActionManager {
 		}
 
 		// Check to see if the player released the trigger, for non-automatic weapons.
-		if (!gun.isAutomatic() && gunNeedsReCock && !lastInputState.hitting()) {
+		if (!gun.isAutomatic() && gunNeedsReCock && !input.hitting()) {
 			gunNeedsReCock = false;
 		}
 	}
@@ -159,7 +155,7 @@ public class PlayerActionManager {
 	private void tickBlockAction(long now, Server server, World world, BlockItemStack stack) {
 		// Check for breaking blocks.
 		if (
-				lastInputState.hitting() &&
+				input.hitting() &&
 				stack.getAmount() < stack.getType().getMaxAmount() &&
 				now - lastBlockRemovedAt > server.getConfig().actions.blockBreakCooldown * 1000
 		) {
@@ -175,7 +171,7 @@ public class PlayerActionManager {
 		}
 		// Check for placing blocks.
 		if (
-				lastInputState.interacting() &&
+				input.interacting() &&
 				stack.getAmount() > 0 &&
 				now - lastBlockPlacedAt > server.getConfig().actions.blockPlaceCooldown * 1000
 		) {
@@ -202,8 +198,8 @@ public class PlayerActionManager {
 		tickHorizontalVelocity(config, grounded);
 
 		if (isGrounded(world)) {
-			if (lastInputState.jumping()) {
-				velocity.y = config.jumpVerticalSpeed * (lastInputState.sprinting() ? 1.25f : 1f);
+			if (input.jumping()) {
+				velocity.y = config.jumpVerticalSpeed * (input.sprinting() ? 1.25f : 1f);
 				updated = true;
 			}
 		} else {
@@ -239,19 +235,19 @@ public class PlayerActionManager {
 				velocity.z == velocity.z ? velocity.z : 0f
 		);
 		Vector3f acceleration = new Vector3f(0);
-		if (lastInputState.forward()) acceleration.z -= 1;
-		if (lastInputState.backward()) acceleration.z += 1;
-		if (lastInputState.left()) acceleration.x -= 1;
-		if (lastInputState.right()) acceleration.x += 1;
+		if (input.forward()) acceleration.z -= 1;
+		if (input.backward()) acceleration.z += 1;
+		if (input.left()) acceleration.x -= 1;
+		if (input.right()) acceleration.x += 1;
 		if (acceleration.lengthSquared() > 0) {
 			acceleration.normalize();
 			acceleration.rotateAxis(orientation.x, 0, 1, 0);
 			acceleration.mul(config.movementAcceleration);
 			horizontalVelocity.add(acceleration);
 			final float maxSpeed;
-			if (lastInputState.crouching()) {
+			if (input.crouching()) {
 				maxSpeed = config.crouchingSpeed;
-			} else if (lastInputState.sprinting()) {
+			} else if (input.sprinting()) {
 				maxSpeed = config.sprintingSpeed;
 			} else {
 				maxSpeed = config.walkingSpeed;

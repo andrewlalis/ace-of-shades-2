@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.config;
 
+import nl.andrewl.aos_core.FileUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ public final class Config {
 	 * @param paths The paths to load from.
 	 * @param fallback A default configuration object to use if no config could
 	 *                 be loaded from any of the paths.
-	 * @param defaultConfigFile The default config file to save.
+	 * @param defaultConfigFile The default config file resource to save.
 	 * @return The configuration object.
 	 * @param <T> The type of the configuration object.
 	 */
@@ -35,23 +36,11 @@ public final class Config {
 		}
 		Path outputPath = paths.size() > 0 ? paths.get(0) : Path.of("config.yaml");
 		try (var writer = Files.newBufferedWriter(outputPath)) {
-			writer.write(defaultConfigFile);
+			writer.write(FileUtils.readClasspathFile(defaultConfigFile));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return fallback;
-	}
-
-	public static <T> T loadConfig(Class<T> configType, List<Path> paths, String defaultConfigFile) {
-		var cfg = loadConfig(configType, paths, null, defaultConfigFile);
-		if (cfg == null) {
-			throw new RuntimeException("Could not load config from any of the supplied paths.");
-		}
-		return cfg;
-	}
-
-	public static <T> T loadConfig(Class<T> configType, T fallback, String defaultConfigFile, Path... paths) {
-		return loadConfig(configType, List.of(paths), fallback, defaultConfigFile);
 	}
 
 	public static List<Path> getCommonConfigPaths() {

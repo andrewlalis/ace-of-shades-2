@@ -177,10 +177,11 @@ public class Server implements Runnable {
 
 	public static void main(String[] args) throws IOException {
 		List<Path> configPaths = Config.getCommonConfigPaths();
+		configPaths.add(0, Path.of("server.yaml"));
 		if (args.length > 0) {
 			configPaths.add(Path.of(args[0].trim()));
 		}
-		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig(), null);
+		ServerConfig cfg = Config.loadConfig(ServerConfig.class, configPaths, new ServerConfig(), "default-config.yaml");
 		Server server = new Server(cfg);
 		new Thread(server).start();
 		ServerCli.start(server);

@@ -1,0 +1,32 @@
+# Ace of Shades 2 Server Configuration
+port: 25565
+connectionBacklog: 5
+ticksPerSecond: 20.0
+world: worlds.redfort
+teams:
+  - name: Red
+    color: [0.8, 0, 0]
+    spawnPoint: A
+  - name: Blue
+    color: [0, 0, 0.8]
+    spawnPoint: B
+physics:
+  gravity: 29.43
+  walkingSpeed: 4
+  crouchingSpeed: 1.5
+  sprintingSpeed: 9
+  movementAcceleration: 2
+  movementDeceleration: 1
+  jumpVerticalSpeed: 8
+actions:
+  blockBreakCooldown: 0.25
+  blockPlaceCooldown: 0.1
+  blockBreakReach: 5
+  blockPlaceReach: 5
+  blockBulletDamageResistance: 3
+  blockBulletDamageCooldown: 10
+  resupplyCooldown: 30
+  resupplyRadius: 3
+  teamSpawnProtection: 10
+  movementAccuracyDecreaseFactor: 0.01
+  friendlyFire: false

@@ -7,7 +7,6 @@ import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos2_client.sound.SoundManager;
-import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.config.Config;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
@@ -137,7 +136,7 @@ public class Client implements Runnable {
 						gameRenderer.getCamera().setToPlayer(myPlayer);
 					}
 					if (soundManager != null) {
-						soundManager.updateListener(myPlayer.getPosition(), myPlayer.getVelocity());
+						soundManager.updateListener(myPlayer.getEyePosition(), myPlayer.getVelocity());
 					}
 					lastPlayerUpdate = playerUpdate.timestamp();
 				} else {
@@ -206,7 +205,7 @@ public class Client implements Runnable {
 		} else if (msg instanceof ChatMessage chatMessage) {
 			chat.chatReceived(chatMessage);
 			if (soundManager != null) {
-				soundManager.play("chat", 1, myPlayer.getPosition(), myPlayer.getVelocity());
+				soundManager.play("chat", 1, myPlayer.getEyePosition(), myPlayer.getVelocity());
 			}
 		}
 	}
@@ -268,10 +267,11 @@ public class Client implements Runnable {
 
 	public static void main(String[] args) throws IOException {
 		List<Path> configPaths = Config.getCommonConfigPaths();
+		configPaths.add(0, Path.of("client.yaml")); // Add this first so we create client.yaml if needed.
 		if (args.length > 0) {
 			configPaths.add(Path.of(args[0].trim()));
 		}
-		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig(), FileUtils.readClasspathFile("default-config.yaml"));
+		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig(), "default-config.yaml");
 		Client client = new Client(clientConfig);
 		client.run();
 	}

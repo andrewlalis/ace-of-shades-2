@@ -17,7 +17,7 @@ import java.util.Map;
  * that players can interact in.
  */
 public class World {
-	private static final float DELTA = 0.01f;
+	private static final float DELTA = 0.001f;
 
 	protected final Map<Vector3ic, Chunk> chunkMap = new HashMap<>();
 	protected ColorPalette palette;
@@ -164,8 +164,12 @@ public class World {
 	public Hit getLookingAtPos(Vector3f eyePos, Vector3f eyeDir, float limit) {
 		if (eyeDir.lengthSquared() == 0 || limit <= 0) return null;
 		Vector3f pos = new Vector3f(eyePos);
+		Vector3f previousPos = new Vector3f();
 		while (pos.distance(eyePos) < limit) {
+			previousPos.set(pos);
 			stepToNextBlock(pos, eyeDir);
+			// If for some reason we couldn't advance to the next block, exit null, so we don't infinitely loop.
+			if (pos.equals(previousPos)) return null;
 			if (getBlockAt(pos) > 0) {
 				Vector3i hitPos = new Vector3i(
 						(int) Math.floor(pos.x),
@@ -234,7 +238,7 @@ public class World {
 		// Testing code!
 		if (diff == 0) {
 			System.out.printf("n = %.8f, nextValue = %.8f, floor(n) - DELTA = %.8f%n", n, nextValue, Math.floor(n) - DELTA);
-			throw new RuntimeException("EEK");
+			return Float.MAX_VALUE;
 		}
 		return Math.abs(diff / dir);
 	}

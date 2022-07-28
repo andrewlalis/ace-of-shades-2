@@ -6,7 +6,6 @@ import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;
 import nl.andrewl.aos_core.model.item.ItemTypes;
-import nl.andrewl.aos_core.model.item.gun.Winchester;
 import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +68,7 @@ public class ServerPlayer extends Player {
 				position.x, position.y, position.z,
 				velocity.x, velocity.y, velocity.z,
 				orientation.x, orientation.y,
-				actionManager.getLastInputState().crouching(),
+				actionManager.getInput().crouching(),
 				inventory.getSelectedItemStack().getType().getId()
 		);
 	}
