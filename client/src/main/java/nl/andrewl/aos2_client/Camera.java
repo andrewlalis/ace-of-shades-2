@@ -52,6 +52,14 @@ public class Camera {
 		velocity.set(p.getVelocity());
 	}
 
+	public void setToPlayerScopeView(Player p) {
+		Vector3f pos = new Vector3f();
+		Matrix4f tx = p.getHeldItemTransform();
+		tx.transformPosition(pos);
+		position.set(pos);
+		velocity.set(p.getVelocity());
+	}
+
 	public void setOrientationToPlayer(Player p) {
 		orientation.set(p.getOrientation());
 	}

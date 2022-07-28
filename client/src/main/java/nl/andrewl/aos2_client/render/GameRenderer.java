@@ -137,7 +137,7 @@ public class GameRenderer {
 			throw new RuntimeException(e);
 		}
 		log.debug("Initialized model renderer.");
-		updatePerspective();
+		updatePerspective(config.fov);
 	}
 
 	public float getAspectRatio() {
@@ -147,8 +147,8 @@ public class GameRenderer {
 	/**
 	 * Updates the rendering perspective used to render the game.
 	 */
-	private void updatePerspective() {
-		float fovRad = (float) Math.toRadians(config.fov);
+	public void updatePerspective(float fov) {
+		float fovRad = (float) Math.toRadians(fov);
 		if (fovRad >= Math.PI) {
 			fovRad = (float) (Math.PI - 0.01f);
 		} else if (fovRad <= 0) {

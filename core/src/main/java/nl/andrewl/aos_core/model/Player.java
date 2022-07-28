@@ -1,10 +1,9 @@
 package nl.andrewl.aos_core.model;
 
+import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.MathUtils;
+import org.joml.*;
 import org.joml.Math;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector3i;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -166,6 +165,18 @@ public class Player {
 
 	public float getCurrentHeight() {
 		return crouching ? HEIGHT_CROUCH : HEIGHT;
+	}
+
+	/**
+	 * Gets a transformation that transforms a position to the position of the
+	 * player's held gun.
+	 * @return The gun transform.
+	 */
+	public Matrix4f getHeldItemTransform() {
+		return new Matrix4f()
+				.translate(position)
+				.rotate(orientation.x + (float) Math.PI, Directions.UPf)
+				.translate(-0.35f, getEyeHeight() - 0.4f, 0.35f);
 	}
 
 	public List<Vector3i> getBlockSpaceOccupied() {
