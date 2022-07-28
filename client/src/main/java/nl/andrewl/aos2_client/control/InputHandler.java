@@ -6,6 +6,7 @@ import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.world.Hit;
 import nl.andrewl.aos_core.net.client.BlockColorMessage;
+import nl.andrewl.aos_core.net.client.ChatWrittenMessage;
 import nl.andrewl.aos_core.net.client.ClientInputState;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -34,6 +35,9 @@ public class InputHandler {
 	private int selectedInventoryIndex;
 
 	private boolean debugEnabled;
+
+	private boolean chatting;
+	private StringBuffer chatText = new StringBuffer();
 
 
 	public InputHandler(Client client, CommunicationHandler comm) {
@@ -66,6 +70,7 @@ public class InputHandler {
 	}
 
 	public void setForward(boolean forward) {
+		if (chatting) return;
 		this.forward = forward;
 		updateInputState();
 	}
@@ -75,6 +80,7 @@ public class InputHandler {
 	}
 
 	public void setBackward(boolean backward) {
+		if (chatting) return;
 		this.backward = backward;
 		updateInputState();
 	}
@@ -84,6 +90,7 @@ public class InputHandler {
 	}
 
 	public void setLeft(boolean left) {
+		if (chatting) return;
 		this.left = left;
 		updateInputState();
 	}
@@ -93,6 +100,7 @@ public class InputHandler {
 	}
 
 	public void setRight(boolean right) {
+		if (chatting) return;
 		this.right = right;
 		updateInputState();
 	}
@@ -102,6 +110,7 @@ public class InputHandler {
 	}
 
 	public void setJumping(boolean jumping) {
+		if (chatting) return;
 		this.jumping = jumping;
 		updateInputState();
 	}
@@ -111,6 +120,7 @@ public class InputHandler {
 	}
 
 	public void setCrouching(boolean crouching) {
+		if (chatting) return;
 		this.crouching = crouching;
 		updateInputState();
 	}
@@ -120,6 +130,7 @@ public class InputHandler {
 	}
 
 	public void setSprinting(boolean sprinting) {
+		if (chatting) return;
 		this.sprinting = sprinting;
 		updateInputState();
 	}
@@ -129,6 +140,7 @@ public class InputHandler {
 	}
 
 	public void setHitting(boolean hitting) {
+		if (chatting) return;
 		this.hitting = hitting;
 		updateInputState();
 	}
@@ -138,6 +150,7 @@ public class InputHandler {
 	}
 
 	public void setInteracting(boolean interacting) {
+		if (chatting) return;
 		this.interacting = interacting;
 		updateInputState();
 	}
@@ -147,6 +160,7 @@ public class InputHandler {
 	}
 
 	public void setReloading(boolean reloading) {
+		if (chatting) return;
 		this.reloading = reloading;
 		updateInputState();
 	}
@@ -156,6 +170,7 @@ public class InputHandler {
 	}
 
 	public void setSelectedInventoryIndex(int selectedInventoryIndex) {
+		if (chatting) return;
 		this.selectedInventoryIndex = selectedInventoryIndex;
 		updateInputState();
 	}
@@ -166,6 +181,57 @@ public class InputHandler {
 
 	public void toggleDebugEnabled() {
 		this.debugEnabled = !debugEnabled;
+	}
+
+	public void enableChatting() {
+		if (chatting) return;
+		setForward(false);
+		setBackward(false);
+		setLeft(false);
+		setRight(false);
+		setJumping(false);
+		setCrouching(false);
+		setSprinting(false);
+		setReloading(false);
+		chatting = true;
+		chatText = new StringBuffer();
+	}
+
+	public boolean isChatting() {
+		return chatting;
+	}
+
+	public void cancelChatting() {
+		chatting = false;
+		chatText.delete(0, chatText.length());
+	}
+
+	public void appendToChat(int codePoint) {
+		if (!chatting || chatText.length() + 1 > 120) return;
+		chatText.appendCodePoint(codePoint);
+	}
+
+	public void appendToChat(String s) {
+		if (!chatting || chatText.length() + s.length() > 120) return;
+		chatText.append(s);
+	}
+
+	public void deleteFromChat() {
+		if (!chatting || chatText.length() == 0) return;
+		chatText.deleteCharAt(chatText.length() - 1);
+	}
+
+	public String getChatText() {
+		return chatText.toString();
+	}
+
+	public void sendChat() {
+		if (!chatting) return;
+		String text = chatText.toString().trim();
+		cancelChatting();
+		if (!text.isBlank()) {
+			client.getCommunicationHandler().sendMessage(new ChatWrittenMessage(text));
+		}
 	}
 
 	public void pickBlock() {

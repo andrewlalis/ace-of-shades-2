@@ -24,12 +24,23 @@ public class PlayerInputKeyCallback implements GLFWKeyCallbackI {
 				case GLFW_KEY_LEFT_SHIFT -> inputHandler.setSprinting(true);
 				case GLFW_KEY_R -> inputHandler.setReloading(true);
 
+				case GLFW_KEY_BACKSPACE -> inputHandler.deleteFromChat();
+				case GLFW_KEY_ENTER -> inputHandler.sendChat();
+
 				case GLFW_KEY_1 -> inputHandler.setSelectedInventoryIndex(0);
 				case GLFW_KEY_2 -> inputHandler.setSelectedInventoryIndex(1);
 				case GLFW_KEY_3 -> inputHandler.setSelectedInventoryIndex(2);
 				case GLFW_KEY_4 -> inputHandler.setSelectedInventoryIndex(3);
 
 				case GLFW_KEY_F3 -> inputHandler.toggleDebugEnabled();
+
+				case GLFW_KEY_ESCAPE -> {
+					if (inputHandler.isChatting()) {
+						inputHandler.cancelChatting();
+					} else {
+						glfwSetWindowShouldClose(window, true);
+					}
+				}
 			}
 		} else if (action == GLFW_RELEASE) {
 			switch (key) {
@@ -42,7 +53,15 @@ public class PlayerInputKeyCallback implements GLFWKeyCallbackI {
 				case GLFW_KEY_LEFT_SHIFT -> inputHandler.setSprinting(false);
 				case GLFW_KEY_R -> inputHandler.setReloading(false);
 
-				case GLFW_KEY_ESCAPE -> glfwSetWindowShouldClose(window, true);
+				case GLFW_KEY_T -> inputHandler.enableChatting();
+				case GLFW_KEY_SLASH -> {
+					inputHandler.enableChatting();
+					inputHandler.appendToChat("/");
+				}
+			}
+		} else if (action == GLFW_REPEAT) {
+			switch (key) {
+				case GLFW_KEY_BACKSPACE -> inputHandler.deleteFromChat();
 			}
 		}
 	}

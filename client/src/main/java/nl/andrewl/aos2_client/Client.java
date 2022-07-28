@@ -83,14 +83,7 @@ public class Client implements Runnable {
 			return;
 		}
 
-		gameRenderer = new GameRenderer(this);
-		gameRenderer.setupWindow(
-				inputHandler,
-				new PlayerViewCursorCallback(config.input, this, gameRenderer.getCamera(), communicationHandler),
-				new PlayerInputKeyCallback(inputHandler),
-				new PlayerInputMouseClickCallback(inputHandler),
-				new PlayerInputMouseScrollCallback(this, communicationHandler)
-		);
+		gameRenderer = new GameRenderer(this, inputHandler);
 		soundManager = new SoundManager();
 		log.debug("Sound system initialized.");
 
@@ -207,6 +200,13 @@ public class Client implements Runnable {
 			if (soundManager != null) {
 				soundManager.play("chat", 1, myPlayer.getEyePosition(), myPlayer.getVelocity());
 			}
+		} else if (msg instanceof ClientOrientationUpdateMessage orientationUpdateMessage) {
+			runLater(() -> {
+				myPlayer.setOrientation(orientationUpdateMessage.x(), orientationUpdateMessage.y());
+				if (gameRenderer != null) {
+					gameRenderer.getCamera().setOrientationToPlayer(myPlayer);
+				}
+			});
 		}
 	}
 
@@ -220,6 +220,10 @@ public class Client implements Runnable {
 
 	public InputHandler getInputHandler() {
 		return inputHandler;
+	}
+
+	public CommunicationHandler getCommunicationHandler() {
+		return communicationHandler;
 	}
 
 	public Map<Integer, Team> getTeams() {

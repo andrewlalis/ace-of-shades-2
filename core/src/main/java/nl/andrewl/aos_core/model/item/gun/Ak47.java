@@ -14,7 +14,7 @@ public class Ak47 extends Gun {
 				0.1f,
 				1.2f,
 				0.4f,
-				30f,
+				0.1f,
 				true
 		);
 	}

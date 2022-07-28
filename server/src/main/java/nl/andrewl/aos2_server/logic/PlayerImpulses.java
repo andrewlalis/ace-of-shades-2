@@ -2,6 +2,11 @@ package nl.andrewl.aos2_server.logic;
 
 import nl.andrewl.aos_core.net.client.ClientInputState;
 
+/**
+ * Component that keeps track of any impulses the player has made since the
+ * last tick. This way, if a player activates an input for even a fraction of
+ * a tick, it'll register.
+ */
 public class PlayerImpulses {
 	public boolean forward;
 	public boolean backward;

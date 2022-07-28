@@ -10,9 +10,9 @@ public class PlayerInputMouseScrollCallback implements GLFWScrollCallbackI {
 	private final Client client;
 	private final CommunicationHandler comm;
 
-	public PlayerInputMouseScrollCallback(Client client, CommunicationHandler comm) {
+	public PlayerInputMouseScrollCallback(Client client) {
 		this.client = client;
-		this.comm = comm;
+		this.comm = client.getCommunicationHandler();
 	}
 
 	@Override

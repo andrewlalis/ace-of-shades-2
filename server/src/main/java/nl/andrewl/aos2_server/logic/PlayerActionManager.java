@@ -111,6 +111,16 @@ public class PlayerActionManager {
 				gunNeedsReCock = true;
 			}
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+			// Apply recoil!
+			float recoilFactor = 10f; // Maximum number of degrees to recoil.
+			float recoil = recoilFactor * gun.getRecoil() + (float) ThreadLocalRandom.current().nextGaussian(0, 0.01);
+			player.getOrientation().y += Math.toRadians(recoil);
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientOrientationUpdateMessage(
+					player.getOrientation().x(),
+					player.getOrientation().y()
+			));
+			server.getPlayerManager().broadcastUdpMessageToAllBut(player.getUpdateMessage(now), player);
+			// Play sound!
 			String shotSound = null;
 			if (gun instanceof Rifle) {
 				shotSound = "shot_m1-garand_1";

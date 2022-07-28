@@ -7,6 +7,8 @@ import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.Chunk;
 import nl.andrewl.aos_core.model.world.WorldIO;
 import nl.andrewl.aos_core.net.TcpReceiver;
+import nl.andrewl.aos_core.net.client.ChatMessage;
+import nl.andrewl.aos_core.net.client.ChatWrittenMessage;
 import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
@@ -77,6 +79,25 @@ public class ClientCommunicationHandler {
 			if (chunk != null && hashMessage.hash() != chunk.blockHash()) {
 				sendTcpMessage(new ChunkDataMessage(chunk));
 			}
+		} else if (msg instanceof ChatWrittenMessage chatWrittenMessage) {
+			if (chatWrittenMessage.message().startsWith("/t ")) {
+				if (player.getTeam() != null) {
+					var chat = new ChatMessage(
+							System.currentTimeMillis(),
+							player.getUsername(),
+							chatWrittenMessage.message().substring(3)
+					);
+					for (var teamPlayer : server.getTeamManager().getPlayers(player.getTeam())) {
+						server.getPlayerManager().getHandler(teamPlayer).sendTcpMessage(chat);
+					}
+				}
+			} else {
+				server.getPlayerManager().broadcastTcpMessage(new ChatMessage(
+						System.currentTimeMillis(),
+						player.getUsername(),
+						chatWrittenMessage.message()
+				));
+			}
 		}
 	}
 
@@ -110,6 +131,10 @@ public class ClientCommunicationHandler {
 					log.debug("Sent connect accept message.");
 					sendInitialData();
 					log.debug("Sent initial data.");
+					sendTcpMessage(ChatMessage.privateMessage("Welcome to the server, " + player.getUsername() + "."));
+					if (player.getTeam() != null) {
+						sendTcpMessage(ChatMessage.privateMessage("You've joined the " + player.getTeam().getName() + " team."));
+					}
 					// Initiate a TCP receiver thread to accept incoming messages from the client.
 					TcpReceiver tcpReceiver = new TcpReceiver(in, this::handleTcpMessage)
 							.withShutdownHook(() -> server.getPlayerManager().deregister(this.player));
@@ -135,10 +160,12 @@ public class ClientCommunicationHandler {
 
 	public void sendTcpMessage(Message msg) {
 		ForkJoinPool.commonPool().submit(() -> {
-			try {
-				Net.write(msg, out);
-			} catch (IOException e) {
-				e.printStackTrace();
+			synchronized (out) {
+				try {
+					Net.write(msg, out);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 	}

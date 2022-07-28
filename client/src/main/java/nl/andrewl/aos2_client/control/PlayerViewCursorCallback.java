@@ -30,11 +30,11 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 	private float lastMouseCursorY;
 	private long lastOrientationUpdateSentAt = 0L;
 
-	public PlayerViewCursorCallback(ClientConfig.InputConfig config, Client client, Camera cam, CommunicationHandler comm) {
-		this.config = config;
+	public PlayerViewCursorCallback(Client client, Camera cam) {
+		this.config = client.getConfig().input;
 		this.client = client;
 		this.camera = cam;
-		this.comm = comm;
+		this.comm = client.getCommunicationHandler();
 	}
 
 	@Override

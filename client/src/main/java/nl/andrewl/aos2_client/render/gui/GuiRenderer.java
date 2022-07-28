@@ -223,7 +223,7 @@ public class GuiRenderer {
 		nvgSave(vgId);
 
 		drawCrosshair(width, height);
-		drawChat(width, height, client.getChat());
+		drawChat(width, height, client);
 		drawHealthBar(width, height, client.getMyPlayer());
 		drawHeldItemStackInfo(width, height, client.getMyPlayer());
 		if (client.getInputHandler().isDebugEnabled()) {
@@ -269,18 +269,18 @@ public class GuiRenderer {
 	private void drawHealthBar(float w, float h, ClientPlayer player) {
 		nvgFillColor(vgId, GuiUtils.rgba(1, 0, 0, 1, colorA));
 		nvgBeginPath(vgId);
-		nvgRect(vgId, 20, h - 60, 100, 20);
+		nvgRect(vgId, w - 170, h - 110, 100, 20);
 		nvgFill(vgId);
 		nvgFillColor(vgId, GuiUtils.rgba(0, 1, 0, 1, colorA));
 		nvgBeginPath(vgId);
-		nvgRect(vgId, 20, h - 60, 100 * player.getHealth(), 20);
+		nvgRect(vgId, w - 170, h - 110, 100 * player.getHealth(), 20);
 		nvgFill(vgId);
 
 		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
 		nvgFontSize(vgId, 12f);
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-		nvgText(vgId, 20, h - 30, String.format("%.2f / 1.00 HP", player.getHealth()));
+		nvgText(vgId, w - 170, h - 80, String.format("%.2f / 1.00 HP", player.getHealth()));
 	}
 
 	private void drawHeldItemStackInfo(float w, float h, ClientPlayer player) {
@@ -324,19 +324,20 @@ public class GuiRenderer {
 		nvgText(vgId, w - 140, h - 14, String.format("Selected value: %d", stack.getSelectedValue()));
 	}
 
-	private void drawChat(float w, float h, Chat chat) {
+	private void drawChat(float w, float h, Client client) {
 		float chatWidth = w / 3;
 		float chatHeight = h / 4;
 
 		nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.25f, colorA));
 		nvgBeginPath(vgId);
-		nvgRect(vgId, 0, 0, chatWidth, chatHeight);
+		nvgRect(vgId, 0,  h - chatHeight - 16, chatWidth, chatHeight);
 		nvgFill(vgId);
 
+		var chat = client.getChat();
 		nvgFontSize(vgId, 12f);
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-		float y = chatHeight - 12;
+		float y = h - 16 - 12;
 		for (var msg : chat.getMessages()) {
 			if (msg.author().equals("_ANNOUNCE")) {
 				nvgFillColor(vgId, GuiUtils.rgba(0.7f, 0, 0, 1, colorA));
@@ -348,8 +349,16 @@ public class GuiRenderer {
 				nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
 				nvgText(vgId, 5, y, msg.author() + ": " + msg.message());
 			}
-
 			y -= 16;
+		}
+		var input = client.getInputHandler();
+		if (input.isChatting()) {
+			nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.5f, colorA));
+			nvgBeginPath(vgId);
+			nvgRect(vgId, 0, h - 16, w, 16);
+			nvgFill(vgId);
+			nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
+			nvgText(vgId, 5, h - 14, "> " + input.getChatText() + "_");
 		}
 	}
 

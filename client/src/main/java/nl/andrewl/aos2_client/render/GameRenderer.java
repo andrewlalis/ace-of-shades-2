@@ -3,7 +3,7 @@ package nl.andrewl.aos2_client.render;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.config.ClientConfig;
-import nl.andrewl.aos2_client.control.InputHandler;
+import nl.andrewl.aos2_client.control.*;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GuiRenderer;
@@ -36,42 +36,36 @@ public class GameRenderer {
 	private static final float Z_FAR = 500f;
 
 	private final ClientConfig.DisplayConfig config;
-	private ChunkRenderer chunkRenderer;
-	private GuiRenderer guiRenderer;
-	private ModelRenderer modelRenderer;
+	private final ChunkRenderer chunkRenderer;
+	private final GuiRenderer guiRenderer;
+	private final ModelRenderer modelRenderer;
 	private final Camera camera;
 	private final Client client;
 
 	// Standard models for various game components.
-	private Model playerModel;
-	private Model rifleModel;
-	private Model blockModel;
-	private Model bulletModel;
-	private Model smgModel;
-	private Model shotgunModel;
-	private Model flagModel;
+	private final Model playerModel;
+	private final Model rifleModel;
+	private final Model blockModel;
+	private final Model bulletModel;
+	private final Model smgModel;
+	private final Model shotgunModel;
+	private final Model flagModel;
 
-	private long windowHandle;
-	private int screenWidth = 800;
-	private int screenHeight = 600;
+	private final long windowHandle;
+	private final int screenWidth;
+	private final int screenHeight;
 
 	private final Matrix4f perspectiveTransform;
 
-	public GameRenderer(Client client) {
+	public GameRenderer(Client client, InputHandler inputHandler) {
 		this.config = client.getConfig().display;
 		this.client = client;
 		this.camera = new Camera();
 		camera.setToPlayer(client.getMyPlayer());
 		this.perspectiveTransform = new Matrix4f();
-	}
 
-	public void setupWindow(
-			InputHandler inputHandler,
-			GLFWCursorPosCallbackI viewCursorCallback,
-			GLFWKeyCallbackI inputKeyCallback,
-			GLFWMouseButtonCallbackI mouseButtonCallback,
-			GLFWScrollCallbackI scrollCallback
-	) {
+		// Initialize window!
+
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!glfwInit()) throw new IllegalStateException("Could not initialize GLFW.");
 		glfwDefaultWindowHints();
@@ -96,10 +90,11 @@ public class GameRenderer {
 		log.debug("Initialized GLFW window.");
 
 		// Setup callbacks.
-		glfwSetKeyCallback(windowHandle, inputKeyCallback);
-		glfwSetCursorPosCallback(windowHandle, viewCursorCallback);
-		glfwSetMouseButtonCallback(windowHandle, mouseButtonCallback);
-		glfwSetScrollCallback(windowHandle, scrollCallback);
+		glfwSetKeyCallback(windowHandle, new PlayerInputKeyCallback(inputHandler));
+		glfwSetCursorPosCallback(windowHandle, new PlayerViewCursorCallback(client, camera));
+		glfwSetMouseButtonCallback(windowHandle, new PlayerInputMouseClickCallback(inputHandler));
+		glfwSetScrollCallback(windowHandle, new PlayerInputMouseScrollCallback(client));
+		glfwSetCharCallback(windowHandle, new PlayerCharacterInputCallback(inputHandler));
 		if (config.captureCursor) {
 			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
@@ -282,15 +277,15 @@ public class GameRenderer {
 	}
 
 	public void freeWindow() {
-		if (rifleModel != null) rifleModel.free();
-		if (smgModel != null) smgModel.free();
-		if (flagModel != null) flagModel.free();
-		if (bulletModel != null) bulletModel.free();
-		if (playerModel != null) playerModel.free();
-		if (blockModel != null) blockModel.free();
-		if (modelRenderer != null) modelRenderer.free();
-		if (guiRenderer != null) guiRenderer.free();
-		if (chunkRenderer != null) chunkRenderer.free();
+		rifleModel.free();
+		smgModel.free();
+		flagModel.free();
+		bulletModel.free();
+		playerModel.free();
+		blockModel.free();
+		modelRenderer.free();
+		guiRenderer.free();
+		chunkRenderer.free();
 		GL.destroy();
 		Callbacks.glfwFreeCallbacks(windowHandle);
 		glfwSetErrorCallback(null);

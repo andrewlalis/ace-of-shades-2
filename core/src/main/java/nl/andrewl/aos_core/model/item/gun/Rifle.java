@@ -7,14 +7,14 @@ public class Rifle extends Gun {
 		super(
 				id,
 				"Rifle",
-				5,
+				6,
 				8,
 				1,
-				0.97f,
+				0.98f,
 				0.8f,
 				2.5f,
 				0.8f,
-				50f,
+				0.2f,
 				false
 		);
 	}

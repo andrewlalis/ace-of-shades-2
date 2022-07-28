@@ -48,6 +48,7 @@ public final class Net {
 		serializer.registerType(19, BlockColorMessage.class);
 		serializer.registerType(20, ChatMessage.class);
 		serializer.registerType(21, ChatWrittenMessage.class);
+		serializer.registerType(22, ClientOrientationUpdateMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {
