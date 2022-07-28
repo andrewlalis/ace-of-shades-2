@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.*;
 import java.util.LinkedList;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Component which manages the establishing and maintenance of a connection
@@ -71,7 +72,6 @@ public class ClientCommunicationHandler {
 	}
 
 	private void handleTcpMessage(Message msg) {
-		log.debug("Received TCP message from client \"{}\": {}", player.getUsername(), msg.toString());
 		if (msg instanceof ChunkHashMessage hashMessage) {
 			Chunk chunk = server.getWorld().getChunkAt(new Vector3i(hashMessage.cx(), hashMessage.cy(), hashMessage.cz()));
 			if (chunk != null && hashMessage.hash() != chunk.blockHash()) {
@@ -134,11 +134,13 @@ public class ClientCommunicationHandler {
 	}
 
 	public void sendTcpMessage(Message msg) {
-		try {
-			Net.write(msg, out);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		ForkJoinPool.commonPool().submit(() -> {
+			try {
+				Net.write(msg, out);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	public void sendDatagramPacket(Message msg) {

@@ -321,6 +321,7 @@ public class GuiRenderer {
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 		nvgText(vgId, w - 140, h - 30, String.format("%d / %d Blocks", stack.getAmount(), block.getMaxAmount()));
+		nvgText(vgId, w - 140, h - 14, String.format("Selected value: %d", stack.getSelectedValue()));
 	}
 
 	private void drawChat(float w, float h, Chat chat) {
