@@ -55,8 +55,10 @@ public class PlayerInputKeyCallback implements GLFWKeyCallbackI {
 
 				case GLFW_KEY_T -> inputHandler.enableChatting();
 				case GLFW_KEY_SLASH -> {
-					inputHandler.enableChatting();
-					inputHandler.appendToChat("/");
+					if (!inputHandler.isChatting()) {
+						inputHandler.enableChatting();
+						inputHandler.appendToChat("/");
+					}
 				}
 			}
 		} else if (action == GLFW_REPEAT) {

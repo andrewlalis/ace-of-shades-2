@@ -39,7 +39,7 @@ public class PlayersCommand {
 		}
 	}
 
-	@CommandLine.Command(name = "list", description = "Kicks a player from the server.")
+	@CommandLine.Command(name = "kick", description = "Kicks a player from the server.")
 	public void kick(
 			@CommandLine.Parameters(paramLabel = "player", description = "The id or name of the player to kick.") String playerIdent
 	) {

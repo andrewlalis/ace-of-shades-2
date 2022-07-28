@@ -1,5 +1,6 @@
 package nl.andrewl.aos_core.net.client;
 
+import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.record_net.Message;
 
 /**
@@ -11,4 +12,8 @@ import nl.andrewl.record_net.Message;
 public record ClientOrientationState(
 		int clientId,
 		float x, float y
-) implements Message {}
+) implements Message {
+	public static ClientOrientationState fromPlayer(Player player) {
+		return new ClientOrientationState(player.getId(), player.getOrientation().x, player.getOrientation().y);
+	}
+}

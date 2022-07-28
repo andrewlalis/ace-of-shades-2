@@ -369,10 +369,10 @@ public class GuiRenderer {
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
 		var pos = client.getMyPlayer().getPosition();
-		nvgText(vgId, 5, y, String.format("Pos: x=%.3f, y=%.3f, z=%.3f", pos.x, pos.y, pos.z));
+		nvgText(vgId, 5, y, String.format("Pos: dx=%.3f, dy=%.3f, z=%.3f", pos.x, pos.y, pos.z));
 		y += 12;
 		var vel = client.getMyPlayer().getVelocity();
-		nvgText(vgId, 5, y, String.format("Vel: x=%.3f, y=%.3f, z=%.3f, speed=%.3f", vel.x, vel.y, vel.z, vel.length()));
+		nvgText(vgId, 5, y, String.format("Vel: dx=%.3f, dy=%.3f, z=%.3f, speed=%.3f", vel.x, vel.y, vel.z, vel.length()));
 		y += 12;
 		var view = client.getMyPlayer().getOrientation();
 		nvgText(vgId, 5, y, String.format("View: horizontal=%.3f, vertical=%.3f", Math.toDegrees(view.x), Math.toDegrees(view.y)));

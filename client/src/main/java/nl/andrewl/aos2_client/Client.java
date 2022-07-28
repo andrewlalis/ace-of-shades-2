@@ -1,7 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.config.ClientConfig;
-import nl.andrewl.aos2_client.control.*;
+import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
@@ -200,12 +200,13 @@ public class Client implements Runnable {
 			if (soundManager != null) {
 				soundManager.play("chat", 1, myPlayer.getEyePosition(), myPlayer.getVelocity());
 			}
-		} else if (msg instanceof ClientOrientationUpdateMessage orientationUpdateMessage) {
+		} else if (msg instanceof ClientRecoilMessage recoil) {
 			runLater(() -> {
-				myPlayer.setOrientation(orientationUpdateMessage.x(), orientationUpdateMessage.y());
+				myPlayer.setOrientation(myPlayer.getOrientation().x + recoil.dx(), myPlayer.getOrientation().y + recoil.dy());
 				if (gameRenderer != null) {
 					gameRenderer.getCamera().setOrientationToPlayer(myPlayer);
 				}
+				communicationHandler.sendDatagramPacket(ClientOrientationState.fromPlayer(myPlayer));
 			});
 		}
 	}

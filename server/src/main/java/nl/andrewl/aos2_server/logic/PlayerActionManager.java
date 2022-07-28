@@ -114,12 +114,7 @@ public class PlayerActionManager {
 			// Apply recoil!
 			float recoilFactor = 10f; // Maximum number of degrees to recoil.
 			float recoil = recoilFactor * gun.getRecoil() + (float) ThreadLocalRandom.current().nextGaussian(0, 0.01);
-			player.getOrientation().y += Math.toRadians(recoil);
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientOrientationUpdateMessage(
-					player.getOrientation().x(),
-					player.getOrientation().y()
-			));
-			server.getPlayerManager().broadcastUdpMessageToAllBut(player.getUpdateMessage(now), player);
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientRecoilMessage(0, Math.toRadians(recoil)));
 			// Play sound!
 			String shotSound = null;
 			if (gun instanceof Rifle) {

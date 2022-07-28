@@ -55,11 +55,7 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 		camera.setOrientationToPlayer(client.getMyPlayer());
 		long now = System.currentTimeMillis();
 		if (lastOrientationUpdateSentAt + ORIENTATION_UPDATE_LIMIT < now) {
-			ForkJoinPool.commonPool().submit(() -> comm.sendDatagramPacket(new ClientOrientationState(
-					client.getMyPlayer().getId(),
-					client.getMyPlayer().getOrientation().x,
-					client.getMyPlayer().getOrientation().y
-			)));
+			ForkJoinPool.commonPool().submit(() -> comm.sendDatagramPacket(ClientOrientationState.fromPlayer(client.getMyPlayer())));
 			lastOrientationUpdateSentAt = now;
 		}
 	}
