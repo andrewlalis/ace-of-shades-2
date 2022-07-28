@@ -5,10 +5,7 @@ import nl.andrewl.aos_core.model.Team;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Component that manages the teams on a server.
@@ -30,6 +27,21 @@ public class TeamManager {
 
 	public Team getTeam(int id) {
 		return teams.get(id);
+	}
+
+	public Optional<Team> findByIdOrName(String ident) {
+		for (var team : teams.values()) {
+			if (team.getName().equals(ident)) return Optional.of(team);
+		}
+		try {
+			int id = Integer.parseInt(ident);
+			for (var team : teams.values()) {
+				if (team.getId() == id) return Optional.of(team);
+			}
+			return Optional.empty();
+		} catch (NumberFormatException e) {
+			return Optional.empty();
+		}
 	}
 
 	public Collection<Team> getTeams() {

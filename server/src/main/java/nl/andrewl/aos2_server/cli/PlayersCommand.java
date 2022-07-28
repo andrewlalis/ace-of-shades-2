@@ -15,7 +15,7 @@ import java.util.Comparator;
 public class PlayersCommand {
 	@CommandLine.ParentCommand ServerCli cli;
 
-	@CommandLine.Command(description = "Lists all online players.")
+	@CommandLine.Command(name = "list", description = "Lists all online players.")
 	public void list() {
 		var playerManager = cli.server.getPlayerManager();
 		Collection<ServerPlayer> players = playerManager.getPlayers();
@@ -39,11 +39,27 @@ public class PlayersCommand {
 		}
 	}
 
-	@CommandLine.Command(description = "Kicks a player from the server.")
-	public void kick(@CommandLine.Parameters(description = "The id or name of the player to kick.") String playerIdent) {
+	@CommandLine.Command(name = "list", description = "Kicks a player from the server.")
+	public void kick(
+			@CommandLine.Parameters(paramLabel = "player", description = "The id or name of the player to kick.") String playerIdent
+	) {
 		cli.server.getPlayerManager().findByIdOrName(playerIdent)
 				.ifPresentOrElse(player -> {
 					cli.server.getPlayerManager().deregister(player);
+				}, () -> cli.out.println("Player not found."));
+	}
+
+	@CommandLine.Command(name = "set-team", description = "Sets a player's team.")
+	public void setTeam(
+			@CommandLine.Parameters(paramLabel = "player", description = "The id or name of the player to set the team of.", index = "0") String playerIdent,
+			@CommandLine.Parameters(paramLabel = "team", description = "The id or name of the team to move the player to.", index = "1") String teamIdent
+	) {
+		cli.server.getPlayerManager().findByIdOrName(playerIdent)
+				.ifPresentOrElse(player -> {
+					cli.server.getTeamManager().findByIdOrName(teamIdent)
+							.ifPresentOrElse(team -> {
+								cli.out.println("Not yet implemented.");
+							}, () -> cli.out.println("Team not found."));
 				}, () -> cli.out.println("Player not found."));
 	}
 }
