@@ -267,20 +267,20 @@ public class GuiRenderer {
 	}
 
 	private void drawHealthBar(float w, float h, ClientPlayer player) {
-		nvgFillColor(vgId, GuiUtils.rgba(1, 0, 0, 1, colorA));
+		nvgFillColor(vgId, GuiUtils.rgba(0.6f, 0, 0, 1, colorA));
 		nvgBeginPath(vgId);
-		nvgRect(vgId, w - 170, h - 110, 100, 20);
+		nvgRect(vgId, w - 170, h - 100, 100, 20);
 		nvgFill(vgId);
-		nvgFillColor(vgId, GuiUtils.rgba(0, 1, 0, 1, colorA));
+		nvgFillColor(vgId, GuiUtils.rgba(0, 0.6f, 0, 1, colorA));
 		nvgBeginPath(vgId);
-		nvgRect(vgId, w - 170, h - 110, 100 * player.getHealth(), 20);
+		nvgRect(vgId, w - 170, h - 100, 100 * player.getHealth(), 20);
 		nvgFill(vgId);
 
 		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
 		nvgFontSize(vgId, 12f);
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-		nvgText(vgId, w - 170, h - 80, String.format("%.2f / 1.00 HP", player.getHealth()));
+		nvgText(vgId, w - 165, h - 95, String.format("%.2f / 1.00", player.getHealth()));
 	}
 
 	private void drawHeldItemStackInfo(float w, float h, ClientPlayer player) {
