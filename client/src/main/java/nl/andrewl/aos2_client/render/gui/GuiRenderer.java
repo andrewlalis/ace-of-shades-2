@@ -343,7 +343,7 @@ public class GuiRenderer {
 				nvgFillColor(vgId, GuiUtils.rgba(0.7f, 0, 0, 1, colorA));
 				nvgText(vgId, 5, y, msg.message());
 			} else if (msg.author().equals("_PRIVATE")) {
-				nvgFillColor(vgId, GuiUtils.rgba(0.3f, 0.3f, 0.3f, 1, colorA));
+				nvgFillColor(vgId, GuiUtils.rgba(0.6f, 0.6f, 0.6f, 1, colorA));
 				nvgText(vgId, 5, y, msg.message());
 			} else {
 				nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));

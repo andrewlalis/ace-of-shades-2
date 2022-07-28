@@ -28,6 +28,9 @@ public class ServerPlayer extends Player {
 	 */
 	private float health;
 
+	private int deathCount;
+	private int killCount;
+
 	public ServerPlayer(int id, String username) {
 		super(id, username);
 		this.inventory = new Inventory(new ArrayList<>(), 0);
@@ -55,6 +58,22 @@ public class ServerPlayer extends Player {
 		if (health > 1) health = 1;
 		if (health < 0) health = 0;
 		this.health = health;
+	}
+
+	public int getDeathCount() {
+		return deathCount;
+	}
+
+	public void incrementDeathCount() {
+		deathCount++;
+	}
+
+	public int getKillCount() {
+		return killCount;
+	}
+
+	public void incrementKillCount() {
+		killCount++;
 	}
 
 	/**

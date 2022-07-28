@@ -169,11 +169,13 @@ public class PlayerManager {
 		Vector3f deathPosition = new Vector3f(player.getPosition());
 		player.setPosition(getBestSpawnPoint(player));
 		player.setVelocity(new Vector3f(0));
+		player.incrementDeathCount();
 		resupply(player);
 		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
 		String deathMessage;
 		if (killedBy != null) {
+			killedBy.incrementKillCount();
 			deathMessage = player.getUsername() + " was killed by " + killedBy.getUsername() + ".";
 		} else {
 			deathMessage = player.getUsername() + " died.";

@@ -184,6 +184,8 @@ public class ProjectileManager {
 			float damage = gun.getBaseDamage();
 			if (playerHitType == 1) damage *= 2;
 			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
+			Vector3f impactAcceleration = new Vector3f(projectile.getVelocity()).normalize().mul(3);
+			hitPlayer.getVelocity().add(impactAcceleration);
 			int soundVariant = ThreadLocalRandom.current().nextInt(1, 4);
 			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("hurt_" + soundVariant, 1, hitPlayer.getPosition(), hitPlayer.getVelocity()));
 			if (hitPlayer.getHealth() == 0) {
