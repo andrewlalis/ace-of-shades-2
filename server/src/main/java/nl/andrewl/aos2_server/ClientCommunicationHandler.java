@@ -80,24 +80,8 @@ public class ClientCommunicationHandler {
 				sendTcpMessage(new ChunkDataMessage(chunk));
 			}
 		} else if (msg instanceof ChatWrittenMessage chatWrittenMessage) {
-			if (chatWrittenMessage.message().startsWith("/t ")) {
-				if (player.getTeam() != null) {
-					var chat = new ChatMessage(
-							System.currentTimeMillis(),
-							player.getUsername(),
-							chatWrittenMessage.message().substring(3)
-					);
-					for (var teamPlayer : server.getTeamManager().getPlayers(player.getTeam())) {
-						server.getPlayerManager().getHandler(teamPlayer).sendTcpMessage(chat);
-					}
-				}
-			} else if (chatWrittenMessage.message().equalsIgnoreCase("/kd")) {
-				int k = player.getKillCount();
-				int d = player.getDeathCount();
-				float kd = d <= 0 ? 0 : (float) k / (float) d;
-				sendTcpMessage(ChatMessage.privateMessage("Your kill/death ratio is %.2f.".formatted(kd)));
-			} else if (chatWrittenMessage.message().equalsIgnoreCase("/kill")) {
-				server.getPlayerManager().playerKilled(player, null);
+			if (chatWrittenMessage.message().startsWith("/")) {
+				server.handleCommand(chatWrittenMessage.message(), player, this);
 			} else {
 				server.getPlayerManager().broadcastTcpMessage(new ChatMessage(
 						System.currentTimeMillis(),
