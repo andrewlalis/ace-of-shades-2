@@ -16,8 +16,6 @@ import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -31,8 +29,6 @@ import java.net.Socket;
  * methods for sending messages and processing those we receive.
  */
 public class CommunicationHandler {
-	private static final Logger log = LoggerFactory.getLogger(CommunicationHandler.class);
-
 	private final Client client;
 	private Socket socket;
 	private DatagramSocket datagramSocket;
@@ -52,7 +48,7 @@ public class CommunicationHandler {
 		InetAddress address = InetAddress.getByName(client.getConfig().serverHost);
 		int port = client.getConfig().serverPort;
 		String username = client.getConfig().username;
-		log.info("Connecting to server at {}, port {}, with username \"{}\"...", address, port, username);
+		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, port, username);
 
 		socket = new Socket(address, port);
 		socket.setSoTimeout(1000);
@@ -66,12 +62,9 @@ public class CommunicationHandler {
 		}
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
-			log.debug("Connection accepted. My client id is {}.", clientId);
 			client.setMyPlayer(new ClientPlayer(clientId, username));
 			receiveInitialData();
-			log.debug("Initial data received.");
 			establishDatagramConnection();
-			log.info("Connection to server established. My client id is {}.", clientId);
 			new Thread(new TcpReceiver(in, client::onMessageReceived).withShutdownHook(this::shutdown)).start();
 			new Thread(new UdpReceiver(datagramSocket, (msg, packet) -> client.onMessageReceived(msg))).start();
 		} else {
@@ -138,7 +131,6 @@ public class CommunicationHandler {
 		if (!connectionEstablished) {
 			throw new IOException("Could not establish a datagram connection to the server after " + attempts + " attempts.");
 		}
-		log.debug("Established datagram communication with the server.");
 	}
 
 	public int getClientId() {

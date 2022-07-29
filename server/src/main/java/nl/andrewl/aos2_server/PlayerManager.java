@@ -11,8 +11,6 @@ import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -24,8 +22,6 @@ import java.util.regex.Pattern;
  * the server, and components related to that.
  */
 public class PlayerManager {
-	private static final Logger log = LoggerFactory.getLogger(PlayerManager.class);
-
 	private final Server server;
 	private final Map<Integer, ServerPlayer> players = new HashMap<>();
 	private final Map<Integer, ClientCommunicationHandler> clientHandlers = new HashMap<>();
@@ -37,14 +33,14 @@ public class PlayerManager {
 
 	public synchronized ServerPlayer register(ClientCommunicationHandler handler, String username) {
 		ServerPlayer player = new ServerPlayer(nextClientId++, username);
-		log.info("Registered player \"{}\" with id {}", player.getUsername(), player.getId());
+		System.out.printf("Registered player \"%s\" with id %d.%n", player.getUsername(), player.getId());
 		players.put(player.getId(), player);
 		clientHandlers.put(player.getId(), handler);
 		String joinMessage;
 		Team team = findBestTeamForNewPlayer();
 		if (team != null) {
 			player.setTeam(team);
-			log.info("Player \"{}\" joined the \"{}\" team.", player.getUsername(), team.getName());
+			System.out.printf("Player \"%s\" joined the \"%s\" team.%n", player.getUsername(), team.getName());
 			joinMessage = String.format("%s joined the %s team.", username, team.getName());
 		} else {
 			joinMessage = username + " joined the game.";
@@ -70,7 +66,7 @@ public class PlayerManager {
 		players.remove(player.getId());
 		clientHandlers.remove(player.getId());
 		broadcastTcpMessage(new PlayerLeaveMessage(player.getId()));
-		log.info("Deregistered player \"{}\" with id {}", player.getUsername(), player.getId());
+		System.out.printf("Deregistered player \"%s\" with id %d.%n", player.getUsername(), player.getId());
 		broadcastTcpMessage(ChatMessage.announce(player.getUsername() + " left the game."));
 	}
 
@@ -207,7 +203,6 @@ public class PlayerManager {
 		if (handler != null) {
 			handler.setClientUdpPort(packet.getPort());
 			handler.sendDatagramPacket(init);
-			log.debug("Echoed player \"{}\"'s UDP init packet.", getPlayer(init.clientId()).getUsername());
 		}
 	}
 
@@ -233,7 +228,7 @@ public class PlayerManager {
 				handler.sendDatagramPacket(packet);
 			}
 		} catch (IOException e) {
-			log.warn("An error occurred while broadcasting a UDP message.", e);
+			e.printStackTrace();
 		}
 	}
 
@@ -247,7 +242,7 @@ public class PlayerManager {
 				}
 			}
 		} catch (IOException e) {
-			log.warn("An error occurred while broadcasting a UDP message.", e);
+			e.printStackTrace();
 		}
 	}
 }

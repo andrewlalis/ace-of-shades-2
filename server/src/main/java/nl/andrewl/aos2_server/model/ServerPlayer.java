@@ -7,8 +7,6 @@ import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;
 import nl.andrewl.aos_core.model.item.ItemTypes;
 import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
@@ -17,8 +15,6 @@ import java.util.ArrayList;
  * needed for the server.
  */
 public class ServerPlayer extends Player {
-	private static final Logger log = LoggerFactory.getLogger(ServerPlayer.class);
-
 	private final PlayerActionManager actionManager;
 	private final Inventory inventory;
 

@@ -18,8 +18,6 @@ import nl.andrewl.aos_core.net.client.ClientOrientationState;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
@@ -29,8 +27,6 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 public class Server implements Runnable {
-	private static final Logger log = LoggerFactory.getLogger(Server.class);
-
 	private final ServerSocket serverSocket;
 	private final DatagramSocket datagramSocket;
 	private volatile boolean running;
@@ -68,7 +64,7 @@ public class Server implements Runnable {
 			if (Files.isReadable(worldFile)) {
 				this.world = WorldIO.read(worldFile);
 			} else {
-				log.error("Cannot read world file: {}", worldFile.toAbsolutePath());
+				System.err.println("Cannot read world file: " + worldFile.toAbsolutePath());
 				this.world = Worlds.arena();
 			}
 		}
@@ -83,11 +79,11 @@ public class Server implements Runnable {
 		running = true;
 		new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
 		new Thread(worldUpdater).start();
-		log.info("Started AoS2 Server on TCP/UDP port {}; now accepting connections.", serverSocket.getLocalPort());
+		System.out.printf("Started AoS2 Server on TCP/UDP port %d; now accepting connections.%n", serverSocket.getLocalPort());
 		while (running) {
 			acceptClientConnection();
 		}
-		log.info("Shutting down the server.");
+		System.out.println("Shutting down the server.");
 		playerManager.deregisterAll();
 		worldUpdater.shutdown();
 		datagramSocket.close(); // Shuts down the UdpReceiver.
@@ -96,7 +92,6 @@ public class Server implements Runnable {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		log.info("Shutdown complete.");
 	}
 
 	public boolean isRunning() {

@@ -17,8 +17,6 @@ import nl.andrewl.aos_core.net.world.ChunkHashMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import nl.andrewl.record_net.Message;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,8 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client implements Runnable {
-	private static final Logger log = LoggerFactory.getLogger(Client.class);
-
 	private final ClientConfig config;
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
@@ -79,13 +75,12 @@ public class Client implements Runnable {
 		try {
 			communicationHandler.establishConnection();
 		} catch (IOException e) {
-			log.error("Couldn't connect to the server: {}", e.getMessage());
+			System.err.println("Couldn't connect to the server: " + e.getMessage());
 			return;
 		}
 
 		gameRenderer = new GameRenderer(this, inputHandler);
 		soundManager = new SoundManager();
-		log.debug("Sound system initialized.");
 
 		long lastFrameAt = System.currentTimeMillis();
 		while (!gameRenderer.windowShouldClose() && !communicationHandler.isDone()) {

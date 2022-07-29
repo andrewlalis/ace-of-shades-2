@@ -16,8 +16,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -31,7 +29,6 @@ import static org.lwjgl.opengl.GL46.*;
  * OpenGL context exists.
  */
 public class GameRenderer {
-	private static final Logger log = LoggerFactory.getLogger(GameRenderer.class);
 	private static final float Z_NEAR = 0.01f;
 	private static final float Z_FAR = 500f;
 
@@ -76,7 +73,6 @@ public class GameRenderer {
 		long monitorId = glfwGetPrimaryMonitor();
 		GLFWVidMode primaryMonitorSettings = glfwGetVideoMode(monitorId);
 		if (primaryMonitorSettings == null) throw new IllegalStateException("Could not get information about the primary monitory.");
-		log.debug("Primary monitor settings: Width: {}, Height: {}, FOV: {}", primaryMonitorSettings.width(), primaryMonitorSettings.height(), config.fov);
 		if (config.fullscreen) {
 			screenWidth = primaryMonitorSettings.width();
 			screenHeight = primaryMonitorSettings.height();
@@ -88,7 +84,6 @@ public class GameRenderer {
 		}
 		if (windowHandle == 0) throw new RuntimeException("Failed to create GLFW window.");
 		inputHandler.setWindowId(windowHandle);
-		log.debug("Initialized GLFW window.");
 
 		// Setup callbacks.
 		glfwSetKeyCallback(windowHandle, new PlayerInputKeyCallback(inputHandler));
@@ -101,7 +96,6 @@ public class GameRenderer {
 		}
 		glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		glfwSetCursorPos(windowHandle, 0, 0);
-		log.debug("Set up window callbacks.");
 
 		glfwMakeContextCurrent(windowHandle);
 		glfwSwapInterval(1);
@@ -113,17 +107,14 @@ public class GameRenderer {
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glCullFace(GL_BACK);
-		log.debug("Initialized OpenGL context.");
 
 		this.chunkRenderer = new ChunkRenderer();
-		log.debug("Initialized chunk renderer.");
 
 		try {
 			this.guiRenderer = new GuiRenderer();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		log.debug("Initialized GUI renderer.");
 
 		this.modelRenderer = new ModelRenderer();
 		try {
@@ -137,7 +128,6 @@ public class GameRenderer {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		log.debug("Initialized model renderer.");
 		updatePerspective(config.fov);
 	}
 

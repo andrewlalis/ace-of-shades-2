@@ -18,8 +18,6 @@ import nl.andrewl.record_net.Message;
 import nl.andrewl.record_net.util.ExtendedDataInputStream;
 import nl.andrewl.record_net.util.ExtendedDataOutputStream;
 import org.joml.Vector3i;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.*;
@@ -35,8 +33,6 @@ import java.util.concurrent.ForkJoinPool;
  * from them.
  */
 public class ClientCommunicationHandler {
-	private static final Logger log = LoggerFactory.getLogger(ClientCommunicationHandler.class);
-
 	private final Server server;
 	private final Socket socket;
 	private final DatagramSocket datagramSocket;
@@ -100,7 +96,6 @@ public class ClientCommunicationHandler {
 			try {
 				Message msg = Net.read(in);
 				if (msg instanceof ConnectRequestMessage connectMsg) {
-					log.debug("Received connect request from player \"{}\"", connectMsg.username());
 					// Ensure the connection is valid.
 					if (!UsernameChecker.isValid(connectMsg.username())) {
 						Net.write(new ConnectRejectMessage("Invalid username."), out);
@@ -119,9 +114,7 @@ public class ClientCommunicationHandler {
 					connectionEstablished = true;
 					this.player = server.getPlayerManager().register(this, connectMsg.username());
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
-					log.debug("Sent connect accept message.");
 					sendInitialData();
-					log.debug("Sent initial data.");
 					sendTcpMessage(ChatMessage.privateMessage("Welcome to the server, " + player.getUsername() + "."));
 					if (player.getTeam() != null) {
 						sendTcpMessage(ChatMessage.privateMessage("You've joined the " + player.getTeam().getName() + " team."));
@@ -134,7 +127,7 @@ public class ClientCommunicationHandler {
 			} catch (SocketTimeoutException e) {
 				// Ignore this one, since this will happen if the client doesn't send data properly.
 			} catch (IOException e) {
-				log.warn("An IOException occurred while attempting to establish a connection to a client.", e);
+				System.err.println("An IOException occurred while attempting to establish a connection to a client: " + e.getMessage());
 			}
 			attempts++;
 		}
@@ -144,7 +137,7 @@ public class ClientCommunicationHandler {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			log.warn("Player couldn't connect after {} attempts. Aborting connection.", attempts);
+			System.err.printf("Player couldn't connect after %d attempts. Aborting connection.%n", attempts);
 			socket.close();
 		}
 	}
@@ -174,7 +167,7 @@ public class ClientCommunicationHandler {
 			DatagramPacket packet = new DatagramPacket(data, data.length, clientAddress, clientUdpPort);
 			sendDatagramPacket(packet);
 		} else {
-			log.warn("Can't send datagram packet because we don't know the client's UDP port yet.");
+			System.err.println("Can't send datagram packet because we don't know the client's UDP port yet.");
 		}
 	}
 

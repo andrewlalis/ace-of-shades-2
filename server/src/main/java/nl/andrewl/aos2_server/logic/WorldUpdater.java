@@ -2,8 +2,6 @@ package nl.andrewl.aos2_server.logic;
 
 import nl.andrewl.aos2_server.Server;
 import org.joml.Math;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A runnable to run as a separate thread, to periodically update the server's
@@ -11,8 +9,6 @@ import org.slf4j.LoggerFactory;
  * game engine, as it controls the game's main update pattern.
  */
 public class WorldUpdater implements Runnable {
-	private static final Logger log = LoggerFactory.getLogger(WorldUpdater.class);
-
 	private final Server server;
 	private final float ticksPerSecond;
 	private final float secondsPerTick;
@@ -30,15 +26,16 @@ public class WorldUpdater implements Runnable {
 
 	@Override
 	public void run() {
+		final long msPerTick = (long) (Math.floor(1.0 / ticksPerSecond) * 1_000);
 		final long nsPerTick = (long) Math.floor((1.0 / ticksPerSecond) * 1_000_000_000.0);
-		log.debug("Running world updater at {} ticks per second, or {} ns per tick.", ticksPerSecond, nsPerTick);
+		System.out.printf("Running world updater at %d ms/tick, or %d ns/tick.%n", msPerTick, nsPerTick);
 		running = true;
 		while (running) {
 			long start = System.nanoTime();
 			tick(System.currentTimeMillis());
 			long elapsedNs = System.nanoTime() - start;
 			if (elapsedNs > nsPerTick) {
-				log.warn("Took {} ns to do one tick, which is more than the desired {} ns per tick.", elapsedNs, nsPerTick);
+				System.err.printf("Took %d ns to do one tick, which is more than the desired %d ns per tick.%n", elapsedNs, nsPerTick);
 			} else {
 				long sleepTime = nsPerTick - elapsedNs;
 				long ms = sleepTime / 1_000_000;

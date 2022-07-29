@@ -5,8 +5,6 @@ import org.joml.Vector3f;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALCCapabilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -21,8 +19,6 @@ import static org.lwjgl.openal.ALC10.*;
  * Main class for managing the OpenAL audio interface.
  */
 public class SoundManager {
-	private static final Logger log = LoggerFactory.getLogger(SoundManager.class);
-
 	private static final int SOURCE_COUNT = 32;
 
 	private final long alContext;
@@ -101,7 +97,7 @@ public class SoundManager {
 	public void play(String soundName, float gain, Vector3f position, Vector3f velocity) {
 		Integer bufferId = getSoundBuffer(soundName);
 		if (bufferId == null) {
-			log.warn("Attempted to play unknown sound \"{}\"", soundName);
+			System.err.printf("Attempted to play unknown sound \"%s\".%n", soundName);
 		} else {
 			SoundSource source = getNextAvailableSoundSource();
 			if (source != null) {
@@ -110,7 +106,7 @@ public class SoundManager {
 				source.setGain(gain);
 				source.play(bufferId);
 			} else {
-				log.warn("Couldn't get an available sound source to play sound \"{}\"", soundName);
+				System.err.printf("No sound sources available to play sound \"%s\".%n", soundName);
 			}
 		}
 	}
