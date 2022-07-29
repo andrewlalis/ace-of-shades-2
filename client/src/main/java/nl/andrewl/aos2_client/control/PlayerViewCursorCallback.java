@@ -48,9 +48,11 @@ public class PlayerViewCursorCallback implements GLFWCursorPosCallbackI {
 		float dy = y - lastMouseCursorY;
 		lastMouseCursorX = x;
 		lastMouseCursorY = y;
+		float trueSensitivity = config.mouseSensitivity;
+		if (client.getInputHandler().isScopeEnabled()) trueSensitivity *= 0.1f;
 		client.getMyPlayer().setOrientation(
-				client.getMyPlayer().getOrientation().x - dx * config.mouseSensitivity,
-				client.getMyPlayer().getOrientation().y - dy * config.mouseSensitivity
+				client.getMyPlayer().getOrientation().x - dx * trueSensitivity,
+				client.getMyPlayer().getOrientation().y - dy * trueSensitivity
 		);
 		camera.setOrientationToPlayer(client.getMyPlayer());
 		long now = System.currentTimeMillis();

@@ -54,14 +54,22 @@ public class ProjectileManager {
 			if (nextProjectileId == Integer.MAX_VALUE) nextProjectileId = 1;
 
 			pos.set(0);
-			bulletTransform.identity()
-					.translate(player.getEyePosition())
-					.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
-					.translate(-0.35f, -0.4f, 0.35f);
-			bulletTransform.transformPosition(pos);
-
 			direction.set(player.getViewVector()).normalize();
 			float accuracy = gun.getAccuracy();
+
+			if (player.getActionManager().isScopeEnabled()) {
+				bulletTransform.identity()
+						.translate(player.getEyePosition())
+						.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf);
+				accuracy += (1f - accuracy) / 2f;
+			} else {
+				bulletTransform.identity()
+						.translate(player.getEyePosition())
+						.rotate(player.getOrientation().x + (float) Math.PI, Directions.UPf)
+						.translate(-0.35f, -0.4f, 0.35f);
+			}
+
+			bulletTransform.transformPosition(pos);
 			accuracy -= server.getConfig().actions.movementAccuracyDecreaseFactor * player.getVelocity().length();
 			float perturbationFactor = (1 - accuracy) / 8;
 			direction.x += rand.nextGaussian(0, perturbationFactor);

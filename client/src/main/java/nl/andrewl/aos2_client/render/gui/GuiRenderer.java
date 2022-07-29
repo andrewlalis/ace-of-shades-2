@@ -222,10 +222,12 @@ public class GuiRenderer {
 		nvgBeginFrame(vgId, width, height, width / height);
 		nvgSave(vgId);
 
-		drawCrosshair(width, height);
-		drawChat(width, height, client);
-		drawHealthBar(width, height, client.getMyPlayer());
-		drawHeldItemStackInfo(width, height, client.getMyPlayer());
+		drawCrosshair(width, height, client.getInputHandler().isScopeEnabled());
+		if (!client.getInputHandler().isScopeEnabled()) {
+			drawChat(width, height, client);
+			drawHealthBar(width, height, client.getMyPlayer());
+			drawHeldItemStackInfo(width, height, client.getMyPlayer());
+		}
 		if (client.getInputHandler().isDebugEnabled()) {
 			drawDebugInfo(width, height, client);
 		}
@@ -253,16 +255,18 @@ public class GuiRenderer {
 		shaderProgram.free();
 	}
 
-	private void drawCrosshair(float w, float h) {
+	private void drawCrosshair(float w, float h, boolean scopeEnabled) {
 		float cx = w / 2f;
 		float cy = h / 2f;
+		float size = 20f;
+		if (scopeEnabled) size = 3f;
 
 		nvgStrokeColor(vgId, GuiUtils.rgba(1, 1, 1, 0.25f, colorA));
 		nvgBeginPath(vgId);
-		nvgMoveTo(vgId, cx - 10, cy);
-		nvgLineTo(vgId, cx + 10, cy);
-		nvgMoveTo(vgId, cx, cy - 10);
-		nvgLineTo(vgId, cx, cy + 10);
+		nvgMoveTo(vgId, cx - size / 2, cy);
+		nvgLineTo(vgId, cx + size / 2, cy);
+		nvgMoveTo(vgId, cx, cy - size / 2);
+		nvgLineTo(vgId, cx, cy + size / 2);
 		nvgStroke(vgId);
 	}
 

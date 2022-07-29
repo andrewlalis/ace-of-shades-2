@@ -56,6 +56,7 @@ public class GameRenderer {
 	private final int screenHeight;
 
 	private final Matrix4f perspectiveTransform;
+	private final float[] perspectiveTransformData = new float[16];
 
 	public GameRenderer(Client client, InputHandler inputHandler) {
 		this.config = client.getConfig().display;
@@ -155,10 +156,9 @@ public class GameRenderer {
 			fovRad = 0.01f;
 		}
 		perspectiveTransform.setPerspective(fovRad, getAspectRatio(), Z_NEAR, Z_FAR);
-		float[] data = new float[16];
-		perspectiveTransform.get(data);
-		if (chunkRenderer != null) chunkRenderer.setPerspective(data);
-		if (modelRenderer != null) modelRenderer.setPerspective(data);
+		perspectiveTransform.get(perspectiveTransformData);
+		if (chunkRenderer != null) chunkRenderer.setPerspective(perspectiveTransformData);
+		if (modelRenderer != null) modelRenderer.setPerspective(perspectiveTransformData);
 	}
 
 	public boolean windowShouldClose() {
@@ -175,13 +175,19 @@ public class GameRenderer {
 
 	public void draw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
 
 		ClientPlayer myPlayer = client.getMyPlayer();
+		if (client.getInputHandler().isScopeEnabled()) {
+			updatePerspective(15);
+		} else {
+			updatePerspective(config.fov);
+		}
+		myPlayer.updateHeldItemTransform(camera, client.getInputHandler());
+
+		chunkRenderer.draw(camera, client.getWorld().getChunkMeshesToDraw());
 
 		// Draw models. Use one texture at a time for efficiency.
 		modelRenderer.start(camera.getViewTransformData());
-		myPlayer.updateHeldItemTransform(camera);
 
 		playerModel.bind();
 		for (var player : client.getPlayers().values()) {

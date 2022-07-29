@@ -4,12 +4,11 @@ import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos2_client.CommunicationHandler;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.world.Hit;
 import nl.andrewl.aos_core.net.client.BlockColorMessage;
 import nl.andrewl.aos_core.net.client.ChatWrittenMessage;
 import nl.andrewl.aos_core.net.client.ClientInputState;
-
-import static org.lwjgl.glfw.GLFW.*;
 
 /**
  * Class which manages the player's input, and sending it to the server.
@@ -232,6 +231,11 @@ public class InputHandler {
 		if (!text.isBlank()) {
 			client.getCommunicationHandler().sendMessage(new ChatWrittenMessage(text));
 		}
+	}
+
+	public boolean isScopeEnabled() {
+		return interacting &&
+				client.getMyPlayer().getInventory().getSelectedItemStack() instanceof GunItemStack;
 	}
 
 	public void pickBlock() {

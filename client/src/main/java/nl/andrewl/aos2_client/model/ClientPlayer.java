@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client.model;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.Inventory;
 import org.joml.Matrix3f;
@@ -42,12 +43,16 @@ public class ClientPlayer extends Player {
 		this.health = health;
 	}
 
-	public void updateHeldItemTransform(Camera cam) {
+	public void updateHeldItemTransform(Camera cam, InputHandler inputHandler) {
 		heldItemTransform.identity()
 				.translate(cam.getPosition())
 				.rotate((float) (cam.getOrientation().x + Math.PI), Camera.UP)
-				.rotate(-cam.getOrientation().y + (float) Math.PI / 2, Camera.RIGHT)
-				.translate(-0.35f, -0.4f, 0.5f);
+				.rotate(-cam.getOrientation().y + (float) Math.PI / 2, Camera.RIGHT);
+		if (inputHandler.isScopeEnabled()) {
+			heldItemTransform.translate(0, -0.12f, 0);
+		} else {
+			heldItemTransform.translate(-0.35f, -0.4f, 0.5f);
+		}
 		heldItemTransform.get(heldItemTransformData);
 
 		heldItemTransform.normal(heldItemNormalTransform);

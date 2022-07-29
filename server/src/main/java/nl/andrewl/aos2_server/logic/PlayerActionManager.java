@@ -56,6 +56,11 @@ public class PlayerActionManager {
 		return input.setLastInputState(lastInputState);
 	}
 
+	public boolean isScopeEnabled() {
+		return input.interacting() &&
+				player.getInventory().getSelectedItemStack() instanceof GunItemStack;
+	}
+
 	public boolean isUpdated() {
 		return updated;
 	}
@@ -113,6 +118,7 @@ public class PlayerActionManager {
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
 			// Apply recoil!
 			float recoilFactor = 10f; // Maximum number of degrees to recoil.
+			if (isScopeEnabled()) recoilFactor *= 0.1f;
 			float recoil = recoilFactor * gun.getRecoil() + (float) ThreadLocalRandom.current().nextGaussian(0, 0.01);
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientRecoilMessage(0, Math.toRadians(recoil)));
 			// Play sound!
@@ -249,7 +255,7 @@ public class PlayerActionManager {
 			acceleration.rotateAxis(orientation.x, 0, 1, 0);
 			acceleration.mul(config.movementAcceleration);
 			horizontalVelocity.add(acceleration);
-			final float maxSpeed;
+			float maxSpeed;
 			if (input.crouching()) {
 				maxSpeed = config.crouchingSpeed;
 			} else if (input.sprinting()) {
@@ -257,6 +263,8 @@ public class PlayerActionManager {
 			} else {
 				maxSpeed = config.walkingSpeed;
 			}
+			// If scoping, then force limit to crouching speed.
+			if (isScopeEnabled()) maxSpeed = config.crouchingSpeed;
 			if (horizontalVelocity.length() > maxSpeed) {
 				horizontalVelocity.normalize(maxSpeed);
 			}
