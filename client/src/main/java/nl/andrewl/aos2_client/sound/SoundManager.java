@@ -77,6 +77,8 @@ public class SoundManager {
 		load("block_break_1", "sound/m_block_break_1.wav");
 		load("block_place_1", "sound/m_block_place_1.wav");
 		load("chat", "sound/chat.wav");
+		load("hit_1", "sound/m_hit_1.wav");
+		load("hit_2", "sound/m_hit_2.wav");
 	}
 
 	public void load(String name, String resource) {

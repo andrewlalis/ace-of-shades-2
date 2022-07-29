@@ -90,6 +90,11 @@ public class PlayerActionManager {
 			lastResupplyAt = now;
 		}
 
+		if (server.getConfig().actions.healthRegenPerSecond != 0 && player.getHealth() < 1) {
+			player.setHealth(player.getHealth() + server.getConfig().actions.healthRegenPerSecond * dt);
+			server.getPlayerManager().getHandler(player).sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
+		}
+
 		if (player.isCrouching() != input.crouching()) {
 			player.setCrouching(input.crouching());
 			updated = true;
@@ -208,13 +213,13 @@ public class PlayerActionManager {
 		boolean grounded = isGrounded(world);
 		tickHorizontalVelocity(config, grounded);
 
-		if (isGrounded(world)) {
+		if (grounded) {
 			if (input.jumping()) {
 				velocity.y = config.jumpVerticalSpeed * (input.sprinting() ? 1.25f : 1f);
 				updated = true;
 			}
 		} else {
-			velocity.y -= config.gravity * dt;
+			velocity.y -= config.gravity * dt * 2; // Apply double-gravity to players to make the game feel faster.
 			updated = true;
 		}
 
@@ -237,7 +242,7 @@ public class PlayerActionManager {
 		}
 	}
 
-	private void tickHorizontalVelocity(ServerConfig.PhysicsConfig config, boolean doDeceleration) {
+	private void tickHorizontalVelocity(ServerConfig.PhysicsConfig config, boolean grounded) {
 		var velocity = player.getVelocity();
 		var orientation = player.getOrientation();
 		Vector3f horizontalVelocity = new Vector3f(
@@ -253,7 +258,9 @@ public class PlayerActionManager {
 		if (acceleration.lengthSquared() > 0) {
 			acceleration.normalize();
 			acceleration.rotateAxis(orientation.x, 0, 1, 0);
-			acceleration.mul(config.movementAcceleration);
+			float accelerationMagnitude = config.movementAcceleration;
+			if (!grounded) accelerationMagnitude *= 0.25f;
+			acceleration.mul(accelerationMagnitude);
 			horizontalVelocity.add(acceleration);
 			float maxSpeed;
 			if (input.crouching()) {
@@ -269,10 +276,11 @@ public class PlayerActionManager {
 				horizontalVelocity.normalize(maxSpeed);
 			}
 			updated = true;
-		} else if (doDeceleration && horizontalVelocity.lengthSquared() > 0) {
-			Vector3f deceleration = new Vector3f(horizontalVelocity)
-					.negate().normalize()
-					.mul(Math.min(horizontalVelocity.length(), config.movementDeceleration));
+		} else if (horizontalVelocity.lengthSquared() > 0) {
+			float baseDecel = config.movementDeceleration;
+			if (!grounded) baseDecel *= 0.25f;
+			float decelerationMagnitude = Math.min(horizontalVelocity.length(), baseDecel);
+			Vector3f deceleration = new Vector3f(horizontalVelocity).negate().normalize().mul(decelerationMagnitude);
 			horizontalVelocity.add(deceleration);
 			if (horizontalVelocity.length() < 0.1f) {
 				horizontalVelocity.set(0);
@@ -449,7 +457,7 @@ public class PlayerActionManager {
 						if (collidingWithFloor) {
 							// This is a special case! We need to check for fall damage.
 							if (velocity.y < -20) {
-								float damage = velocity.y / 200f;
+								float damage = velocity.y / 50f;
 								player.setHealth(player.getHealth() + damage);
 								if (player.getHealth() <= 0) {
 									server.getPlayerManager().playerKilled(player, player);

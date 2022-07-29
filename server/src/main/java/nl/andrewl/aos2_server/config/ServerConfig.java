@@ -13,13 +13,13 @@ public class ServerConfig {
 	};
 
 	public static class PhysicsConfig {
-		public float gravity = 9.81f * 3;
+		public float gravity = 9.81f;
 		public float walkingSpeed = 4;
 		public float crouchingSpeed = 1.5f;
 		public float sprintingSpeed = 9;
 		public float movementAcceleration = 2;
 		public float movementDeceleration = 1;
-		public float jumpVerticalSpeed = 8;
+		public float jumpVerticalSpeed = 7;
 	}
 
 	public static class ActionsConfig {
@@ -34,6 +34,7 @@ public class ServerConfig {
 		public float teamSpawnProtection = 10;
 		public float movementAccuracyDecreaseFactor = 0.01f;
 		public boolean friendlyFire = false;
+		public float healthRegenPerSecond = 0.01f;
 	}
 
 	public static class TeamConfig {

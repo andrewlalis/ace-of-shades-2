@@ -190,7 +190,18 @@ public class ProjectileManager {
 		if (!server.getTeamManager().isProtected(hitPlayer)) {
 			Gun gun = (Gun) projectile.getSourceItem();
 			float damage = gun.getBaseDamage();
-			if (playerHitType == 1) damage *= 2;
+			if (playerHitType == 1) {// headshot.
+				damage *= 2;
+				if (projectile.getPlayer() != null) {
+					var shooter = projectile.getPlayer();
+					server.getPlayerManager().getHandler(shooter).sendDatagramPacket(new SoundMessage("hit_1", 1, shooter.getPosition(), shooter.getVelocity()));
+				}
+			} else {
+				if (projectile.getPlayer() != null) {
+					var shooter = projectile.getPlayer();
+					server.getPlayerManager().getHandler(shooter).sendDatagramPacket(new SoundMessage("hit_2", 1, shooter.getPosition(), shooter.getVelocity()));
+				}
+			}
 			hitPlayer.setHealth(hitPlayer.getHealth() - damage);
 			Vector3f impactAcceleration = new Vector3f(projectile.getVelocity()).normalize().mul(3);
 			hitPlayer.getVelocity().add(impactAcceleration);

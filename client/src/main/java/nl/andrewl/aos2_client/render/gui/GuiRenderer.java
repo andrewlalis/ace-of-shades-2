@@ -223,10 +223,10 @@ public class GuiRenderer {
 		nvgSave(vgId);
 
 		drawCrosshair(width, height, client.getInputHandler().isScopeEnabled());
+		drawHeldItemStackInfo(width, height, client.getMyPlayer());
 		if (!client.getInputHandler().isScopeEnabled()) {
 			drawChat(width, height, client);
 			drawHealthBar(width, height, client.getMyPlayer());
-			drawHeldItemStackInfo(width, height, client.getMyPlayer());
 		}
 		if (client.getInputHandler().isDebugEnabled()) {
 			drawDebugInfo(width, height, client);
@@ -259,9 +259,13 @@ public class GuiRenderer {
 		float cx = w / 2f;
 		float cy = h / 2f;
 		float size = 20f;
-		if (scopeEnabled) size = 3f;
+		if (scopeEnabled) {
+			size = 3f;
+			nvgStrokeColor(vgId, GuiUtils.rgba(1, 0, 0, 0.5f, colorA));
+		} else {
+			nvgStrokeColor(vgId, GuiUtils.rgba(1, 1, 1, 0.25f, colorA));
+		}
 
-		nvgStrokeColor(vgId, GuiUtils.rgba(1, 1, 1, 0.25f, colorA));
 		nvgBeginPath(vgId);
 		nvgMoveTo(vgId, cx - size / 2, cy);
 		nvgLineTo(vgId, cx + size / 2, cy);
@@ -329,14 +333,6 @@ public class GuiRenderer {
 	}
 
 	private void drawChat(float w, float h, Client client) {
-		float chatWidth = w / 3;
-		float chatHeight = h / 4;
-
-		nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.25f, colorA));
-		nvgBeginPath(vgId);
-		nvgRect(vgId, 0,  h - chatHeight - 16, chatWidth, chatHeight);
-		nvgFill(vgId);
-
 		var chat = client.getChat();
 		nvgFontSize(vgId, 12f);
 		nvgFontFaceId(vgId, jetbrainsMonoFont);
