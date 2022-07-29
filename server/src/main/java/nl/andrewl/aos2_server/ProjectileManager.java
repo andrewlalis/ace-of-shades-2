@@ -77,7 +77,7 @@ public class ProjectileManager {
 			direction.z += rand.nextGaussian(0, perturbationFactor);
 
 			Vector3f vel = new Vector3f(direction).normalize()
-					.mul(200 * MOVEMENT_FACTOR)
+					.mul(300 * MOVEMENT_FACTOR)
 					.add(player.getVelocity());
 
 			ServerProjectile bullet = new ServerProjectile(id, new Vector3f(pos), vel, Projectile.Type.BULLET, player, gun);

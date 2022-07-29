@@ -47,6 +47,13 @@ public class Inventory {
 		return Optional.empty();
 	}
 
+	public int getIndex(ItemStack stack) {
+		for (int i = 0; i < itemStacks.size(); i++) {
+			if (itemStacks.get(i).equals(stack)) return i;
+		}
+		return -1;
+	}
+
 	public byte getSelectedBlockValue() {
 		for (var stack : itemStacks) {
 			if (stack instanceof BlockItemStack b) {

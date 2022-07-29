@@ -142,6 +142,12 @@ public class World {
 		return chunkMap.values().stream().mapToInt(c -> c.getPosition().z * Chunk.SIZE + Chunk.SIZE - 1).max().orElse(0);
 	}
 
+	public boolean containsPoint(Vector3i pos) {
+		return pos.x >= getMinX() && pos.x < getMaxX() &&
+				pos.y >= getMinY() && pos.y < getMaxY() &&
+				pos.z >= getMinZ() && pos.z < getMaxZ();
+	}
+
 	/**
 	 * Clears all data from the world.
 	 */

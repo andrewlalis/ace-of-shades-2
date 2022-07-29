@@ -40,6 +40,7 @@ public class PlayerActionManager {
 	private boolean gunNeedsReCock = false;
 	private boolean gunReloading = false;
 	private long gunReloadingStartedAt = 0;
+	private GunItemStack reloadingItemStack = null;
 
 	private boolean updated = false;
 
@@ -149,17 +150,23 @@ public class PlayerActionManager {
 			g.setClipCount(g.getClipCount() - 1);
 			gunReloadingStartedAt = now;
 			gunReloading = true;
+			reloadingItemStack = g;
 			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
 			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("reload", 1, player.getPosition(), player.getVelocity()));
 		}
 
 		if (// Check to see if reloading is done.
 				gunReloading &&
+				reloadingItemStack != null &&
 				now - gunReloadingStartedAt > gun.getReloadTime() * 1000
 		) {
-			g.setBulletCount(gun.getMaxBulletCount());
+			reloadingItemStack.setBulletCount(gun.getMaxBulletCount());
+			int idx = player.getInventory().getIndex(reloadingItemStack);
+			if (idx != -1) {
+				server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(idx, reloadingItemStack));
+			}
 			gunReloading = false;
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+			reloadingItemStack = null;
 		}
 
 		// Check to see if the player released the trigger, for non-automatic weapons.
@@ -195,7 +202,10 @@ public class PlayerActionManager {
 			if (hit != null && !server.getTeamManager().isProtected(hit.pos())) {
 				Vector3i placePos = new Vector3i(hit.pos());
 				placePos.add(hit.norm());
-				if (!isSpaceOccupied(placePos)) { // Ensure that we can't place blocks in space we're occupying.
+				boolean canPlace = server.getPlayerManager().getPlayers().stream()
+						.noneMatch(p -> p.isSpaceOccupied(placePos)) &&
+						world.containsPoint(placePos);
+				if (canPlace) { // Ensure that we can't place blocks in space we're occupying.
 					world.setBlockAt(placePos.x, placePos.y, placePos.z, stack.getSelectedValue());
 					lastBlockPlacedAt = now;
 					stack.decrementAmount();

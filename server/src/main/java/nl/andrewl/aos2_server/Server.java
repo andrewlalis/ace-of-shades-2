@@ -26,6 +26,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
+/**
+ * The central server, which mainly contains all the different managers and
+ * other components that make up the server's state and logic.
+ */
 public class Server implements Runnable {
 	private final ServerSocket serverSocket;
 	private final DatagramSocket datagramSocket;
