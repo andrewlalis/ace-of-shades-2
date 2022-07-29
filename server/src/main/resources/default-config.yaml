@@ -11,13 +11,13 @@ teams:
     color: [0, 0, 0.8]
     spawnPoint: B
 physics:
-  gravity: 29.43
+  gravity: 9.81
   walkingSpeed: 4
   crouchingSpeed: 1.5
   sprintingSpeed: 9
   movementAcceleration: 2
   movementDeceleration: 1
-  jumpVerticalSpeed: 8
+  jumpVerticalSpeed: 7
 actions:
   blockBreakCooldown: 0.25
   blockPlaceCooldown: 0.1
@@ -30,3 +30,4 @@ actions:
   teamSpawnProtection: 10
   movementAccuracyDecreaseFactor: 0.01
   friendlyFire: false
+  healthRegenPerSecond: 0.01
