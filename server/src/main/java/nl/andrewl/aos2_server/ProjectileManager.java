@@ -13,6 +13,7 @@ import nl.andrewl.aos_core.net.client.SoundMessage;
 import nl.andrewl.aos_core.net.world.ChunkUpdateMessage;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.joml.Vector3i;
 
 import java.util.*;
@@ -103,10 +104,9 @@ public class ProjectileManager {
 
 		// Check for if the bullet will move close enough to a player to hit them.
 		Vector3f movement = new Vector3f(projectile.getVelocity()).mul(dt);
+		Vector3f direction = new Vector3f(projectile.getVelocity()).normalize();
 
 		// Check first to see if we'll hit a player this tick.
-		Vector3f testPos = new Vector3f();
-		Vector3f testMovement = new Vector3f(movement).normalize(0.1f);
 		Vector3f playerHit = null;
 		ServerPlayer hitPlayer = null;
 		int playerHitType = -1;
@@ -121,23 +121,25 @@ public class ProjectileManager {
 			) continue;
 
 			Vector3f headPos = player.getEyePosition();
-			Vector3f bodyPos = new Vector3f(player.getPosition());
-			bodyPos.y += 1.0f;
+			float headRadius = Player.RADIUS;
+			Vector3f bodyPos = new Vector3f(player.getPosition().x, player.getPosition().y + 1, player.getPosition().z);
+			float bodyRadius = Player.RADIUS;
 
-			// Do a really shitty collision detection... check in 10cm increments if we're close to the player.
-			// TODO: Come up with a better collision system.
-			testPos.set(projectile.getPosition());
-			while (testPos.distanceSquared(projectile.getPosition()) < movement.lengthSquared() && playerHit == null) {
-				if (testPos.distanceSquared(headPos) < Player.RADIUS * Player.RADIUS) {
-					playerHitType = 1;
-					playerHit = new Vector3f(testPos);
-					hitPlayer = player;
-				} else if (testPos.distanceSquared(bodyPos) < Player.RADIUS * Player.RADIUS) {
-					playerHitType = 2;
-					playerHit = new Vector3f(testPos);
-					hitPlayer = player;
-				}
-				testPos.add(testMovement);
+			Vector3f headIntersect = checkSphereIntersection(projectile.getPosition(), direction, headPos, headRadius);
+			if (headIntersect != null) {
+				playerHitType = 1;
+				playerHit = headIntersect;
+				hitPlayer = player;
+				break;
+			}
+
+			// Check body intersection.
+			Vector3f bodyIntersect = checkSphereIntersection(projectile.getPosition(), direction, bodyPos, bodyRadius);
+			if (bodyIntersect != null) {
+				playerHitType = 2;
+				playerHit = bodyIntersect;
+				hitPlayer = player;
+				break;
 			}
 		}
 
@@ -166,6 +168,37 @@ public class ProjectileManager {
 				server.getPlayerManager().broadcastUdpMessage(projectile.toMessage(false));
 			}
 		}
+	}
+
+	/**
+	 * Checks for and returns the point at which a ray with origin p and
+	 * normalized direction d intersects with a sphere whose center is c, and
+	 * whose radius is r.
+	 * @param p The ray origin.
+	 * @param d The ray's normalized direction.
+	 * @param c The sphere's center.
+	 * @param r The radius of the sphere.
+	 * @return The point of intersection, if one exists.
+	 */
+	private Vector3f checkSphereIntersection(Vector3fc p, Vector3fc d, Vector3fc c, float r) {
+		Vector3f vpc = new Vector3f(c).sub(p);
+		if (vpc.dot(d) >= 0) {// Only check for intersections ahead of us.
+			Vector3f puv = new Vector3f(d).mul(d.dot(vpc) / d.length());
+			Vector3f pc = new Vector3f(p).add(puv);
+			Vector3f diff = new Vector3f(c).sub(pc);
+			if (diff.length() <= r) {
+				Vector3f pcToC = new Vector3f(pc).sub(c);
+				float dist = (float) Math.sqrt(r * r - pcToC.lengthSquared());
+				float distanceToFirstIntersection;
+				if (vpc.length() > r) {
+					distanceToFirstIntersection = pcToC.length() - dist;
+				} else {
+					distanceToFirstIntersection = pcToC.length() + dist;
+				}
+				return new Vector3f(d).mul(distanceToFirstIntersection).add(p);
+			}
+		}
+		return null;
 	}
 
 	private void handleProjectileBlockHit(Hit hit, ServerProjectile projectile, long now) {

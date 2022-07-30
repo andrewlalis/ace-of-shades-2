@@ -102,7 +102,7 @@ public class PlayerActionManager {
 		}
 
 		tickMovement(dt, server, world, server.getConfig().physics);
-		input.reset();
+		input.reset(); // Reset our input state after processing this tick's player input.
 	}
 
 	private void tickGunAction(long now, Server server, GunItemStack g) {
@@ -115,58 +115,17 @@ public class PlayerActionManager {
 				(gun.isAutomatic() || !gunNeedsReCock) &&
 				!server.getTeamManager().isProtected(player) // Don't allow players to shoot from within their own team's protected zones.
 		) {
-			server.getProjectileManager().spawnBullets(player, gun);
-			g.setBulletCount(g.getBulletCount() - 1);
-			gunLastShotAt = now;
-			if (!gun.isAutomatic()) {
-				gunNeedsReCock = true;
-			}
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
-			// Apply recoil!
-			float recoilFactor = 10f; // Maximum number of degrees to recoil.
-			if (isScopeEnabled()) recoilFactor *= 0.1f;
-			float recoil = recoilFactor * gun.getRecoil() + (float) ThreadLocalRandom.current().nextGaussian(0, 0.01);
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientRecoilMessage(0, Math.toRadians(recoil)));
-			// Play sound!
-			String shotSound = null;
-			if (gun instanceof Rifle) {
-				shotSound = "shot_m1-garand_1";
-			} else if (gun instanceof Ak47) {
-				shotSound = "shot_ak-47_1";
-			} else if (gun instanceof Winchester) {
-				shotSound = "shot_winchester_1";
-			}
-			Vector3f soundLocation = new Vector3f(player.getPosition());
-			soundLocation.y += 1.4f;
-			soundLocation.add(player.getViewVector());
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, soundLocation, player.getVelocity()));
+			shootGun(now, server, gun, g);
 		}
 
-		if (// Check to see if the player is reloading.
-				input.reloading() &&
-				!gunReloading &&
-				g.getClipCount() > 0
-		) {
-			g.setClipCount(g.getClipCount() - 1);
-			gunReloadingStartedAt = now;
-			gunReloading = true;
-			reloadingItemStack = g;
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
-			server.getPlayerManager().broadcastUdpMessage(new SoundMessage("reload", 1, player.getPosition(), player.getVelocity()));
+		// Check to see if the player is reloading.
+		if (input.reloading() && !gunReloading && g.getClipCount() > 0) {
+			reloadGun(now, server, g);
 		}
 
-		if (// Check to see if reloading is done.
-				gunReloading &&
-				reloadingItemStack != null &&
-				now - gunReloadingStartedAt > gun.getReloadTime() * 1000
-		) {
-			reloadingItemStack.setBulletCount(gun.getMaxBulletCount());
-			int idx = player.getInventory().getIndex(reloadingItemStack);
-			if (idx != -1) {
-				server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(idx, reloadingItemStack));
-			}
-			gunReloading = false;
-			reloadingItemStack = null;
+		// Check to see if reloading is done.
+		if (gunReloading && reloadingItemStack != null && now - gunReloadingStartedAt > gun.getReloadTime() * 1000) {
+			reloadingComplete(server, gun);
 		}
 
 		// Check to see if the player released the trigger, for non-automatic weapons.
@@ -334,26 +293,6 @@ public class PlayerActionManager {
 		return points;
 	}
 
-	private boolean isSpaceOccupied(Vector3i pos) {
-		var playerPos = player.getPosition();
-		float playerBodyMinZ = playerPos.z - RADIUS;
-		float playerBodyMaxZ = playerPos.z + RADIUS;
-		float playerBodyMinX = playerPos.x - RADIUS;
-		float playerBodyMaxX = playerPos.x + RADIUS;
-		float playerBodyMinY = playerPos.y;
-		float playerBodyMaxY = playerPos.y + player.getCurrentHeight();
-
-		// Compute the bounds of all blocks the player is intersecting with.
-		int minX = (int) Math.floor(playerBodyMinX);
-		int minZ = (int) Math.floor(playerBodyMinZ);
-		int minY = (int) Math.floor(playerBodyMinY);
-		int maxX = (int) Math.floor(playerBodyMaxX);
-		int maxZ = (int) Math.floor(playerBodyMaxZ);
-		int maxY = (int) Math.floor(playerBodyMaxY);
-
-		return pos.x >= minX && pos.x <= maxX && pos.y >= minY && pos.y <= maxY && pos.z >= minZ && pos.z <= maxZ;
-	}
-
 	private void checkBlockCollisions(Vector3f movement, Server server, World world) {
 		var position = player.getPosition();
 		var velocity = player.getVelocity();
@@ -500,5 +439,52 @@ public class PlayerActionManager {
 				}
 			}
 		}
+	}
+
+	private void shootGun(long now, Server server, Gun gun, GunItemStack g) {
+		server.getProjectileManager().spawnBullets(player, gun);
+		g.setBulletCount(g.getBulletCount() - 1);
+		gunLastShotAt = now;
+		if (!gun.isAutomatic()) {
+			gunNeedsReCock = true;
+		}
+		server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+		// Apply recoil!
+		float recoilFactor = 10f; // Maximum number of degrees to recoil.
+		if (isScopeEnabled()) recoilFactor *= 0.1f;
+		float recoil = recoilFactor * gun.getRecoil() + (float) ThreadLocalRandom.current().nextGaussian(0, 0.01);
+		server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ClientRecoilMessage(0, Math.toRadians(recoil)));
+		// Play sound!
+		String shotSound = null;
+		if (gun instanceof Rifle) {
+			shotSound = "shot_m1-garand_1";
+		} else if (gun instanceof Ak47) {
+			shotSound = "shot_ak-47_1";
+		} else if (gun instanceof Winchester) {
+			shotSound = "shot_winchester_1";
+		}
+		Vector3f soundLocation = new Vector3f(player.getPosition());
+		soundLocation.y += 1.4f;
+		soundLocation.add(player.getViewVector());
+		server.getPlayerManager().broadcastUdpMessage(new SoundMessage(shotSound, 1, soundLocation, player.getVelocity()));
+	}
+
+	private void reloadGun(long now, Server server, GunItemStack g) {
+		g.setClipCount(g.getClipCount() - 1);
+		gunReloadingStartedAt = now;
+		gunReloading = true;
+		reloadingItemStack = g;
+		server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(player.getInventory()));
+		server.getPlayerManager().broadcastUdpMessage(new SoundMessage("reload", 1, player.getPosition(), player.getVelocity()));
+	}
+
+	private void reloadingComplete(Server server, Gun gun) {
+		reloadingItemStack.setBulletCount(gun.getMaxBulletCount());
+		int idx = player.getInventory().getIndex(reloadingItemStack);
+		if (idx != -1) {
+			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new ItemStackMessage(idx, reloadingItemStack));
+		}
+		gunReloading = false;
+		reloadingItemStack = null;
 	}
 }
