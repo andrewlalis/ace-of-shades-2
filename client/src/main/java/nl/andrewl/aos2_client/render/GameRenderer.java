@@ -8,6 +8,7 @@ import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.render.chunk.ChunkRenderer;
 import nl.andrewl.aos2_client.render.gui.GuiRenderer;
 import nl.andrewl.aos2_client.render.model.Model;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.ItemTypes;
@@ -181,6 +182,7 @@ public class GameRenderer {
 
 		playerModel.bind();
 		for (var player : client.getPlayers().values()) {
+			if (player.getMode() == PlayerMode.SPECTATOR) continue;
 			if (player.getTeam() != null) {
 				modelRenderer.setAspectColor(player.getTeam().getColor());
 			} else {
@@ -196,6 +198,7 @@ public class GameRenderer {
 			modelRenderer.render(rifleModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
+			if (player.getMode() == PlayerMode.SPECTATOR) continue;
 			if (player.getHeldItemId() == ItemTypes.RIFLE.getId()) {
 				modelRenderer.render(rifleModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
@@ -206,6 +209,7 @@ public class GameRenderer {
 			modelRenderer.render(smgModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
+			if (player.getMode() == PlayerMode.SPECTATOR) continue;
 			if (player.getHeldItemId() == ItemTypes.AK_47.getId()) {
 				modelRenderer.render(smgModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
@@ -216,6 +220,7 @@ public class GameRenderer {
 			modelRenderer.render(shotgunModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
+			if (player.getMode() == PlayerMode.SPECTATOR) continue;
 			if (player.getHeldItemId() == ItemTypes.WINCHESTER.getId()) {
 				modelRenderer.render(shotgunModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());
 			}
@@ -230,6 +235,7 @@ public class GameRenderer {
 		}
 		modelRenderer.setAspectColor(new Vector3f(0.5f, 0.5f, 0.5f));
 		for (var player : client.getPlayers().values()) {
+			if (player.getMode() == PlayerMode.SPECTATOR) continue;
 			if (player.getHeldItemId() == ItemTypes.BLOCK.getId()) {
 				modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(player.getSelectedBlockValue()));
 				modelRenderer.render(blockModel, player.getHeldItemTransformData(), player.getHeldItemNormalTransformData());

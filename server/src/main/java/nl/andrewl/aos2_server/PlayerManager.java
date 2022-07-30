@@ -2,6 +2,7 @@ package nl.andrewl.aos2_server;
 
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
@@ -46,6 +47,7 @@ public class PlayerManager {
 			joinMessage = username + " joined the game.";
 		}
 		player.setPosition(getBestSpawnPoint(player));
+		player.setMode(PlayerMode.NORMAL);
 		// Tell all other players that this one has joined.
 		broadcastTcpMessageToAllBut(new PlayerJoinMessage(
 				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
@@ -54,7 +56,8 @@ public class PlayerManager {
 				player.getOrientation().x(), player.getOrientation().y(),
 				player.isCrouching(),
 				player.getInventory().getSelectedItemStack().getType().getId(),
-				player.getInventory().getSelectedBlockValue()
+				player.getInventory().getSelectedBlockValue(),
+				player.getMode()
 		), player);
 		broadcastTcpMessageToAllBut(ChatMessage.announce(joinMessage), player);
 		return player;

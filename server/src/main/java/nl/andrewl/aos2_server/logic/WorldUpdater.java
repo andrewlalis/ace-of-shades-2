@@ -31,9 +31,11 @@ public class WorldUpdater implements Runnable {
 		final long nsPerTick = (long) Math.floor(secondsPerTick * 1_000_000_000);
 		System.out.printf("Running world updater at %d ms/tick, or %d ns/tick.%n", msPerTick, nsPerTick);
 		running = true;
+
 		while (running) {
 			long start = System.nanoTime();
-			tick(System.currentTimeMillis());
+			long now = System.currentTimeMillis();
+			tick(now);
 			long elapsedNs = System.nanoTime() - start;
 			if (elapsedNs > nsPerTick) {
 				System.err.printf("Took %d ns to do one tick, which is more than the desired %d ns per tick.%n", elapsedNs, nsPerTick);

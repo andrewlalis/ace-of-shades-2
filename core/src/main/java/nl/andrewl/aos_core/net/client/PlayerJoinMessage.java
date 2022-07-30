@@ -1,6 +1,7 @@
 package nl.andrewl.aos_core.net.client;
 
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.item.ItemTypes;
 import nl.andrewl.record_net.Message;
 
@@ -15,13 +16,15 @@ public record PlayerJoinMessage(
 		float ox, float oy,
 		boolean crouching,
 		int selectedItemId,
-		byte selectedBlockValue
+		byte selectedBlockValue,
+		PlayerMode mode
 ) implements Message {
 	public Player toPlayer() {
 		Player p = new Player(id, username);
 		p.getPosition().set(px, py, pz);
 		p.getVelocity().set(vx, vy, vz);
 		p.getOrientation().set(ox, oy);
+		p.setMode(mode);
 		return p;
 	}
 }

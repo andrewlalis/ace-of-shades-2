@@ -2,6 +2,7 @@ package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;
@@ -84,7 +85,8 @@ public class ServerPlayer extends Player {
 				velocity.x, velocity.y, velocity.z,
 				orientation.x, orientation.y,
 				actionManager.getInput().crouching(),
-				inventory.getSelectedItemStack().getType().getId()
+				inventory.getSelectedItemStack().getType().getId(),
+				mode
 		);
 	}
 }

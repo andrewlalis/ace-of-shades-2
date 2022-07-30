@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos_core.Net;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.World;
@@ -174,6 +175,7 @@ public class CommunicationHandler {
 			player.setCrouching(in.readBoolean());
 			player.setHeldItemId(in.readInt());
 			player.setSelectedBlockValue(in.readByte());
+			player.setMode(PlayerMode.values()[in.readInt()]);
 			client.getPlayers().put(player.getId(), player);
 		}
 
@@ -189,5 +191,6 @@ public class CommunicationHandler {
 		int teamId = in.readInt();
 		if (teamId != -1) client.getMyPlayer().setTeam(client.getTeams().get(teamId));
 		client.getMyPlayer().getPosition().set(in.readFloat(), in.readFloat(), in.readFloat());
+		client.getMyPlayer().setMode(PlayerMode.values()[in.readInt()]);
 	}
 }

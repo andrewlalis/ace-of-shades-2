@@ -1,8 +1,10 @@
 package nl.andrewl.aos2_client.model;
 
 import nl.andrewl.aos2_client.Camera;
+import nl.andrewl.aos2_client.Client;
 import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.item.ItemTypes;
+import nl.andrewl.aos_core.net.client.PlayerJoinMessage;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -98,5 +100,19 @@ public class OtherPlayer extends Player {
 
 	public float[] getHeldItemNormalTransformData() {
 		return heldItemNormalTransformData;
+	}
+
+	public static OtherPlayer fromJoinMessage(PlayerJoinMessage msg, Client client) {
+		OtherPlayer op = new OtherPlayer(msg.id(), msg.username());
+		if (msg.teamId() != -1 && client.getTeams().containsKey(msg.teamId())) {
+			op.setTeam(client.getTeams().get(msg.teamId()));
+		}
+		op.getPosition().set(msg.px(), msg.py(), msg.pz());
+		op.getVelocity().set(msg.vx(), msg.vy(), msg.vz());
+		op.getOrientation().set(msg.ox(), msg.oy());
+		op.setHeldItemId(msg.selectedItemId());
+		op.setSelectedBlockValue(msg.selectedBlockValue());
+		op.setMode(msg.mode());
+		return op;
 	}
 }

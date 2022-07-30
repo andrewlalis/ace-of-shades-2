@@ -233,6 +233,7 @@ public class ClientCommunicationHandler {
 			out.writeBoolean(player.isCrouching());
 			out.writeInt(player.getInventory().getSelectedItemStack().getType().getId());
 			out.writeByte(player.getInventory().getSelectedBlockValue());
+			out.writeInt(player.getMode().ordinal());
 		}
 
 		// Send the player's own inventory data.
@@ -251,5 +252,7 @@ public class ClientCommunicationHandler {
 		out.writeFloat(player.getPosition().x());
 		out.writeFloat(player.getPosition().y());
 		out.writeFloat(player.getPosition().z());
+
+		out.writeInt(player.getMode().ordinal());
 	}
 }

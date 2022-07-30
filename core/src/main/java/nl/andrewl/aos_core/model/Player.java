@@ -74,7 +74,13 @@ public class Player {
 	 */
 	protected Team team;
 
-	public Player(int id, String username, Team team) {
+	/**
+	 * The mode that the player is in, which dictates how they can move and/or
+	 * interact with the world.
+	 */
+	protected PlayerMode mode;
+
+	public Player(int id, String username, Team team, PlayerMode mode) {
 		this.position = new Vector3f();
 		this.velocity = new Vector3f();
 		this.orientation = new Vector2f();
@@ -82,10 +88,11 @@ public class Player {
 		this.id = id;
 		this.username = username;
 		this.team = team;
+		this.mode = mode;
 	}
 
 	public Player(int id, String username) {
-		this(id, username, null);
+		this(id, username, null, PlayerMode.NORMAL);
 	}
 
 	public Vector3f getPosition() {
@@ -136,6 +143,14 @@ public class Player {
 
 	public void setTeam(Team team) {
 		this.team = team;
+	}
+
+	public PlayerMode getMode() {
+		return mode;
+	}
+
+	public void setMode(PlayerMode mode) {
+		this.mode = mode;
 	}
 
 	public Vector3f getViewVector() {

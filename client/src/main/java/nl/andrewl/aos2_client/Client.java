@@ -8,7 +8,6 @@ import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.GameRenderer;
 import nl.andrewl.aos2_client.sound.SoundManager;
 import nl.andrewl.aos_core.config.Config;
-import nl.andrewl.aos_core.model.Player;
 import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.net.client.*;
@@ -149,22 +148,11 @@ public class Client implements Runnable {
 			}
 		} else if (msg instanceof PlayerJoinMessage joinMessage) {
 			runLater(() -> {
-				Player p = joinMessage.toPlayer();
-				OtherPlayer op = new OtherPlayer(p.getId(), p.getUsername());
-				if (joinMessage.teamId() != -1) {
-					op.setTeam(teams.get(joinMessage.teamId()));
-				}
-				op.getPosition().set(p.getPosition());
-				op.getVelocity().set(p.getVelocity());
-				op.getOrientation().set(p.getOrientation());
-				op.setHeldItemId(joinMessage.selectedItemId());
-				op.setSelectedBlockValue(joinMessage.selectedBlockValue());
+				OtherPlayer op = OtherPlayer.fromJoinMessage(joinMessage, this);
 				players.put(op.getId(), op);
 			});
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {
-			runLater(() -> {
-				players.remove(leaveMessage.id());
-			});
+			runLater(() -> players.remove(leaveMessage.id()));
 		} else if (msg instanceof SoundMessage soundMessage) {
 			if (soundManager != null) {
 				soundManager.play(
