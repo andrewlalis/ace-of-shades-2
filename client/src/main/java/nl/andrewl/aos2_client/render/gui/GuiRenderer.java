@@ -13,6 +13,7 @@ import nl.andrewl.aos_core.model.item.BlockItem;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.item.GunItemStack;
+import nl.andrewl.aos_core.model.world.Hit;
 import org.joml.Matrix4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nanovg.NVGColor;
@@ -369,10 +370,10 @@ public class GuiRenderer {
 		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
 		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
 		var pos = client.getMyPlayer().getPosition();
-		nvgText(vgId, 5, y, String.format("Pos: dx=%.3f, dy=%.3f, z=%.3f", pos.x, pos.y, pos.z));
+		nvgText(vgId, 5, y, String.format("Pos: x=%.3f, y=%.3f, z=%.3f", pos.x, pos.y, pos.z));
 		y += 12;
 		var vel = client.getMyPlayer().getVelocity();
-		nvgText(vgId, 5, y, String.format("Vel: dx=%.3f, dy=%.3f, z=%.3f, speed=%.3f", vel.x, vel.y, vel.z, vel.length()));
+		nvgText(vgId, 5, y, String.format("Vel: x=%.3f, y=%.3f, z=%.3f, speed=%.3f", vel.x, vel.y, vel.z, vel.length()));
 		y += 12;
 		var view = client.getMyPlayer().getOrientation();
 		nvgText(vgId, 5, y, String.format("View: horizontal=%.3f, vertical=%.3f", Math.toDegrees(view.x), Math.toDegrees(view.y)));
@@ -386,5 +387,11 @@ public class GuiRenderer {
 		nvgText(vgId, 5, y, String.format("Players: %d", client.getPlayers().size()));
 		y += 12;
 		nvgText(vgId, 5, y, String.format("Chunks: %d", client.getWorld().getChunkMap().size()));
+		y += 12;
+
+		Hit hit = client.getWorld().getLookingAtPos(client.getMyPlayer().getEyePosition(), client.getMyPlayer().getViewVector(), 50);
+		if (hit != null) {
+			nvgText(vgId, 5, y, String.format("Looking at: x=%d, y=%d, z=%d", hit.pos().x, hit.pos().y, hit.pos().z));
+		}
 	}
 }
