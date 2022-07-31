@@ -100,8 +100,7 @@ public class PlayerActionManager {
 
 		updated = switch (player.getMode()) {
 			case NORMAL -> normalMovementController.tickMovement(dt, player, input, server, world, server.getConfig().physics);
-			case CREATIVE -> creativeMovementController.tickMovement(dt, player, input, server, world, server.getConfig().physics);
-			case SPECTATOR -> false;
+			case CREATIVE, SPECTATOR -> creativeMovementController.tickMovement(dt, player, input, server, world, server.getConfig().physics);
 		} || updated;
 		input.reset(); // Reset our input state after processing this tick's player input.
 	}
