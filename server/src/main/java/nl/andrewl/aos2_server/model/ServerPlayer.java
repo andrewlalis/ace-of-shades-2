@@ -2,7 +2,6 @@ package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;

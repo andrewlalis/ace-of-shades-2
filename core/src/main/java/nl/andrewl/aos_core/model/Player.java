@@ -2,6 +2,7 @@ package nl.andrewl.aos_core.model;
 
 import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.MathUtils;
+import nl.andrewl.aos_core.model.world.World;
 import org.joml.*;
 import org.joml.Math;
 
@@ -192,6 +193,36 @@ public class Player {
 				.translate(position)
 				.rotate(orientation.x + (float) Math.PI, Directions.UPf)
 				.translate(-0.35f, getEyeHeight() - 0.4f, 0.35f);
+	}
+
+	/**
+	 * Gets the list of all spaces occupied by a player's position, in the
+	 * horizontal XZ plane. This can be between 1 and 4 spaces, depending on
+	 * if the player's position is overlapping with a few blocks.
+	 * @param pos The position.
+	 * @return The list of 2d positions occupied.
+	 */
+	private List<Vector2i> getHorizontalSpaceOccupied(Vector3f pos) {
+		// Get the list of 2d x,z coordinates that we overlap with.
+		List<Vector2i> points = new ArrayList<>(4); // Due to the size of radius, there can only be a max of 4 blocks.
+		int minX = (int) Math.floor(pos.x - RADIUS);
+		int minZ = (int) Math.floor(pos.z - RADIUS);
+		int maxX = (int) Math.floor(pos.x + RADIUS);
+		int maxZ = (int) Math.floor(pos.z + RADIUS);
+		for (int x = minX; x <= maxX; x++) {
+			for (int z = minZ; z <= maxZ; z++) {
+				points.add(new Vector2i(x, z));
+			}
+		}
+		return points;
+	}
+
+	public boolean isGrounded(World world) {
+		// Player must be flat on the top of a block.
+		if (Math.floor(position.y) != position.y) return false;
+		// Check to see if there's a block under any of the spaces the player is over.
+		return getHorizontalSpaceOccupied(position).stream()
+				.anyMatch(point -> world.getBlockAt(point.x, position.y - 0.1f, point.y) != 0);
 	}
 
 	public List<Vector3i> getBlockSpaceOccupied() {

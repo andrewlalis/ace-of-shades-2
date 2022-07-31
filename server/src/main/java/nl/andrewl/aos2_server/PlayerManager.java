@@ -47,7 +47,7 @@ public class PlayerManager {
 			joinMessage = username + " joined the game.";
 		}
 		player.setPosition(getBestSpawnPoint(player));
-		player.setMode(PlayerMode.NORMAL);
+		player.setMode(PlayerMode.CREATIVE);
 		// Tell all other players that this one has joined.
 		broadcastTcpMessageToAllBut(new PlayerJoinMessage(
 				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
