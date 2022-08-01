@@ -21,6 +21,7 @@ public class PlayerModeCommand implements PlayerCommand {
 			server.getPlayerManager().setMode(player, mode);
 			handler.sendTcpMessage(new ClientInventoryMessage(player.getInventory()));
 			server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
+			handler.sendTcpMessage(ChatMessage.privateMessage("Your mode has been updated to " + mode.name() + "."));
 		} catch (IllegalArgumentException e) {
 			handler.sendTcpMessage(ChatMessage.privateMessage("Invalid mode. Should be NORMAL, CREATIVE, or SPECTATOR."));
 		}

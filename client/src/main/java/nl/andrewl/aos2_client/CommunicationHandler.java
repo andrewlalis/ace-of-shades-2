@@ -168,7 +168,6 @@ public class CommunicationHandler {
 			OtherPlayer player = new OtherPlayer(in.readInt(), in.readString());
 			int teamId = in.readInt();
 			if (teamId != -1) player.setTeam(client.getTeams().get(teamId));
-			System.out.println(teamId);
 			player.getPosition().set(in.readFloat(), in.readFloat(), in.readFloat());
 			player.getVelocity().set(in.readFloat(), in.readFloat(), in.readFloat());
 			player.getOrientation().set(in.readFloat(), in.readFloat());

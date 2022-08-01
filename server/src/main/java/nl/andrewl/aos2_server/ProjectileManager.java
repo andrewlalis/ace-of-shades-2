@@ -5,6 +5,7 @@ import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos2_server.model.ServerProjectile;
 import nl.andrewl.aos_core.Directions;
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Projectile;
 import nl.andrewl.aos_core.model.item.Gun;
 import nl.andrewl.aos_core.model.world.Hit;
@@ -111,13 +112,17 @@ public class ProjectileManager {
 		ServerPlayer hitPlayer = null;
 		int playerHitType = -1;
 		for (ServerPlayer player : server.getPlayerManager().getPlayers()) {
-			// Don't allow players to shoot themselves.
-			if (projectile.getPlayer() != null && projectile.getPlayer().equals(player)) continue;
-			// Don't check for collisions with team players, if friendly fire is disabled.
+			// First, skip any players that can't be hit by bullets.
 			if (
+				// Only normal players can be hit.
+				player.getMode() != PlayerMode.NORMAL ||
+				// Don't allow players to shoot themselves.
+				(projectile.getPlayer() != null && projectile.getPlayer().equals(player)) ||
+				(// If friendly fire is disabled, don't allow it!
 					!server.getConfig().actions.friendlyFire &&
 					projectile.getPlayer() != null && projectile.getPlayer().getTeam() != null &&
 					projectile.getPlayer().getTeam().equals(player.getTeam())
+				)
 			) continue;
 
 			Vector3f headPos = player.getEyePosition();
