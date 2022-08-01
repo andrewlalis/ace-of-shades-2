@@ -3,6 +3,7 @@ package nl.andrewl.aos2_client.control.context;
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.control.InputContext;
 import nl.andrewl.aos2_client.control.InputHandler;
+import nl.andrewl.aos2_client.util.WindowUtils;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.ItemStack;
@@ -81,6 +82,9 @@ public class NormalContext implements InputContext {
 		hitting = false;
 		interacting = false;
 		reloading = false;
+		var size = WindowUtils.getSize(inputHandler.getWindowId());
+		lastMouseCursorX = size.first() / 2f;
+		lastMouseCursorY = size.second() / 2f;
 		updateInputState();
 	}
 

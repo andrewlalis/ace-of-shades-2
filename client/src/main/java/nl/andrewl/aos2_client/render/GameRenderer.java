@@ -94,6 +94,9 @@ public class GameRenderer {
 		glfwSetMouseButtonCallback(windowHandle, new PlayerInputMouseClickCallback(inputHandler));
 		glfwSetScrollCallback(windowHandle, new PlayerInputMouseScrollCallback(inputHandler));
 		glfwSetCharCallback(windowHandle, new PlayerCharacterInputCallback(inputHandler));
+		glfwSetWindowFocusCallback(windowHandle, (window, focused) -> {
+			if (!focused) inputHandler.switchToExitMenuContext();
+		});
 		if (config.captureCursor) {
 			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
