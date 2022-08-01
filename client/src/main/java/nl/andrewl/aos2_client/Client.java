@@ -29,6 +29,7 @@ public class Client implements Runnable {
 	private final ClientConfig config;
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
+	private final Camera camera;
 	private GameRenderer gameRenderer;
 	private SoundManager soundManager;
 	private long lastPlayerUpdate = 0;
@@ -43,11 +44,12 @@ public class Client implements Runnable {
 
 	public Client(ClientConfig config) {
 		this.config = config;
+		this.camera = new Camera();
 		this.players = new ConcurrentHashMap<>();
 		this.teams = new ConcurrentHashMap<>();
 		this.projectiles = new ConcurrentHashMap<>();
 		this.communicationHandler = new CommunicationHandler(this);
-		this.inputHandler = new InputHandler(this, communicationHandler);
+		this.inputHandler = new InputHandler(this, communicationHandler, camera);
 		this.chat = new Chat();
 		this.mainThreadActions = new ConcurrentLinkedQueue<>();
 	}
@@ -78,7 +80,7 @@ public class Client implements Runnable {
 			return;
 		}
 
-		gameRenderer = new GameRenderer(this, inputHandler);
+		gameRenderer = new GameRenderer(this, inputHandler, camera);
 		soundManager = new SoundManager();
 
 		long lastFrameAt = System.currentTimeMillis();

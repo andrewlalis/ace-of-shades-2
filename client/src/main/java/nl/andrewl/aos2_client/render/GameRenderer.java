@@ -39,6 +39,7 @@ public class GameRenderer {
 	private final ModelRenderer modelRenderer;
 	private final Camera camera;
 	private final Client client;
+	private final InputHandler inputHandler;
 
 	// Standard models for various game components.
 	private final Model playerModel;
@@ -56,10 +57,11 @@ public class GameRenderer {
 	private final Matrix4f perspectiveTransform;
 	private final float[] perspectiveTransformData = new float[16];
 
-	public GameRenderer(Client client, InputHandler inputHandler) {
+	public GameRenderer(Client client, InputHandler inputHandler, Camera camera) {
 		this.config = client.getConfig().display;
 		this.client = client;
-		this.camera = new Camera();
+		this.inputHandler = inputHandler;
+		this.camera = camera;
 		camera.setToPlayer(client.getMyPlayer());
 		this.perspectiveTransform = new Matrix4f();
 
@@ -88,9 +90,9 @@ public class GameRenderer {
 
 		// Setup callbacks.
 		glfwSetKeyCallback(windowHandle, new PlayerInputKeyCallback(inputHandler));
-		glfwSetCursorPosCallback(windowHandle, new PlayerViewCursorCallback(client, camera));
+		glfwSetCursorPosCallback(windowHandle, new PlayerViewCursorCallback(inputHandler));
 		glfwSetMouseButtonCallback(windowHandle, new PlayerInputMouseClickCallback(inputHandler));
-		glfwSetScrollCallback(windowHandle, new PlayerInputMouseScrollCallback(client));
+		glfwSetScrollCallback(windowHandle, new PlayerInputMouseScrollCallback(inputHandler));
 		glfwSetCharCallback(windowHandle, new PlayerCharacterInputCallback(inputHandler));
 		if (config.captureCursor) {
 			glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -168,7 +170,7 @@ public class GameRenderer {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		ClientPlayer myPlayer = client.getMyPlayer();
-		if (client.getInputHandler().isScopeEnabled()) {
+		if (inputHandler.isNormalContextActive() && inputHandler.getNormalContext().isScopeEnabled()) {
 			updatePerspective(15);
 		} else {
 			updatePerspective(config.fov);

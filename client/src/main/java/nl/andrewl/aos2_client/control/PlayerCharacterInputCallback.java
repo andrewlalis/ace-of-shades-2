@@ -11,8 +11,6 @@ public class PlayerCharacterInputCallback implements GLFWCharCallbackI {
 
 	@Override
 	public void invoke(long window, int codepoint) {
-		if (inputHandler.isChatting()) {
-			inputHandler.appendToChat(codepoint);
-		}
+		inputHandler.getActiveContext().charInput(window, codepoint);
 	}
 }

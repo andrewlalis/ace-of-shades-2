@@ -2,7 +2,6 @@ package nl.andrewl.aos2_client.render.gui;
 
 import nl.andrewl.aos2_client.Camera;
 import nl.andrewl.aos2_client.Client;
-import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
 import nl.andrewl.aos2_client.model.OtherPlayer;
 import nl.andrewl.aos2_client.render.ShaderProgram;
@@ -223,14 +222,18 @@ public class GuiRenderer {
 		nvgBeginFrame(vgId, width, height, width / height);
 		nvgSave(vgId);
 
-		drawCrosshair(width, height, client.getInputHandler().isScopeEnabled());
+		boolean scopeEnabled = client.getInputHandler().getNormalContext().isScopeEnabled();
+		drawCrosshair(width, height, scopeEnabled);
 		drawHeldItemStackInfo(width, height, client.getMyPlayer());
-		if (!client.getInputHandler().isScopeEnabled()) {
+		if (!scopeEnabled) {
 			drawChat(width, height, client);
 			drawHealthBar(width, height, client.getMyPlayer());
 		}
-		if (client.getInputHandler().isDebugEnabled()) {
+		if (client.getInputHandler().getNormalContext().isDebugEnabled()) {
 			drawDebugInfo(width, height, client);
+		}
+		if (client.getInputHandler().isExitMenuContextActive()) {
+			drawExitMenu(width, height);
 		}
 
 		nvgRestore(vgId);
@@ -353,13 +356,13 @@ public class GuiRenderer {
 			y -= 16;
 		}
 		var input = client.getInputHandler();
-		if (input.isChatting()) {
+		if (input.isChattingContextActive()) {
 			nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.5f, colorA));
 			nvgBeginPath(vgId);
 			nvgRect(vgId, 0, h - 16, w, 16);
 			nvgFill(vgId);
 			nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
-			nvgText(vgId, 5, h - 14, "> " + input.getChatText() + "_");
+			nvgText(vgId, 5, h - 14, "> " + input.getChattingContext().getChatBufferText() + "_");
 		}
 	}
 
@@ -393,5 +396,18 @@ public class GuiRenderer {
 		if (hit != null) {
 			nvgText(vgId, 5, y, String.format("Looking at: x=%d, y=%d, z=%d", hit.pos().x, hit.pos().y, hit.pos().z));
 		}
+	}
+
+	private void drawExitMenu(float width, float height) {
+		nvgFillColor(vgId, GuiUtils.rgba(0, 0, 0, 0.5f, colorA));
+		nvgBeginPath(vgId);
+		nvgRect(vgId, 0, 0, width, height);
+		nvgFill(vgId);
+
+		nvgFontSize(vgId, 12f);
+		nvgFontFaceId(vgId, jetbrainsMonoFont);
+		nvgTextAlign(vgId, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		nvgFillColor(vgId, GuiUtils.rgba(1, 1, 1, 1, colorA));
+		nvgText(vgId, width / 2f, height / 2f, "Press ESC to quit. Press any other key to return to the game.");
 	}
 }
