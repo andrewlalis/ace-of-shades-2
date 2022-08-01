@@ -17,6 +17,8 @@ public class WindowUtils {
 
 	public static void captureCursor(long id) {
 		glfwSetInputMode(id, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		var size = WindowUtils.getSize(id);
+		glfwSetCursorPos(id, size.first() / 2.0, size.second() / 2.0);
 	}
 
 	public static void freeCursor(long id) {
