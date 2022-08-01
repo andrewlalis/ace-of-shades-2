@@ -1,6 +1,8 @@
 package nl.andrewl.aos2_client.sound;
 
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
+import nl.andrewl.aos_core.model.world.World;
 import org.joml.Vector3f;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
@@ -115,8 +117,9 @@ public class SoundManager {
 		play(soundName, gain, position, new Vector3f(0, 0, 0));
 	}
 
-	public void playWalkingSounds(Player player, long now) {
-		if (player.getVelocity().length() <= 0) return;
+	public void playWalkingSounds(Player player, World world, long now) {
+		// Don't play sounds for players who are still, non-normal mode, or not on the ground.
+		if (player.getVelocity().length() <= 0 || player.getMode() != PlayerMode.NORMAL || !player.isGrounded(world)) return;
 		long lastSoundAt = lastPlayerWalkingSounds.computeIfAbsent(player, p -> 0L);
 		long delay = 500; // Delay in ms between footfalls.
 		if (player.getVelocity().length() > 5) delay -= 150;

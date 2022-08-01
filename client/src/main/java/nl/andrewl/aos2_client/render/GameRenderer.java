@@ -11,11 +11,14 @@ import nl.andrewl.aos2_client.render.model.Model;
 import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
+import nl.andrewl.aos_core.model.item.Inventory;
 import nl.andrewl.aos_core.model.item.ItemTypes;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.*;
+import org.lwjgl.glfw.Callbacks;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.io.IOException;
@@ -173,6 +176,7 @@ public class GameRenderer {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		ClientPlayer myPlayer = client.getMyPlayer();
+		Inventory inv = myPlayer.getInventory();
 		if (inputHandler.isNormalContextActive() && inputHandler.getNormalContext().isScopeEnabled()) {
 			updatePerspective(15);
 		} else {
@@ -199,7 +203,7 @@ public class GameRenderer {
 
 		// Render guns!
 		rifleModel.bind();
-		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
+		if (inv.getSelectedItemStack() != null && inv.getSelectedItemStack().getType().getId() == ItemTypes.RIFLE.getId()) {
 			modelRenderer.render(rifleModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
@@ -210,7 +214,7 @@ public class GameRenderer {
 		}
 		rifleModel.unbind();
 		smgModel.bind();
-		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.AK_47.getId()) {
+		if (inv.getSelectedItemStack() != null && inv.getSelectedItemStack().getType().getId() == ItemTypes.AK_47.getId()) {
 			modelRenderer.render(smgModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
@@ -221,7 +225,7 @@ public class GameRenderer {
 		}
 		smgModel.unbind();
 		shotgunModel.bind();
-		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.WINCHESTER.getId()) {
+		if (inv.getSelectedItemStack() != null && inv.getSelectedItemStack().getType().getId() == ItemTypes.WINCHESTER.getId()) {
 			modelRenderer.render(shotgunModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());
 		}
 		for (var player : client.getPlayers().values()) {
@@ -233,7 +237,7 @@ public class GameRenderer {
 		shotgunModel.unbind();
 
 		blockModel.bind();
-		if (myPlayer.getInventory().getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
+		if (inv.getSelectedItemStack() != null && inv.getSelectedItemStack().getType().getId() == ItemTypes.BLOCK.getId()) {
 			BlockItemStack stack = (BlockItemStack) myPlayer.getInventory().getSelectedItemStack();
 			modelRenderer.setAspectColor(client.getWorld().getPalette().getColor(stack.getSelectedValue()));
 			modelRenderer.render(blockModel, myPlayer.getHeldItemTransformData(), myPlayer.getHeldItemNormalTransformData());

@@ -31,6 +31,7 @@ public class Inventory {
 	}
 
 	public ItemStack getSelectedItemStack() {
+		if (itemStacks.isEmpty()) return null;
 		return itemStacks.get(selectedIndex);
 	}
 
@@ -61,5 +62,10 @@ public class Inventory {
 			}
 		}
 		return 1;
+	}
+
+	public void clear() {
+		itemStacks.clear();
+		selectedIndex = -1;
 	}
 }

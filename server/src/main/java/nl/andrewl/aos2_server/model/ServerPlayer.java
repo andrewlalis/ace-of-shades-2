@@ -2,10 +2,7 @@ package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
-import nl.andrewl.aos_core.model.item.BlockItemStack;
-import nl.andrewl.aos_core.model.item.GunItemStack;
 import nl.andrewl.aos_core.model.item.Inventory;
-import nl.andrewl.aos_core.model.item.ItemTypes;
 import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 
 import java.util.ArrayList;
@@ -32,10 +29,6 @@ public class ServerPlayer extends Player {
 		this.inventory = new Inventory(new ArrayList<>(), 0);
 		this.health = 1f;
 		this.actionManager = new PlayerActionManager(this);
-		inventory.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
-		inventory.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
-		inventory.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
-		inventory.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
 	}
 
 	public PlayerActionManager getActionManager() {
@@ -84,7 +77,7 @@ public class ServerPlayer extends Player {
 				velocity.x, velocity.y, velocity.z,
 				orientation.x, orientation.y,
 				actionManager.getInput().crouching(),
-				inventory.getSelectedItemStack().getType().getId(),
+				inventory.getSelectedItemStack() == null ? -1 : inventory.getSelectedItemStack().getType().getId(),
 				mode
 		);
 	}

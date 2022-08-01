@@ -6,6 +6,7 @@ import nl.andrewl.aos2_server.cli.ingame.PlayerCommand;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.net.client.ChatMessage;
+import nl.andrewl.aos_core.net.client.ClientInventoryMessage;
 
 public class PlayerModeCommand implements PlayerCommand {
 	@Override
@@ -17,7 +18,8 @@ public class PlayerModeCommand implements PlayerCommand {
 		String modeText = args[0].trim().toUpperCase();
 		try {
 			PlayerMode mode = PlayerMode.valueOf(modeText);
-			player.setMode(mode);
+			server.getPlayerManager().setMode(player, mode);
+			handler.sendTcpMessage(new ClientInventoryMessage(player.getInventory()));
 			server.getPlayerManager().broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		} catch (IllegalArgumentException e) {
 			handler.sendTcpMessage(ChatMessage.privateMessage("Invalid mode. Should be NORMAL, CREATIVE, or SPECTATOR."));

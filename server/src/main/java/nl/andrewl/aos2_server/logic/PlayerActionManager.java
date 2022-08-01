@@ -65,27 +65,30 @@ public class PlayerActionManager {
 
 	public void tick(long now, float dt, World world, Server server) {
 		updated = false; // Reset the updated flag. This will be set to true if the player was updated in this tick.
-		if (player.getInventory().getSelectedIndex() != input.selectedInventoryIndex()) {
-			player.getInventory().setSelectedIndex(input.selectedInventoryIndex());
-			// Tell the client that their inventory slot has been updated properly.
-			server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new InventorySelectedStackMessage(player.getInventory().getSelectedIndex()));
-			updated = true; // Tell everyone else that this player's selected item has changed.
-		}
 
-		ItemStack selectedStack = player.getInventory().getSelectedItemStack();
-		if (selectedStack instanceof BlockItemStack b) {
-			tickBlockAction(now, server, world, b);
-		} else if (selectedStack instanceof GunItemStack g) {
-			tickGunAction(now, server, g);
-		}
+		if (player.getMode() != PlayerMode.SPECTATOR) {
+			if (player.getInventory().getSelectedIndex() != input.selectedInventoryIndex()) {
+				player.getInventory().setSelectedIndex(input.selectedInventoryIndex());
+				// Tell the client that their inventory slot has been updated properly.
+				server.getPlayerManager().getHandler(player.getId()).sendDatagramPacket(new InventorySelectedStackMessage(player.getInventory().getSelectedIndex()));
+				updated = true; // Tell everyone else that this player's selected item has changed.
+			}
 
-		if (
-				now - lastResupplyAt > server.getConfig().actions.resupplyCooldown * 1000 &&
-				player.getTeam() != null &&
-				player.getPosition().distance(player.getTeam().getSpawnPoint()) < server.getConfig().actions.resupplyRadius
-		) {
-			server.getPlayerManager().resupply(player);
-			lastResupplyAt = now;
+			ItemStack selectedStack = player.getInventory().getSelectedItemStack();
+			if (selectedStack instanceof BlockItemStack b) {
+				tickBlockAction(now, server, world, b);
+			} else if (selectedStack instanceof GunItemStack g) {
+				tickGunAction(now, server, g);
+			}
+
+			if (
+					now - lastResupplyAt > server.getConfig().actions.resupplyCooldown * 1000 &&
+							player.getTeam() != null &&
+							player.getPosition().distance(player.getTeam().getSpawnPoint()) < server.getConfig().actions.resupplyRadius
+			) {
+				server.getPlayerManager().resupply(player);
+				lastResupplyAt = now;
+			}
 		}
 
 		if (player.getMode() == PlayerMode.NORMAL && server.getConfig().actions.healthRegenPerSecond != 0 && player.getHealth() < 1) {

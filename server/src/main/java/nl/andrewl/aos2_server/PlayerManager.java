@@ -4,10 +4,7 @@ import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.Net;
 import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.Team;
-import nl.andrewl.aos_core.model.item.BlockItemStack;
-import nl.andrewl.aos_core.model.item.Gun;
-import nl.andrewl.aos_core.model.item.GunItemStack;
-import nl.andrewl.aos_core.model.item.ItemStack;
+import nl.andrewl.aos_core.model.item.*;
 import nl.andrewl.aos_core.net.client.*;
 import nl.andrewl.aos_core.net.connect.DatagramInit;
 import nl.andrewl.record_net.Message;
@@ -47,7 +44,7 @@ public class PlayerManager {
 			joinMessage = username + " joined the game.";
 		}
 		player.setPosition(getBestSpawnPoint(player));
-		player.setMode(PlayerMode.NORMAL);
+		setMode(player, PlayerMode.NORMAL);
 		// Tell all other players that this one has joined.
 		broadcastTcpMessageToAllBut(new PlayerJoinMessage(
 				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
@@ -199,6 +196,19 @@ public class PlayerManager {
 		}
 		handler.sendDatagramPacket(new ClientHealthMessage(player.getHealth()));
 		handler.sendTcpMessage(ChatMessage.privateMessage("You've been resupplied at your team base."));
+	}
+
+	public void setMode(ServerPlayer player, PlayerMode mode) {
+		player.setMode(mode);
+		var inv = player.getInventory();
+		inv.clear();
+		if (mode == PlayerMode.NORMAL || mode == PlayerMode.CREATIVE) {
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
+			inv.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
+			inv.setSelectedIndex(0);
+		}
 	}
 
 	public void handleUdpInit(DatagramInit init, DatagramPacket packet) {

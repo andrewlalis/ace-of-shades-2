@@ -8,6 +8,7 @@ import nl.andrewl.aos2_client.render.ShaderProgram;
 import nl.andrewl.aos2_client.sound.SoundSource;
 import nl.andrewl.aos_core.FileUtils;
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
 import nl.andrewl.aos_core.model.item.BlockItem;
 import nl.andrewl.aos_core.model.item.BlockItemStack;
 import nl.andrewl.aos_core.model.item.Gun;
@@ -196,10 +197,12 @@ public class GuiRenderer {
 		glUniform1i(namePlateTextureSamplerUniform, 0);
 		glUniformMatrix4fv(namePlateViewTransformUniform, false, viewTransformData);
 		glUniformMatrix4fv(namePlatePerspectiveTransformUniform, false, perspectiveTransformData);
+		// Show nameplates from farther away if we're in creative/spectator.
+		float nameplateRadius = myPlayer.getMode() == PlayerMode.NORMAL ? 50 : 200;
 		for (var entry : playerNamePlates.entrySet()) {
 			OtherPlayer player = entry.getKey();
-			// Skip rendering far-away nameplates.
-			if (player.getPosition().distance(myPlayer.getPosition()) > 50) continue;
+			// There are some scenarios where we skip rendering the name.
+			if (player.getPosition().distance(myPlayer.getPosition()) > nameplateRadius || player.getMode() == PlayerMode.SPECTATOR) continue;
 			GuiTexture texture = entry.getValue();
 			float aspectRatio = (float) texture.getHeight() / (float) texture.getWidth();
 			transformMatrix.identity()
@@ -223,11 +226,12 @@ public class GuiRenderer {
 		nvgSave(vgId);
 
 		boolean scopeEnabled = client.getInputHandler().getNormalContext().isScopeEnabled();
+		PlayerMode mode = client.getMyPlayer().getMode();
 		drawCrosshair(width, height, scopeEnabled);
 		drawHeldItemStackInfo(width, height, client.getMyPlayer());
 		if (!scopeEnabled) {
 			drawChat(width, height, client);
-			drawHealthBar(width, height, client.getMyPlayer());
+			if (mode == PlayerMode.NORMAL) drawHealthBar(width, height, client.getMyPlayer());
 		}
 		if (client.getInputHandler().getNormalContext().isDebugEnabled()) {
 			drawDebugInfo(width, height, client);

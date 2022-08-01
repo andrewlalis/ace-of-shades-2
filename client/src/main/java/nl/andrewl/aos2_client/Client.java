@@ -96,7 +96,7 @@ public class Client implements Runnable {
 			gameRenderer.getCamera().interpolatePosition(dt);
 			interpolatePlayers(now, dt);
 			interpolateProjectiles(dt);
-			soundManager.playWalkingSounds(myPlayer, now);
+			soundManager.playWalkingSounds(myPlayer, world, now);
 
 			gameRenderer.draw();
 			lastFrameAt = now;
@@ -121,6 +121,7 @@ public class Client implements Runnable {
 					myPlayer.getPosition().set(playerUpdate.px(), playerUpdate.py(), playerUpdate.pz());
 					myPlayer.getVelocity().set(playerUpdate.vx(), playerUpdate.vy(), playerUpdate.vz());
 					myPlayer.setCrouching(playerUpdate.crouching());
+					myPlayer.setMode(playerUpdate.mode());
 					if (gameRenderer != null) {
 						gameRenderer.getCamera().setToPlayer(myPlayer);
 					}
@@ -138,7 +139,7 @@ public class Client implements Runnable {
 				}
 			});
 		} else if (msg instanceof ClientInventoryMessage inventoryMessage) {
-			myPlayer.setInventory(inventoryMessage.inv());
+			runLater(() -> myPlayer.setInventory(inventoryMessage.inv()));
 		} else if (msg instanceof InventorySelectedStackMessage selectedStackMessage) {
 			myPlayer.getInventory().setSelectedIndex(selectedStackMessage.index());
 		} else if (msg instanceof ItemStackMessage itemStackMessage) {
@@ -238,7 +239,7 @@ public class Client implements Runnable {
 			movement.set(player.getVelocity()).mul(dt);
 			player.getPosition().add(movement);
 			player.updateModelTransform();
-			soundManager.playWalkingSounds(player, now);
+			soundManager.playWalkingSounds(player, world, now);
 		}
 		gameRenderer.getGuiRenderer().updateNamePlates(players.values());
 	}
