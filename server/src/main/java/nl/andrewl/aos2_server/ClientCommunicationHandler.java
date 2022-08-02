@@ -111,8 +111,7 @@ public class ClientCommunicationHandler {
 					// Try to set the TCP timeout back to 0 now that we've got the correct request.
 					socket.setSoTimeout(0);
 					this.clientAddress = socket.getInetAddress();
-					connectionEstablished = true;
-					this.player = server.getPlayerManager().register(this, connectMsg.username());
+					this.player = server.getPlayerManager().register(this, connectMsg.username(), connectMsg.spectator());
 					Net.write(new ConnectAcceptMessage(player.getId()), out);
 					sendInitialData();
 					sendTcpMessage(ChatMessage.privateMessage("Welcome to the server, " + player.getUsername() + "."));
@@ -123,6 +122,7 @@ public class ClientCommunicationHandler {
 					TcpReceiver tcpReceiver = new TcpReceiver(in, this::handleTcpMessage)
 							.withShutdownHook(() -> server.getPlayerManager().deregister(this.player));
 					new Thread(tcpReceiver).start();
+					connectionEstablished = true;
 				}
 			} catch (SocketTimeoutException e) {
 				// Ignore this one, since this will happen if the client doesn't send data properly.
@@ -231,7 +231,7 @@ public class ClientCommunicationHandler {
 			out.writeFloat(player.getOrientation().y());
 
 			out.writeBoolean(player.isCrouching());
-			out.writeInt(player.getInventory().getSelectedItemStack().getType().getId());
+			out.writeInt(player.getInventory().getSelectedItemStack() == null ? -1 : player.getInventory().getSelectedItemStack().getType().getId());
 			out.writeByte(player.getInventory().getSelectedBlockValue());
 			out.writeInt(player.getMode().ordinal());
 		}

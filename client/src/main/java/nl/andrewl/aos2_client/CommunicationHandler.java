@@ -55,7 +55,7 @@ public class CommunicationHandler {
 		socket.setSoTimeout(1000);
 		in = Net.getInputStream(socket.getInputStream());
 		out = Net.getOutputStream(socket.getOutputStream());
-		Net.write(new ConnectRequestMessage(username), out);
+		Net.write(new ConnectRequestMessage(username, true), out);
 		Message response = Net.read(in);
 		socket.setSoTimeout(0);
 		if (response instanceof ConnectRejectMessage rejectMessage) {

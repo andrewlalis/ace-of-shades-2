@@ -29,15 +29,18 @@ public class PlayerManager {
 		this.server = server;
 	}
 
-	public synchronized ServerPlayer register(ClientCommunicationHandler handler, String username) {
-		Team team = findBestTeamForNewPlayer();
-		ServerPlayer player = new ServerPlayer(nextClientId++, username, team, PlayerMode.NORMAL);
-		var inv = player.getInventory();
-		inv.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
-		inv.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
-		inv.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
-		inv.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
-		inv.setSelectedIndex(0);
+	public synchronized ServerPlayer register(ClientCommunicationHandler handler, String username, boolean spectator) {
+		PlayerMode mode = spectator ? PlayerMode.SPECTATOR : PlayerMode.NORMAL;
+		Team team = mode != PlayerMode.NORMAL ? null : findBestTeamForNewPlayer();
+		ServerPlayer player = new ServerPlayer(nextClientId++, username, team, mode);
+		if (player.getMode() == PlayerMode.NORMAL || player.getMode() == PlayerMode.CREATIVE) {
+			var inv = player.getInventory();
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
+			inv.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
+			inv.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
+			inv.setSelectedIndex(0);
+		}
 
 		System.out.printf("Registered player \"%s\" with id %d.%n", player.getUsername(), player.getId());
 		players.put(player.getId(), player);
@@ -57,11 +60,13 @@ public class PlayerManager {
 				player.getVelocity().x(), player.getVelocity().y(), player.getVelocity().z(),
 				player.getOrientation().x(), player.getOrientation().y(),
 				player.isCrouching(),
-				player.getInventory().getSelectedItemStack().getType().getId(),
+				player.getInventory().getSelectedItemStack() == null ? -1 : player.getInventory().getSelectedItemStack().getType().getId(),
 				player.getInventory().getSelectedBlockValue(),
 				player.getMode()
 		), player);
-		broadcastTcpMessageToAllBut(ChatMessage.announce(joinMessage), player);
+		if (player.getMode() != PlayerMode.SPECTATOR) {
+			broadcastTcpMessageToAllBut(ChatMessage.announce(joinMessage), player);
+		}
 		return player;
 	}
 
