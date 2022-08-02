@@ -5,6 +5,7 @@ import nl.andrewl.aos2_server.Server;
 import nl.andrewl.aos2_server.cli.ingame.commands.KillCommand;
 import nl.andrewl.aos2_server.cli.ingame.commands.KillDeathRatioCommand;
 import nl.andrewl.aos2_server.cli.ingame.commands.PlayerModeCommand;
+import nl.andrewl.aos2_server.cli.ingame.commands.TeamsCommand;
 import nl.andrewl.aos2_server.model.ServerPlayer;
 import nl.andrewl.aos_core.net.client.ChatMessage;
 
@@ -27,6 +28,7 @@ public class PlayerCommandHandler {
 		commands.put("kd", new KillDeathRatioCommand());
 		commands.put("kill", new KillCommand());
 		commands.put("mode", new PlayerModeCommand());
+		commands.put("teams", new TeamsCommand());
 	}
 
 	public void handle(String rawCommand, ServerPlayer player, ClientCommunicationHandler handler) {

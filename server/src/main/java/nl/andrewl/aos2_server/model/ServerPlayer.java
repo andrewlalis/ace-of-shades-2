@@ -2,6 +2,8 @@ package nl.andrewl.aos2_server.model;
 
 import nl.andrewl.aos2_server.logic.PlayerActionManager;
 import nl.andrewl.aos_core.model.Player;
+import nl.andrewl.aos_core.model.PlayerMode;
+import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.Inventory;
 import nl.andrewl.aos_core.net.client.PlayerUpdateMessage;
 
@@ -24,8 +26,8 @@ public class ServerPlayer extends Player {
 	private int deathCount;
 	private int killCount;
 
-	public ServerPlayer(int id, String username) {
-		super(id, username);
+	public ServerPlayer(int id, String username, Team team, PlayerMode mode) {
+		super(id, username, team, mode);
 		this.inventory = new Inventory(new ArrayList<>(), 0);
 		this.health = 1f;
 		this.actionManager = new PlayerActionManager(this);

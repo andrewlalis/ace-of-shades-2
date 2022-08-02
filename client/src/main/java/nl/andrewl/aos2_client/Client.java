@@ -156,6 +156,14 @@ public class Client implements Runnable {
 			});
 		} else if (msg instanceof PlayerLeaveMessage leaveMessage) {
 			runLater(() -> players.remove(leaveMessage.id()));
+		} else if (msg instanceof PlayerTeamUpdateMessage teamUpdateMessage) {
+			runLater(() -> {
+				OtherPlayer op = players.get(teamUpdateMessage.playerId());
+				Team team = teamUpdateMessage.teamId() == -1 ? null : teams.get(teamUpdateMessage.teamId());
+				if (op != null) {
+					op.setTeam(team);
+				}
+			});
 		} else if (msg instanceof SoundMessage soundMessage) {
 			if (soundManager != null) {
 				soundManager.play(

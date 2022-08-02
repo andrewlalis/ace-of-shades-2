@@ -26,29 +26,37 @@ public final class Net {
 
 	private static final Serializer serializer = new Serializer();
 	static {
-		serializer.registerType(1, ConnectRequestMessage.class);
-		serializer.registerType(2, ConnectAcceptMessage.class);
-		serializer.registerType(3, ConnectRejectMessage.class);
-		serializer.registerType(4, DatagramInit.class);
-		serializer.registerType(5, ChunkHashMessage.class);
-		serializer.registerType(6, ChunkDataMessage.class);
-		serializer.registerType(7, ChunkUpdateMessage.class);
-		serializer.registerType(8, ClientInputState.class);
-		serializer.registerType(9, ClientOrientationState.class);
-		serializer.registerType(10, PlayerUpdateMessage.class);
-		serializer.registerType(11, PlayerJoinMessage.class);
-		serializer.registerType(12, PlayerLeaveMessage.class);
+		int i = 1;
+		// Basic protocol messages.
+		serializer.registerType(i++, ConnectRequestMessage.class);
+		serializer.registerType(i++, ConnectAcceptMessage.class);
+		serializer.registerType(i++, ConnectRejectMessage.class);
+		serializer.registerType(i++, DatagramInit.class);
+
+		// World messages.
+		serializer.registerType(i++, ChunkHashMessage.class);
+		serializer.registerType(i++, ChunkDataMessage.class);
+		serializer.registerType(i++, ChunkUpdateMessage.class);
+		serializer.registerType(i++, ProjectileMessage.class);
+
+		// Player/client messages.
+		serializer.registerType(i++, ClientInputState.class);
+		serializer.registerType(i++, ClientOrientationState.class);
+		serializer.registerType(i++, ClientHealthMessage.class);
+		serializer.registerType(i++, PlayerUpdateMessage.class);
+		serializer.registerType(i++, PlayerJoinMessage.class);
+		serializer.registerType(i++, PlayerLeaveMessage.class);
+		serializer.registerType(i++, PlayerTeamUpdateMessage.class);
+		serializer.registerType(i++, BlockColorMessage.class);
+		serializer.registerType(i++, InventorySelectedStackMessage.class);
+		serializer.registerType(i++, ChatMessage.class);
+		serializer.registerType(i++, ChatWrittenMessage.class);
+		serializer.registerType(i++, ClientRecoilMessage.class);
 		// Separate serializers for client inventory messages.
-		serializer.registerTypeSerializer(13, new InventorySerializer());
-		serializer.registerTypeSerializer(14, new ItemStackSerializer());
-		serializer.registerType(15, InventorySelectedStackMessage.class);
-		serializer.registerType(16, SoundMessage.class);
-		serializer.registerType(17, ProjectileMessage.class);
-		serializer.registerType(18, ClientHealthMessage.class);
-		serializer.registerType(19, BlockColorMessage.class);
-		serializer.registerType(20, ChatMessage.class);
-		serializer.registerType(21, ChatWrittenMessage.class);
-		serializer.registerType(22, ClientRecoilMessage.class);
+		serializer.registerTypeSerializer(i++, new InventorySerializer());
+		serializer.registerTypeSerializer(i++, new ItemStackSerializer());
+
+		serializer.registerType(i++, SoundMessage.class);
 	}
 
 	public static ExtendedDataInputStream getInputStream(InputStream in) {

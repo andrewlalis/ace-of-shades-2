@@ -33,6 +33,9 @@ public class TeamManager {
 		for (var team : teams.values()) {
 			if (team.getName().equals(ident)) return Optional.of(team);
 		}
+		for (var team : teams.values()) {// Try again ignoring case.
+			if (team.getName().equalsIgnoreCase(ident)) return Optional.of(team);
+		}
 		try {
 			int id = Integer.parseInt(ident);
 			for (var team : teams.values()) {

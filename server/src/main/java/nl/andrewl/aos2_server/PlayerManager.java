@@ -30,21 +30,26 @@ public class PlayerManager {
 	}
 
 	public synchronized ServerPlayer register(ClientCommunicationHandler handler, String username) {
-		ServerPlayer player = new ServerPlayer(nextClientId++, username);
+		Team team = findBestTeamForNewPlayer();
+		ServerPlayer player = new ServerPlayer(nextClientId++, username, team, PlayerMode.NORMAL);
+		var inv = player.getInventory();
+		inv.getItemStacks().add(new GunItemStack(ItemTypes.RIFLE));
+		inv.getItemStacks().add(new GunItemStack(ItemTypes.AK_47));
+		inv.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
+		inv.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
+		inv.setSelectedIndex(0);
+
 		System.out.printf("Registered player \"%s\" with id %d.%n", player.getUsername(), player.getId());
 		players.put(player.getId(), player);
 		clientHandlers.put(player.getId(), handler);
 		String joinMessage;
-		Team team = findBestTeamForNewPlayer();
-		if (team != null) {
-			player.setTeam(team);
-			System.out.printf("Player \"%s\" joined the \"%s\" team.%n", player.getUsername(), team.getName());
-			joinMessage = String.format("%s joined the %s team.", username, team.getName());
+		if (player.getTeam() != null) {
+			System.out.printf("Player \"%s\" joined the \"%s\" team.%n", player.getUsername(), player.getTeam().getName());
+			joinMessage = String.format("%s joined the %s team.", username, player.getTeam().getName());
 		} else {
 			joinMessage = username + " joined the game.";
 		}
 		player.setPosition(getBestSpawnPoint(player));
-		setMode(player, PlayerMode.NORMAL);
 		// Tell all other players that this one has joined.
 		broadcastTcpMessageToAllBut(new PlayerJoinMessage(
 				player.getId(), player.getUsername(), player.getTeam() == null ? -1 : player.getTeam().getId(),
@@ -163,12 +168,9 @@ public class PlayerManager {
 	 */
 	public void playerKilled(ServerPlayer player, ServerPlayer killedBy) {
 		Vector3f deathPosition = new Vector3f(player.getPosition());
-		player.setPosition(getBestSpawnPoint(player));
-		player.setVelocity(new Vector3f(0));
 		player.incrementDeathCount();
-		resupply(player);
-		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		broadcastUdpMessage(new SoundMessage("death", 1, deathPosition));
+		respawn(player);
 		String deathMessage;
 		if (killedBy != null) {
 			killedBy.incrementKillCount();
@@ -198,8 +200,16 @@ public class PlayerManager {
 		handler.sendTcpMessage(ChatMessage.privateMessage("You've been resupplied at your team base."));
 	}
 
+	public void respawn(ServerPlayer player) {
+		player.setPosition(getBestSpawnPoint(player));
+		player.setVelocity(new Vector3f(0));
+		broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
+		resupply(player);
+	}
+
 	public void setMode(ServerPlayer player, PlayerMode mode) {
 		player.setMode(mode);
+		var handler = getHandler(player);
 		var inv = player.getInventory();
 		inv.clear();
 		if (mode == PlayerMode.NORMAL || mode == PlayerMode.CREATIVE) {
@@ -208,7 +218,31 @@ public class PlayerManager {
 			inv.getItemStacks().add(new GunItemStack(ItemTypes.WINCHESTER));
 			inv.getItemStacks().add(new BlockItemStack(ItemTypes.BLOCK, 50, (byte) 1));
 			inv.setSelectedIndex(0);
+			handler.sendTcpMessage(new ClientInventoryMessage(inv));
+			broadcastUdpMessage(player.getUpdateMessage(System.currentTimeMillis()));
 		}
+		if (mode != PlayerMode.NORMAL) {
+			player.setTeam(null);
+			broadcastTcpMessage(new PlayerTeamUpdateMessage(player.getId(), -1));
+		} else {
+			player.setTeam(findBestTeamForNewPlayer());
+			broadcastTcpMessage(new PlayerTeamUpdateMessage(player.getId(), player.getTeam() == null ? -1 : player.getTeam().getId()));
+		}
+		handler.sendTcpMessage(ChatMessage.privateMessage("Your mode has been updated to " + mode.name() + "."));
+	}
+
+	public void setTeam(ServerPlayer player, Team team) {
+		if (Objects.equals(team, player.getTeam()) || player.getMode() != PlayerMode.NORMAL) return;
+		player.setTeam(team);
+		broadcastUdpMessage(new PlayerTeamUpdateMessage(player.getId(), team == null ? -1 : team.getId()));
+		respawn(player);
+		String chatMessage;
+		if (team != null) {
+			chatMessage = "%s has changed to the %s team.".formatted(player.getUsername(), team.getName());
+		} else {
+			chatMessage = "%s has changed to not be on a team.".formatted(player.getUsername());
+		}
+		broadcastTcpMessage(ChatMessage.announce(chatMessage));
 	}
 
 	public void handleUdpInit(DatagramInit init, DatagramPacket packet) {
