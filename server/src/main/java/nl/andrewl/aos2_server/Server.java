@@ -24,7 +24,10 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The central server, which mainly contains all the different managers and
@@ -83,11 +86,15 @@ public class Server implements Runnable {
 		running = true;
 		new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
 		new Thread(worldUpdater).start();
+		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+		var registryUpdater = new RegistryUpdater(this);
+		executorService.scheduleAtFixedRate(registryUpdater::sendUpdates, 0, 90, TimeUnit.SECONDS);
 		System.out.printf("Started AoS2 Server on TCP/UDP port %d; now accepting connections.%n", serverSocket.getLocalPort());
 		while (running) {
 			acceptClientConnection();
 		}
 		System.out.println("Shutting down the server.");
+		executorService.shutdown();
 		playerManager.deregisterAll();
 		worldUpdater.shutdown();
 		datagramSocket.close(); // Shuts down the UdpReceiver.

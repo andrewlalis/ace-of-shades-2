@@ -2,6 +2,11 @@ package nl.andrewl.aos2_server.config;
 
 public class ServerConfig {
 	public int port = 25565;
+	public String name = "My Server";
+	public String description = "My server";
+	public String[] registries = new String[0];
+
+	public int maxPlayers = 32;
 	public int connectionBacklog = 5;
 	public float ticksPerSecond = 20.0f;
 	public String world = "worlds.redfort";

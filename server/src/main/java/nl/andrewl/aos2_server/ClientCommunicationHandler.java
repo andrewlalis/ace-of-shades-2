@@ -107,6 +107,11 @@ public class ClientCommunicationHandler {
 						socket.close();
 						return;
 					}
+					if (server.getPlayerManager().getPlayers().size() >= server.getConfig().maxPlayers) {
+						Net.write(new ConnectRejectMessage("Server is full."), out);
+						socket.close();
+						return;
+					}
 
 					// Try to set the TCP timeout back to 0 now that we've got the correct request.
 					socket.setSoTimeout(0);

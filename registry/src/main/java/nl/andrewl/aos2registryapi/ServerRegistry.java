@@ -73,7 +73,6 @@ public class ServerRegistry {
 
 	@Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES, initialDelay = 1)
 	public void purgeOldServers() {
-		log.info("Purging old servers.");
 		Queue<ServerIdentifier> removalQueue = new LinkedList<>();
 		final Instant cutoff = Instant.now().minus(SERVER_TIMEOUT);
 		for (var entry : servers.entrySet()) {
