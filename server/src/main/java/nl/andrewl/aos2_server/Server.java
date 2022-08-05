@@ -86,15 +86,18 @@ public class Server implements Runnable {
 		running = true;
 		new Thread(new UdpReceiver(datagramSocket, this::handleUdpMessage)).start();
 		new Thread(worldUpdater).start();
-		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-		var registryUpdater = new RegistryUpdater(this);
-		executorService.scheduleAtFixedRate(registryUpdater::sendUpdates, 0, 30, TimeUnit.SECONDS);
+		ScheduledExecutorService executorService = null;
+		if (config.registries != null && config.registries.length > 0) {
+			executorService = Executors.newSingleThreadScheduledExecutor();
+			var registryUpdater = new RegistryUpdater(this);
+			executorService.scheduleAtFixedRate(registryUpdater::sendUpdates, 0, 30, TimeUnit.SECONDS);
+		}
 		System.out.printf("Started AoS2 Server on TCP/UDP port %d; now accepting connections.%n", serverSocket.getLocalPort());
 		while (running) {
 			acceptClientConnection();
 		}
 		System.out.println("Shutting down the server.");
-		executorService.shutdown();
+		if (executorService != null) executorService.shutdown();
 		playerManager.deregisterAll();
 		worldUpdater.shutdown();
 		datagramSocket.close(); // Shuts down the UdpReceiver.
