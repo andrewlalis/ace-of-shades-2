@@ -88,7 +88,7 @@ public class Server implements Runnable {
 		new Thread(worldUpdater).start();
 		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 		var registryUpdater = new RegistryUpdater(this);
-		executorService.scheduleAtFixedRate(registryUpdater::sendUpdates, 0, 90, TimeUnit.SECONDS);
+		executorService.scheduleAtFixedRate(registryUpdater::sendUpdates, 0, 30, TimeUnit.SECONDS);
 		System.out.printf("Started AoS2 Server on TCP/UDP port %d; now accepting connections.%n", serverSocket.getLocalPort());
 		while (running) {
 			acceptClientConnection();

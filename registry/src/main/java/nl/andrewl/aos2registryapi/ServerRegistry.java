@@ -26,8 +26,8 @@ import java.util.stream.Stream;
 public class ServerRegistry {
 	private static final Logger log = LoggerFactory.getLogger(ServerRegistry.class);
 
-	public static final Duration SERVER_TIMEOUT = Duration.ofMinutes(5);
-	public static final Duration SERVER_MIN_UPDATE = Duration.ofMinutes(1);
+	public static final Duration SERVER_TIMEOUT = Duration.ofMinutes(3);
+	public static final Duration SERVER_MIN_UPDATE = Duration.ofSeconds(5);
 
 	private final Map<ServerIdentifier, ServerInfo> servers = new ConcurrentHashMap<>();
 	private final ServerInfoValidator infoValidator = new ServerInfoValidator();
