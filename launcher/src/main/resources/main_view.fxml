@@ -1,24 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/16"
-      maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0"
-      fx:controller="nl.andrewl.aos2_launcher.MainViewController"
->
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.andrewl.aos2_launcher.MainViewController">
     <MenuBar>
         <Menu mnemonicParsing="false" text="File">
-            <MenuItem mnemonicParsing="false" text="Exit"/>
+            <MenuItem mnemonicParsing="false" onAction="#onExit" text="Exit" />
         </Menu>
         <Menu mnemonicParsing="false" text="Profiles">
-            <MenuItem mnemonicParsing="false" text="New Profile"/>
+            <MenuItem mnemonicParsing="false" text="New Profile" />
         </Menu>
         <Menu mnemonicParsing="false" text="Help">
-            <MenuItem mnemonicParsing="false" text="About"/>
+            <MenuItem mnemonicParsing="false" text="About" />
         </Menu>
     </MenuBar>
-    <ScrollPane VBox.vgrow="ALWAYS">
-        <TilePane fx:id="profilesTilePane"/>
-    </ScrollPane>
+   <SplitPane dividerPositions="0.5" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+      <items>
+         <VBox minWidth="-Infinity" prefHeight="200.0" prefWidth="100.0">
+            <children>
+               <HBox alignment="CENTER" prefWidth="200.0" VBox.vgrow="NEVER">
+                  <children>
+                     <Label contentDisplay="CENTER" text="Profiles" />
+                  </children>
+               </HBox>
+               <Separator prefWidth="200.0" />
+               <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <content>
+                     <VBox fx:id="profilesVBox" prefWidth="100.0" />
+                  </content>
+               </ScrollPane>
+            </children>
+         </VBox>
+         <VBox minWidth="-Infinity" prefHeight="200.0" prefWidth="100.0">
+            <children>
+               <HBox alignment="CENTER" prefWidth="200.0" VBox.vgrow="NEVER">
+                  <children>
+                     <Label text="Game Versions" />
+                  </children>
+               </HBox>
+               <Separator prefWidth="200.0" />
+               <ScrollPane fitToWidth="true" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <content>
+                     <VBox prefWidth="100.0" />
+                  </content>
+               </ScrollPane>
+            </children>
+         </VBox>
+      </items>
+   </SplitPane>
+   <HBox alignment="CENTER" prefWidth="200.0" VBox.vgrow="NEVER">
+      <children>
+         <Button fx:id="playButton" mnemonicParsing="false" text="Play" />
+      </children>
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets>
+      <padding>
+         <Insets bottom="5.0" top="5.0" />
+      </padding>
+   </HBox>
 </VBox>
