@@ -1,51 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox
-        maxHeight="-Infinity"
-        maxWidth="-Infinity"
-        minHeight="300.0"
-        minWidth="300.0"
-        prefHeight="400.0"
-        prefWidth="600.0"
-        xmlns="http://javafx.com/javafx/16"
-        xmlns:fx="http://javafx.com/fxml/1"
-        fx:controller="nl.andrewl.aos2_launcher.MainViewController"
->
+<?import javafx.scene.text.*?>
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="300.0" minWidth="300.0" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.andrewl.aos2_launcher.MainViewController">
     <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab text="Profiles">
             <VBox>
-                <HBox VBox.vgrow="NEVER" alignment="CENTER" styleClass="button-bar">
-                    <Button text="Add Profile" onAction="#addProfile"/>
-                    <Button fx:id="editProfileButton" text="Edit Profile" onAction="#editProfile"/>
-                    <Button fx:id="removeProfileButton" text="Remove Profile" onAction="#removeProfile"/>
+                <HBox alignment="CENTER" styleClass="button-bar" VBox.vgrow="NEVER">
+                    <Button onAction="#addProfile" text="Add Profile" />
+                    <Button fx:id="editProfileButton" onAction="#editProfile" text="Edit Profile" />
+                    <Button fx:id="removeProfileButton" onAction="#removeProfile" text="Remove Profile" />
                 </HBox>
                 <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-                    <VBox fx:id="profilesVBox" styleClass="banner-list"/>
+                    <VBox fx:id="profilesVBox" styleClass="banner-list" />
                 </ScrollPane>
             </VBox>
         </Tab>
         <Tab text="Servers">
             <VBox>
-                <HBox VBox.vgrow="NEVER" alignment="CENTER" styleClass="button-bar">
-                    <Button text="Refresh" onAction="#refreshServers"/>
+                <HBox alignment="CENTER" styleClass="button-bar" VBox.vgrow="NEVER">
+                    <Button onAction="#refreshServers" text="Refresh" />
                 </HBox>
                 <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
-                    <VBox fx:id="serversVBox" styleClass="banner-list"/>
+                    <VBox fx:id="serversVBox" styleClass="banner-list" />
                 </ScrollPane>
             </VBox>
         </Tab>
     </TabPane>
-    <HBox alignment="CENTER" VBox.vgrow="NEVER" styleClass="button-bar">
-        <HBox alignment="CENTER_LEFT" HBox.hgrow="NEVER" spacing="5">
-            <Label text="Profile: "/>
-            <Label fx:id="selectedProfileLabel" text="None"/>
+    <HBox alignment="CENTER" styleClass="button-bar" VBox.vgrow="NEVER">
+        <HBox alignment="CENTER_LEFT" spacing="5" HBox.hgrow="NEVER">
+            <Label text="Profile: " />
+            <Label fx:id="selectedProfileLabel" text="None" />
         </HBox>
-        <Button fx:id="playButton" mnemonicParsing="false" text="Play" onAction="#play"/>
-        <HBox alignment="CENTER_LEFT" HBox.hgrow="NEVER" spacing="5">
-            <Label text="Server: "/>
-            <Label fx:id="selectedServerLabel" text="None"/>
+        <Button fx:id="playButton" mnemonicParsing="false" onAction="#play" text="Play" />
+        <HBox alignment="CENTER_LEFT" spacing="5" HBox.hgrow="NEVER">
+            <Label text="Server: " />
+            <Label fx:id="selectedServerLabel" text="None" />
         </HBox>
     </HBox>
+   <VBox fx:id="progressVBox" VBox.vgrow="NEVER">
+      <children>
+         <AnchorPane VBox.vgrow="NEVER">
+            <children>
+               <Label fx:id="progressLabel" text="Work in progress..." AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <font>
+                     <Font size="10.0" />
+                  </font>
+               </Label>
+               <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            </children>
+            <padding>
+               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+            </padding>
+         </AnchorPane>
+      </children>
+   </VBox>
 </VBox>

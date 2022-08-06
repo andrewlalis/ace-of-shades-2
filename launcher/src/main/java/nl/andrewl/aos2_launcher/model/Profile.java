@@ -3,15 +3,27 @@ package nl.andrewl.aos2_launcher.model;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+import java.util.UUID;
+
 public class Profile {
+	private final UUID id;
 	private final StringProperty name;
 	private final StringProperty description;
 	private final StringProperty clientVersion;
 
 	public Profile() {
-		this.name = new SimpleStringProperty("");
-		this.description = new SimpleStringProperty(null);
-		this.clientVersion = new SimpleStringProperty(null);
+		this(UUID.randomUUID(), "", null, null);
+	}
+
+	public Profile(UUID id, String name, String description, String clientVersion) {
+		this.id = id;
+		this.name = new SimpleStringProperty(name);
+		this.description = new SimpleStringProperty(description);
+		this.clientVersion = new SimpleStringProperty(clientVersion);
+	}
+
+	public UUID getId() {
+		return id;
 	}
 
 	public String getName() {

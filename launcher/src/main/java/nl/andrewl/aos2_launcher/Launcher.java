@@ -17,6 +17,7 @@ public class Launcher extends Application {
 	public static final Path BASE_DIR = Path.of(System.getProperty("user.home"), ".ace-of-shades");
 	public static final Path VERSIONS_DIR = BASE_DIR.resolve("versions");
 	public static final Path PROFILES_FILE = BASE_DIR.resolve("profiles.json");
+	public static final Path JRE_PATH = BASE_DIR.resolve("jre");
 
 	@Override
 	public void start(Stage stage) throws IOException {

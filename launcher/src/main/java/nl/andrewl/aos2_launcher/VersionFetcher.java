@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import nl.andrewl.aos2_launcher.model.ClientVersionRelease;
+import nl.andrewl.aos2_launcher.model.ProgressReporter;
+import nl.andrewl.aos2_launcher.util.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -98,7 +100,7 @@ public class VersionFetcher {
 		}
 	}
 
-	public CompletableFuture<Path> ensureVersionIsDownloaded(String versionTag) {
+	public CompletableFuture<Path> ensureVersionIsDownloaded(String versionTag, ProgressReporter progressReporter) {
 		try (var s = Files.list(Launcher.VERSIONS_DIR)) {
 			Optional<Path> optionalFile = s.filter(f -> isVersionFile(f) && versionTag.equals(extractVersion(f)))
 					.findFirst();
@@ -106,11 +108,15 @@ public class VersionFetcher {
 		} catch (IOException e) {
 			return CompletableFuture.failedFuture(e);
 		}
-		return getRelease(versionTag)
-				.thenComposeAsync(this::downloadVersion);
+		progressReporter.enableProgress();
+		progressReporter.setActionText("Downloading client " + versionTag + "...");
+		var future = getRelease(versionTag)
+				.thenComposeAsync(release -> downloadVersion(release, progressReporter));
+		future.thenRun(progressReporter::disableProgress);
+		return future;
 	}
 
-	private CompletableFuture<Path> downloadVersion(ClientVersionRelease release) {
+	private CompletableFuture<Path> downloadVersion(ClientVersionRelease release, ProgressReporter progressReporter) {
 		System.out.println("Downloading version " + release.tag());
 		HttpRequest req = HttpRequest.newBuilder(URI.create(release.assetsUrl()))
 				.GET().timeout(Duration.ofSeconds(3)).build();
@@ -140,10 +146,19 @@ public class VersionFetcher {
 					.GET().timeout(Duration.ofMinutes(5)).build();
 			Path file = Launcher.VERSIONS_DIR.resolve(fileName);
 			System.out.printf("Downloading %s to %s.%n", fileName, file.toAbsolutePath());
-			return httpClient.sendAsync(downloadRequest, HttpResponse.BodyHandlers.ofFile(file))
+			return httpClient.sendAsync(downloadRequest, HttpResponse.BodyHandlers.ofInputStream())
 					.thenApplyAsync(resp -> {
-						System.out.println(resp);
-						return resp.body();
+						if (resp.statusCode() == 200) {
+							// Download sequentially, and update the progress.
+							try {
+								FileUtils.downloadWithProgress(file, resp, progressReporter);
+							} catch (IOException e) {
+								throw new RuntimeException(e);
+							}
+							return file;
+						} else {
+							throw new RuntimeException("Version download failed.");
+						}
 					});
 		});
 	}
