@@ -11,6 +11,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.stage.Modality;
 import javafx.stage.Window;
+import nl.andrewl.aos2_launcher.VersionFetcher;
+import nl.andrewl.aos2_launcher.model.ClientVersionRelease;
 import nl.andrewl.aos2_launcher.model.Profile;
 
 import java.io.IOException;
@@ -41,8 +43,15 @@ public class EditProfileDialog extends Dialog<Profile> {
 					.or(clientVersionChoiceBox.valueProperty().isNull());
 			nameField.setText(profile.getName());
 			descriptionTextArea.setText(profile.getDescription());
-			clientVersionChoiceBox.setItems(FXCollections.observableArrayList("v1.2.0", "v1.3.0", "v1.4.0"));
-			clientVersionChoiceBox.setValue(profile.getClientVersion());
+			VersionFetcher.INSTANCE.getAvailableReleases().thenAccept(releases -> {
+				Platform.runLater(() -> {
+					clientVersionChoiceBox.setItems(FXCollections.observableArrayList(releases.stream().map(ClientVersionRelease::tag).toList()));
+					String lastRelease = releases.size() == 0 ? null : releases.get(0).tag();
+					if (lastRelease != null) {
+						clientVersionChoiceBox.setValue(lastRelease);
+					}
+				});
+			});
 
 			DialogPane pane = new DialogPane();
 			pane.setContent(parent);

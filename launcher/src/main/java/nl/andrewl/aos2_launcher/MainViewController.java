@@ -118,12 +118,10 @@ public class MainViewController {
 					throwable.printStackTrace();
 					return new ArrayList<>();
 				})
-				.thenAccept(newServers -> {
-					Platform.runLater(() -> {
-						this.servers.clear();
-						this.servers.addAll(newServers);
-					});
-				});
+				.thenAccept(newServers -> Platform.runLater(() -> {
+					this.servers.clear();
+					this.servers.addAll(newServers);
+				}));
 	}
 
 	@FXML
@@ -150,7 +148,20 @@ public class MainViewController {
 
 	@FXML
 	public void play() {
-
+		Profile profile = this.selectedProfile.get();
+		Server server = this.selectedServer.get();
+		VersionFetcher.INSTANCE.ensureVersionIsDownloaded(profile.getClientVersion())
+				.thenAccept(path -> {
+					try {
+						Process p = new ProcessBuilder()
+								.command("java", "-jar", path.toAbsolutePath().toString())
+								.directory(Launcher.BASE_DIR.toFile())
+								.inheritIO()
+								.start();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
 	}
 
 	private void selectProfile(ProfileView view) {
