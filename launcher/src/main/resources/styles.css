@@ -1,0 +1,22 @@
+.test{
+    -fx-background-color: blue;
+}
+
+.button-bar {
+    -fx-padding: 5 0 5 0;
+    -fx-spacing: 5;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.banner-list {
+    -fx-spacing: 5;
+}
+
+.list-item:selected {
+    -fx-background-color: #e3e3e3;
+}
+
+#playButton {
+    -fx-border-radius: 0;
+}

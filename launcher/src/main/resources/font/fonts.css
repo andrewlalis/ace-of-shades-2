@@ -1,0 +1,27 @@
+@font-face {
+    src: url('JetBrainsMono-Regular.ttf');
+}
+
+@font-face {
+    src: url('JetBrainsMono-Bold.ttf');
+}
+
+@font-face {
+    src: url('JetBrainsMono-Light.ttf');
+}
+
+@font-face {
+    src: url('JetBrainsMono-Italic.ttf');
+}
+
+@font-face {
+    src: url('JetBrainsMono-BoldItalic.ttf');
+}
+
+@font-face {
+    src: url('JetBrainsMono-LightItalic.ttf');
+}
+
+.root {
+    -fx-font-family: "JetBrains Mono";
+}
