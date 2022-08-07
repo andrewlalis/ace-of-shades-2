@@ -42,17 +42,26 @@ public class EditProfileDialog extends Dialog<Profile> {
 					.or(usernameField.textProperty().isEmpty());
 			nameField.setText(profile.getName());
 			usernameField.setText(profile.getUsername());
-			VersionFetcher.INSTANCE.getAvailableReleases().thenAccept(releases -> Platform.runLater(() -> {
-				clientVersionChoiceBox.setItems(FXCollections.observableArrayList(releases.stream().map(ClientVersionRelease::tag).toList()));
-				// If the profile doesn't have a set version, use the latest release.
-				if (profile.getClientVersion() == null || profile.getClientVersion().isBlank()) {
-					String lastRelease = releases.size() == 0 ? null : releases.get(0).tag();
-					if (lastRelease != null) {
-						clientVersionChoiceBox.setValue(lastRelease);
-					}
-				} else {
-					clientVersionChoiceBox.setValue(profile.getClientVersion());
-				}
+			VersionFetcher.INSTANCE.getAvailableReleases()
+					.whenComplete((releases, throwable) -> Platform.runLater(() -> {
+						if (throwable == null) {
+							clientVersionChoiceBox.setItems(FXCollections.observableArrayList(releases.stream().map(ClientVersionRelease::tag).toList()));
+							// If the profile doesn't have a set version, use the latest release.
+							if (profile.getClientVersion() == null || profile.getClientVersion().isBlank()) {
+								String lastRelease = releases.size() == 0 ? null : releases.get(0).tag();
+								if (lastRelease != null) {
+									clientVersionChoiceBox.setValue(lastRelease);
+								}
+							} else {
+								clientVersionChoiceBox.setValue(profile.getClientVersion());
+							}
+						} else {
+							throwable.printStackTrace();
+							Alert alert = new Alert(Alert.AlertType.ERROR);
+							alert.initOwner(this.getOwner());
+							alert.setContentText("An error occurred while fetching the latest game releases: " + throwable.getMessage());
+							alert.show();
+						}
 			}));
 			jvmArgsTextArea.setText(profile.getJvmArgs());
 

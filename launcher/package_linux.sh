@@ -7,15 +7,14 @@ function join_by {
    fi
 }
 
-mvn clean package javafx:jlink -DskipDebug=true -DstripJavaDebugAttributes=true -DnoHeaderFiles=true -DnoManPages=true
-
+mvn clean package
 cd target
 module_jars=(lib/*)
-eligible_main_jars=("*jar-with-dependencies.jar")
+eligible_main_jars=("*.jar")
 main_jar=(${eligible_main_jars[0]})
-module_path=$(join_by ";" ${module_jars[@]})
-module_path="$main_jar;$module_path"
-
+module_path=$(join_by ":" ${module_jars[@]})
+module_path="$main_jar:$module_path"
+echo $module_path
 jpackage \
   --name "Ace of Shades Launcher" \
   --app-version "1.0.0" \
@@ -24,8 +23,6 @@ jpackage \
   --linux-deb-maintainer "andrewlalisofficial@gmail.com" \
   --linux-menu-group "Game" \
   --linux-app-category "Game" \
-  --runtime-image image \
-  --main-jar $main_jar \
-  --main-class nl.andrewl.aos2_launcher.Launcher \
-  --input .
+  --module-path "$module_path" \
+  --module aos2_launcher/nl.andrewl.aos2_launcher.Launcher
 
