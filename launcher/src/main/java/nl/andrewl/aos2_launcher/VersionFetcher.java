@@ -50,8 +50,6 @@ public class VersionFetcher {
 		if (loaded) {
 			return CompletableFuture.completedFuture(Collections.unmodifiableList(availableReleases));
 		}
-
-		System.out.println("Fetching the list of available releases...");
 		return fetchReleasesFromGitHub();
 	}
 
