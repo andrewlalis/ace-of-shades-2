@@ -1,6 +1,7 @@
 package nl.andrewl.aos2_client;
 
 import nl.andrewl.aos2_client.config.ClientConfig;
+import nl.andrewl.aos2_client.config.ConnectConfig;
 import nl.andrewl.aos2_client.control.InputHandler;
 import nl.andrewl.aos2_client.model.Chat;
 import nl.andrewl.aos2_client.model.ClientPlayer;
@@ -26,10 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client implements Runnable {
-	private final String host;
-	private final int port;
-	private final String username;
-	private final ClientConfig config;
+	public final ConnectConfig connectConfig;
+	public final ClientConfig config;
 
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
@@ -46,11 +45,9 @@ public class Client implements Runnable {
 	private final Chat chat;
 	private final Queue<Runnable> mainThreadActions;
 
-	public Client(ClientConfig config, String host, int port, String username) {
-		this.host = host;
-		this.port = port;
-		this.username = username;
+	public Client(ClientConfig config, ConnectConfig connectConfig) {
 		this.config = config;
+		this.connectConfig = connectConfig;
 		this.camera = new Camera();
 		this.players = new ConcurrentHashMap<>();
 		this.teams = new ConcurrentHashMap<>();
@@ -81,7 +78,7 @@ public class Client implements Runnable {
 	@Override
 	public void run() {
 		try {
-			communicationHandler.establishConnection(host, port, username);
+			communicationHandler.establishConnection();
 		} catch (IOException e) {
 			System.err.println("Couldn't connect to the server: " + e.getMessage());
 			return;
@@ -279,6 +276,7 @@ public class Client implements Runnable {
 		String host = args[0].trim();
 		int port = Integer.parseInt(args[1]);
 		String username = args[2].trim();
+		ConnectConfig connectCfg = new ConnectConfig(host, port, username, false);
 
 		List<Path> configPaths = Config.getCommonConfigPaths();
 		configPaths.add(0, Path.of("client.yaml")); // Add this first so we create client.yaml if needed.
@@ -286,7 +284,7 @@ public class Client implements Runnable {
 			configPaths.add(Path.of(args[3].trim()));
 		}
 		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig(), "default-config.yaml");
-		Client client = new Client(clientConfig, host, port, username);
+		Client client = new Client(clientConfig, connectCfg);
 		client.run();
 	}
 }

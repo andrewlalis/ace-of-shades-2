@@ -8,7 +8,8 @@ import nl.andrewl.aos_core.model.Team;
 import nl.andrewl.aos_core.model.item.ItemStack;
 import nl.andrewl.aos_core.model.world.World;
 import nl.andrewl.aos_core.model.world.WorldIO;
-import nl.andrewl.aos_core.net.*;
+import nl.andrewl.aos_core.net.TcpReceiver;
+import nl.andrewl.aos_core.net.UdpReceiver;
 import nl.andrewl.aos_core.net.connect.ConnectAcceptMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRejectMessage;
 import nl.andrewl.aos_core.net.connect.ConnectRequestMessage;
@@ -42,18 +43,18 @@ public class CommunicationHandler {
 		this.client = client;
 	}
 	
-	public void establishConnection(String host, int port, String username) throws IOException {
+	public void establishConnection() throws IOException {
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
-		InetAddress address = InetAddress.getByName(host);
-		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, port, username);
+		InetAddress address = InetAddress.getByName(client.connectConfig.host());
+		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, client.connectConfig.port(), client.connectConfig.username());
 
-		socket = new Socket(address, port);
+		socket = new Socket(address, client.connectConfig.port());
 		socket.setSoTimeout(1000);
 		in = Net.getInputStream(socket.getInputStream());
 		out = Net.getOutputStream(socket.getOutputStream());
-		Net.write(new ConnectRequestMessage(username, true), out);
+		Net.write(new ConnectRequestMessage(client.connectConfig.username(), client.connectConfig.spectator()), out);
 		Message response = Net.read(in);
 		socket.setSoTimeout(0);
 		if (response instanceof ConnectRejectMessage rejectMessage) {
@@ -61,7 +62,7 @@ public class CommunicationHandler {
 		}
 		if (response instanceof ConnectAcceptMessage acceptMessage) {
 			this.clientId = acceptMessage.clientId();
-			client.setMyPlayer(new ClientPlayer(clientId, username));
+			client.setMyPlayer(new ClientPlayer(clientId, client.connectConfig.username()));
 			receiveInitialData();
 			establishDatagramConnection();
 			new Thread(new TcpReceiver(in, client::onMessageReceived).withShutdownHook(this::shutdown)).start();
