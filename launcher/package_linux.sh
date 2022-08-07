@@ -24,5 +24,6 @@ jpackage \
   --linux-menu-group "Game" \
   --linux-app-category "Game" \
   --module-path "$module_path" \
-  --module aos2_launcher/nl.andrewl.aos2_launcher.Launcher
+  --module aos2_launcher/nl.andrewl.aos2_launcher.Launcher \
+  --add-modules jdk.crypto.cryptoki
 
