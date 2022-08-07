@@ -24,10 +24,11 @@ $modulePath = $modules -join ';'
 
 Write-Output "Running jpackage..."
 jpackage `
- --type exe `
+ --type msi `
  --name "Ace-of-Shades" `
  --app-version "1.0.0" `
  --description "Top-down 2D shooter game inspired by Ace of Spades." `
+ --icon ..\icon.ico `
  --win-shortcut `
  --win-dir-chooser `
  --win-per-user-install `
