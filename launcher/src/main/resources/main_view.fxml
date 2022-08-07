@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
-<VBox minHeight="300.0" minWidth="300.0" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.andrewl.aos2_launcher.MainViewController">
+<?import javafx.scene.text.*?>
+
+<VBox minHeight="300.0" minWidth="300.0" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nl.andrewl.aos2_launcher.MainViewController">
     <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab text="Profiles">
             <VBox>
@@ -22,6 +23,7 @@
             <VBox>
                 <HBox alignment="CENTER" styleClass="button-bar" VBox.vgrow="NEVER">
                     <Button onAction="#refreshServers" text="Refresh" />
+               <TextField fx:id="registryUrlField" prefWidth="300.0" promptText="Registry URL" text="http://localhost:8080" style="-fx-font-size: 10px;" />
                 </HBox>
                 <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
                     <VBox fx:id="serversVBox" styleClass="banner-list" />
@@ -30,26 +32,19 @@
         </Tab>
     </TabPane>
     <HBox alignment="CENTER" styleClass="button-bar" VBox.vgrow="NEVER">
-        <Button
-                fx:id="playButton"
-                mnemonicParsing="false"
-                onAction="#play"
-                text="Play"
-        />
+        <Button fx:id="playButton" mnemonicParsing="false" onAction="#play" text="Play" />
     </HBox>
     <VBox fx:id="progressVBox" VBox.vgrow="NEVER">
         <AnchorPane VBox.vgrow="NEVER">
             <padding>
-                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
             </padding>
-            <Label fx:id="progressLabel" text="Work in progress..." AnchorPane.bottomAnchor="0.0"
-                   AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <Label fx:id="progressLabel" text="Work in progress..." AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                 <font>
-                    <Font size="10.0"/>
+                    <Font size="10.0" />
                 </font>
             </Label>
-            <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" AnchorPane.bottomAnchor="0.0"
-                         AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+            <ProgressBar fx:id="progressBar" prefWidth="200.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
         </AnchorPane>
     </VBox>
 </VBox>
