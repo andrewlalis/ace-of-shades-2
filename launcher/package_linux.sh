@@ -19,6 +19,7 @@ jpackage \
   --name "Ace of Shades Launcher" \
   --app-version "1.0.0" \
   --description "Launcher app for Ace of Shades, a voxel-based first-person shooter." \
+  --icon ../icon.ico \
   --linux-shortcut \
   --linux-deb-maintainer "andrewlalisofficial@gmail.com" \
   --linux-menu-group "Game" \

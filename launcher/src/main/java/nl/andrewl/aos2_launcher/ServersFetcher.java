@@ -4,6 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.control.Alert;
+import javafx.stage.Window;
 import nl.andrewl.aos2_launcher.model.Server;
 
 import java.net.URI;
@@ -16,18 +21,28 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 class ServersFetcher {
-	private static final String registryURL = "http://localhost:8080";
-
 	private final HttpClient httpClient;
 	private final Gson gson;
+	private final StringProperty registryUrl;
 
-	public ServersFetcher() {
+	public ServersFetcher(StringProperty registryUrlProperty) {
 		httpClient = HttpClient.newBuilder().build();
 		gson = new Gson();
+		this.registryUrl = new SimpleStringProperty("http://localhost:8080");
+		registryUrl.bind(registryUrlProperty);
 	}
 
-	public CompletableFuture<List<Server>> fetchServers() {
-		HttpRequest req = HttpRequest.newBuilder(URI.create(registryURL + "/servers"))
+	public CompletableFuture<List<Server>> fetchServers(Window owner) {
+		if (registryUrl.get() == null || registryUrl.get().isBlank()) {
+			Platform.runLater(() -> {
+				Alert alert = new Alert(Alert.AlertType.WARNING);
+				alert.setContentText("Invalid or missing registry URL. Can't fetch the list of servers.");
+				alert.initOwner(owner);
+				alert.show();
+			});
+			return CompletableFuture.completedFuture(new ArrayList<>());
+		}
+		HttpRequest req = HttpRequest.newBuilder(URI.create(registryUrl.get() + "/servers"))
 				.GET()
 				.timeout(Duration.ofSeconds(3))
 				.header("Accept", "application/json")

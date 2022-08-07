@@ -4,11 +4,9 @@ import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 import nl.andrewl.aos2_launcher.model.Profile;
 import nl.andrewl.aos2_launcher.model.ProfileSet;
 import nl.andrewl.aos2_launcher.model.ProgressReporter;
@@ -32,10 +30,11 @@ public class MainViewController implements ProgressReporter {
 	@FXML public VBox progressVBox;
 	@FXML public Label progressLabel;
 	@FXML public ProgressBar progressBar;
+	@FXML public TextField registryUrlField;
 
 	private final ProfileSet profileSet = new ProfileSet();
 
-	private final ServersFetcher serversFetcher = new ServersFetcher();
+	private ServersFetcher serversFetcher;
 
 	@FXML
 	public void initialize() {
@@ -61,14 +60,24 @@ public class MainViewController implements ProgressReporter {
 
 		progressVBox.managedProperty().bind(progressVBox.visibleProperty());
 		progressVBox.setVisible(false);
-		refreshServers();
+
+		serversFetcher = new ServersFetcher(registryUrlField.textProperty());
+		Platform.runLater(this::refreshServers);
 	}
 
 	@FXML
 	public void refreshServers() {
-		serversFetcher.fetchServers()
+		Window owner = this.profilesVBox.getScene().getWindow();
+		serversFetcher.fetchServers(owner)
 				.exceptionally(throwable -> {
 					throwable.printStackTrace();
+					Platform.runLater(() -> {
+						Alert alert = new Alert(Alert.AlertType.ERROR);
+						alert.setHeaderText("Couldn't fetch servers.");
+						alert.setContentText("An error occurred, and the list of servers couldn't be fetched: " + throwable.getMessage() + ". Are you sure that you have the correct registry URL? Check the \"Servers\" tab.");
+						alert.initOwner(owner);
+						alert.show();
+					});
 					return new ArrayList<>();
 				})
 				.thenAccept(newServers -> Platform.runLater(() -> {
