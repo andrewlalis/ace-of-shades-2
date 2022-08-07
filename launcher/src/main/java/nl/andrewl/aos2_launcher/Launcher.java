@@ -17,23 +17,21 @@ public class Launcher extends Application {
 	public static final Path BASE_DIR = Path.of(System.getProperty("user.home"), ".ace-of-shades");
 	public static final Path VERSIONS_DIR = BASE_DIR.resolve("versions");
 	public static final Path PROFILES_FILE = BASE_DIR.resolve("profiles.json");
+	public static final Path PROFILES_DIR =  BASE_DIR.resolve("profiles");
 	public static final Path JRE_PATH = BASE_DIR.resolve("jre");
 
 	@Override
 	public void start(Stage stage) throws IOException {
-		if (!Files.exists(BASE_DIR)) {
-			Files.createDirectory(BASE_DIR);
-		}
-		if (!Files.exists(VERSIONS_DIR)) {
-			Files.createDirectory(VERSIONS_DIR);
-		}
+		if (!Files.exists(BASE_DIR)) Files.createDirectory(BASE_DIR);
+		if (!Files.exists(VERSIONS_DIR)) Files.createDirectory(VERSIONS_DIR);
+		if (!Files.exists(PROFILES_DIR)) Files.createDirectory(PROFILES_DIR);
 		FXMLLoader loader = new FXMLLoader(Launcher.class.getResource("/main_view.fxml"));
 		Parent rootNode = loader.load();
 		Scene scene = new Scene(rootNode);
 		addStylesheet(scene, "/font/fonts.css");
 		addStylesheet(scene, "/styles.css");
 		stage.setScene(scene);
-		stage.setTitle("Ace of Shades 2 - Launcher");
+		stage.setTitle("Ace of Shades - Launcher");
 		stage.show();
 	}
 

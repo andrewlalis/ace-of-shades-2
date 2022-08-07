@@ -1,22 +1,35 @@
 package nl.andrewl.aos2_launcher.view;
 
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane;
 import nl.andrewl.aos2_launcher.model.Profile;
 
-public class ProfileView extends VBox {
+import java.io.IOException;
+
+public class ProfileView extends Pane {
 	private final Profile profile;
+
+	@FXML public Label nameLabel;
+	@FXML public Label clientVersionLabel;
+	@FXML public Label usernameLabel;
 
 	public ProfileView(Profile profile) {
 		this.profile = profile;
-		var nameLabel = new Label();
+
+		try {
+			FXMLLoader loader = new FXMLLoader(ProfileView.class.getResource("/profile_view.fxml"));
+			loader.setController(this);
+			Node node = loader.load();
+			getChildren().add(node);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		nameLabel.textProperty().bind(profile.nameProperty());
-		var descriptionLabel = new Label();
-		descriptionLabel.textProperty().bind(profile.descriptionProperty());
-		var versionLabel = new Label();
-		versionLabel.textProperty().bind(profile.clientVersionProperty());
-		getChildren().addAll(nameLabel, descriptionLabel, versionLabel);
-		getStyleClass().add("list-item");
+		clientVersionLabel.textProperty().bind(profile.clientVersionProperty());
+		usernameLabel.textProperty().bind(profile.usernameProperty());
 	}
 
 	public Profile getProfile() {

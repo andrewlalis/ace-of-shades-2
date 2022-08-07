@@ -1,8 +1,4 @@
 # Ace of Shades 2 Client Configuration
-# Set these properties to connect to a server.
-serverHost: localhost
-serverPort: 25565
-username: player
 
 # Settings for input.
 input:

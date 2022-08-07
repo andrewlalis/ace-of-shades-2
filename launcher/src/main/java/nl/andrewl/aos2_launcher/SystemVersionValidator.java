@@ -62,8 +62,8 @@ public class SystemVersionValidator {
 		progressReporter.setActionText("Downloading JRE...");
 		HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder().GET().timeout(Duration.ofMinutes(5));
-		String preferredJreName = getPreferredJreName();
-		String url = JRE_DOWNLOAD_URL + preferredJreName;
+		String jreArchiveName = getPreferredJreName();
+		String url = JRE_DOWNLOAD_URL + jreArchiveName;
 		HttpRequest req = requestBuilder.uri(URI.create(url)).build();
 		return httpClient.sendAsync(req, HttpResponse.BodyHandlers.ofInputStream())
 				.thenApplyAsync(resp -> {
@@ -74,7 +74,7 @@ public class SystemVersionValidator {
 								FileUtils.deleteRecursive(Launcher.JRE_PATH);
 							}
 							Files.createDirectory(Launcher.JRE_PATH);
-							Path jreArchiveFile = Launcher.JRE_PATH.resolve(preferredJreName);
+							Path jreArchiveFile = Launcher.JRE_PATH.resolve(jreArchiveName);
 							FileUtils.downloadWithProgress(jreArchiveFile, resp, progressReporter);
 							progressReporter.setProgress(-1); // Indefinite progress.
 							progressReporter.setActionText("Unpacking JRE...");

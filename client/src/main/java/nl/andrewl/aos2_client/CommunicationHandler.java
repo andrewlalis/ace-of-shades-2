@@ -42,13 +42,11 @@ public class CommunicationHandler {
 		this.client = client;
 	}
 	
-	public void establishConnection() throws IOException {
+	public void establishConnection(String host, int port, String username) throws IOException {
 		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
-		InetAddress address = InetAddress.getByName(client.getConfig().serverHost);
-		int port = client.getConfig().serverPort;
-		String username = client.getConfig().username;
+		InetAddress address = InetAddress.getByName(host);
 		System.out.printf("Connecting to server at %s, port %d, with username \"%s\"...%n", address, port, username);
 
 		socket = new Socket(address, port);

@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import nl.andrewl.aos2_launcher.Launcher;
+import nl.andrewl.aos2_launcher.util.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,16 +33,26 @@ public class ProfileSet {
 
 	public void addNewProfile(Profile profile) {
 		profiles.add(profile);
-		selectedProfile.set(profile);
 		save();
+		try {
+			if (!Files.exists(profile.getDir())) {
+				Files.createDirectory(profile.getDir());
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void removeProfile(Profile profile) {
 		if (profile == null) return;
 		boolean removed = profiles.remove(profile);
 		if (removed) {
-			if (selectedProfile.get() != null && selectedProfile.get().equals(profile)) {
-				selectedProfile.set(null);
+			try {
+				if (Files.exists(profile.getDir())) {
+					FileUtils.deleteRecursive(profile.getDir());
+				}
+			} catch (IOException e) {
+				throw new RuntimeException(e);
 			}
 			save();
 		}
@@ -51,25 +62,27 @@ public class ProfileSet {
 		removeProfile(getSelectedProfile());
 	}
 
-	public void selectProfile(Profile profile) {
-		if (!profiles.contains(profile)) return;
-		selectedProfile.set(profile);
-	}
-
 	public void load(Path file) throws IOException {
 		try (var reader = Files.newBufferedReader(file)) {
 			JsonObject data = new Gson().fromJson(reader, JsonObject.class);
 			profiles.clear();
 			JsonElement selectedProfileIdElement = data.get("selectedProfileId");
-			UUID selectedProfileId = selectedProfileIdElement.isJsonNull() ? null : UUID.fromString(selectedProfileIdElement.getAsString());
+			UUID selectedProfileId = (selectedProfileIdElement == null || selectedProfileIdElement.isJsonNull())
+					? null
+					: UUID.fromString(selectedProfileIdElement.getAsString());
 			JsonArray profilesArray = data.getAsJsonArray("profiles");
 			for (JsonElement element : profilesArray) {
 				JsonObject profileObj = element.getAsJsonObject();
 				UUID id = UUID.fromString(profileObj.get("id").getAsString());
 				String name = profileObj.get("name").getAsString();
-				String description = profileObj.get("description").getAsString();
 				String clientVersion = profileObj.get("clientVersion").getAsString();
-				Profile profile = new Profile(id, name, description, clientVersion);
+				String username = profileObj.get("username").getAsString();
+				JsonElement jvmArgsElement = profileObj.get("jvmArgs");
+				String jvmArgs = null;
+				if (jvmArgsElement != null && jvmArgsElement.isJsonPrimitive() && jvmArgsElement.getAsJsonPrimitive().isString()) {
+					jvmArgs = jvmArgsElement.getAsString();
+				}
+				Profile profile = new Profile(id, name, username, clientVersion, jvmArgs);
 				profiles.add(profile);
 				if (selectedProfileId != null && selectedProfileId.equals(profile.getId())) {
 					selectedProfile.set(profile);
@@ -106,8 +119,9 @@ public class ProfileSet {
 			JsonObject obj = new JsonObject();
 			obj.addProperty("id", profile.getId().toString());
 			obj.addProperty("name", profile.getName());
-			obj.addProperty("description", profile.getDescription());
+			obj.addProperty("username", profile.getUsername());
 			obj.addProperty("clientVersion", profile.getClientVersion());
+			obj.addProperty("jvmArgs", profile.getJvmArgs());
 			profilesArray.add(obj);
 		}
 		data.add("profiles", profilesArray);
@@ -122,7 +136,7 @@ public class ProfileSet {
 			try {
 				save(lastFileUsed);
 			} catch (IOException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 	}

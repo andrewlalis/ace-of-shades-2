@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane prefWidth="300.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
+   <padding><Insets top="5" bottom="5" left="5" right="5"/></padding>
+   <top>
+      <Label fx:id="nameLabel" text="Profile Name" BorderPane.alignment="CENTER_LEFT" style="-fx-font-size: 16px; -fx-font-weight: bold;">
+         <BorderPane.margin>
+            <Insets bottom="5.0" />
+         </BorderPane.margin>
+      </Label>
+   </top>
+   <center>
+      <VBox BorderPane.alignment="CENTER">
+         <AnchorPane VBox.vgrow="NEVER">
+            <Label text="Client Version" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                   AnchorPane.topAnchor="0.0"/>
+            <Label fx:id="clientVersionLabel" text="v1.0.0" textAlignment="RIGHT" AnchorPane.bottomAnchor="0.0"
+                   AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" style="-fx-font-weight: bold;"/>
+         </AnchorPane>
+         <AnchorPane VBox.vgrow="NEVER">
+            <Label text="Username" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                   AnchorPane.topAnchor="0.0"/>
+            <Label fx:id="usernameLabel" text="Player" textAlignment="RIGHT" AnchorPane.bottomAnchor="0.0"
+                   AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" style="-fx-font-weight: bold;"/>
+         </AnchorPane>
+      </VBox>
+   </center>
+</BorderPane>

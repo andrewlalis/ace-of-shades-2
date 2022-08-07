@@ -26,7 +26,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client implements Runnable {
+	private final String host;
+	private final int port;
+	private final String username;
 	private final ClientConfig config;
+
 	private final CommunicationHandler communicationHandler;
 	private final InputHandler inputHandler;
 	private final Camera camera;
@@ -42,7 +46,10 @@ public class Client implements Runnable {
 	private final Chat chat;
 	private final Queue<Runnable> mainThreadActions;
 
-	public Client(ClientConfig config) {
+	public Client(ClientConfig config, String host, int port, String username) {
+		this.host = host;
+		this.port = port;
+		this.username = username;
 		this.config = config;
 		this.camera = new Camera();
 		this.players = new ConcurrentHashMap<>();
@@ -74,7 +81,7 @@ public class Client implements Runnable {
 	@Override
 	public void run() {
 		try {
-			communicationHandler.establishConnection();
+			communicationHandler.establishConnection(host, port, username);
 		} catch (IOException e) {
 			System.err.println("Couldn't connect to the server: " + e.getMessage());
 			return;
@@ -265,13 +272,21 @@ public class Client implements Runnable {
 	}
 
 	public static void main(String[] args) throws IOException {
+		if (args.length < 3) {
+			System.err.println("Missing required host, port, username args.");
+			System.exit(1);
+		}
+		String host = args[0].trim();
+		int port = Integer.parseInt(args[1]);
+		String username = args[2].trim();
+
 		List<Path> configPaths = Config.getCommonConfigPaths();
 		configPaths.add(0, Path.of("client.yaml")); // Add this first so we create client.yaml if needed.
-		if (args.length > 0) {
-			configPaths.add(Path.of(args[0].trim()));
+		if (args.length > 3) {
+			configPaths.add(Path.of(args[3].trim()));
 		}
 		ClientConfig clientConfig = Config.loadConfig(ClientConfig.class, configPaths, new ClientConfig(), "default-config.yaml");
-		Client client = new Client(clientConfig);
+		Client client = new Client(clientConfig, host, port, username);
 		client.run();
 	}
 }

@@ -19,12 +19,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class EditProfileDialog extends Dialog<Profile> {
-	@FXML
-	public TextField nameField;
-	@FXML
-	public TextArea descriptionTextArea;
-	@FXML
-	public ChoiceBox<String> clientVersionChoiceBox;
+	@FXML public TextField nameField;
+	@FXML public TextField usernameField;
+	@FXML public ChoiceBox<String> clientVersionChoiceBox;
+	@FXML public TextArea jvmArgsTextArea;
 
 	private final ObjectProperty<Profile> profile;
 
@@ -40,18 +38,23 @@ public class EditProfileDialog extends Dialog<Profile> {
 			setTitle("Edit Profile");
 
 			BooleanBinding formInvalid = nameField.textProperty().isEmpty()
-					.or(clientVersionChoiceBox.valueProperty().isNull());
+					.or(clientVersionChoiceBox.valueProperty().isNull())
+					.or(usernameField.textProperty().isEmpty());
 			nameField.setText(profile.getName());
-			descriptionTextArea.setText(profile.getDescription());
-			VersionFetcher.INSTANCE.getAvailableReleases().thenAccept(releases -> {
-				Platform.runLater(() -> {
-					clientVersionChoiceBox.setItems(FXCollections.observableArrayList(releases.stream().map(ClientVersionRelease::tag).toList()));
+			usernameField.setText(profile.getUsername());
+			VersionFetcher.INSTANCE.getAvailableReleases().thenAccept(releases -> Platform.runLater(() -> {
+				clientVersionChoiceBox.setItems(FXCollections.observableArrayList(releases.stream().map(ClientVersionRelease::tag).toList()));
+				// If the profile doesn't have a set version, use the latest release.
+				if (profile.getClientVersion() == null || profile.getClientVersion().isBlank()) {
 					String lastRelease = releases.size() == 0 ? null : releases.get(0).tag();
 					if (lastRelease != null) {
 						clientVersionChoiceBox.setValue(lastRelease);
 					}
-				});
-			});
+				} else {
+					clientVersionChoiceBox.setValue(profile.getClientVersion());
+				}
+			}));
+			jvmArgsTextArea.setText(profile.getJvmArgs());
 
 			DialogPane pane = new DialogPane();
 			pane.setContent(parent);
@@ -67,13 +70,9 @@ public class EditProfileDialog extends Dialog<Profile> {
 				}
 				var prof = this.profile.getValue();
 				prof.setName(nameField.getText().trim());
-				String descriptionText = descriptionTextArea.getText().trim();
-				if (descriptionText.isBlank()) {
-					prof.setDescription(null);
-				} else {
-					prof.setDescription(descriptionText);
-				}
+				prof.setUsername(usernameField.getText().trim());
 				prof.setClientVersion(clientVersionChoiceBox.getValue());
+				prof.setJvmArgs(jvmArgsTextArea.getText());
 				return this.profile.getValue();
 			});
 			setOnShowing(event -> Platform.runLater(() -> nameField.requestFocus()));

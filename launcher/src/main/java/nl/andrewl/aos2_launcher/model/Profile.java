@@ -2,24 +2,28 @@ package nl.andrewl.aos2_launcher.model;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import nl.andrewl.aos2_launcher.Launcher;
 
+import java.nio.file.Path;
 import java.util.UUID;
 
 public class Profile {
 	private final UUID id;
 	private final StringProperty name;
-	private final StringProperty description;
+	private final StringProperty username;
 	private final StringProperty clientVersion;
+	private final StringProperty jvmArgs;
 
 	public Profile() {
-		this(UUID.randomUUID(), "", null, null);
+		this(UUID.randomUUID(), "", "Player", null, null);
 	}
 
-	public Profile(UUID id, String name, String description, String clientVersion) {
+	public Profile(UUID id, String name, String username, String clientVersion, String jvmArgs) {
 		this.id = id;
 		this.name = new SimpleStringProperty(name);
-		this.description = new SimpleStringProperty(description);
+		this.username = new SimpleStringProperty(username);
 		this.clientVersion = new SimpleStringProperty(clientVersion);
+		this.jvmArgs = new SimpleStringProperty(jvmArgs);
 	}
 
 	public UUID getId() {
@@ -34,12 +38,12 @@ public class Profile {
 		return name;
 	}
 
-	public String getDescription() {
-		return description.get();
+	public String getUsername() {
+		return username.get();
 	}
 
-	public StringProperty descriptionProperty() {
-		return description;
+	public StringProperty usernameProperty() {
+		return username;
 	}
 
 	public String getClientVersion() {
@@ -50,15 +54,31 @@ public class Profile {
 		return clientVersion;
 	}
 
+	public String getJvmArgs() {
+		return jvmArgs.get();
+	}
+
+	public StringProperty jvmArgsProperty() {
+		return jvmArgs;
+	}
+
 	public void setName(String name) {
 		this.name.set(name);
 	}
 
-	public void setDescription(String description) {
-		this.description.set(description);
+	public void setUsername(String username) {
+		this.username.set(username);
 	}
 
 	public void setClientVersion(String clientVersion) {
 		this.clientVersion.set(clientVersion);
+	}
+
+	public void setJvmArgs(String jvmArgs) {
+		this.jvmArgs.set(jvmArgs);
+	}
+
+	public Path getDir() {
+		return Launcher.PROFILES_DIR.resolve(id.toString());
 	}
 }

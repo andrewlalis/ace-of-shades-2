@@ -38,8 +38,6 @@ public class VersionFetcher {
 
 	public VersionFetcher() {
 		this.availableReleases = new ArrayList<>();
-		System.out.println(System.getProperty("os.name"));
-		System.out.println(System.getProperty("os.arch"));
 	}
 
 	public CompletableFuture<ClientVersionRelease> getRelease(String versionTag) {
@@ -130,13 +128,12 @@ public class VersionFetcher {
 							JsonObject assetObj = asset.getAsJsonObject();
 							String name = assetObj.get("name").getAsString();
 							if (name.matches(regex)) {
-								System.out.println("Found matching asset: " + name);
 								return assetObj;
 							}
 						}
-						throw new RuntimeException("Couldn't find a matching release asset.");
+						throw new RuntimeException("Couldn't find a matching release asset for this system.");
 					} else {
-						throw new RuntimeException("Error while requesting release assets.");
+						throw new RuntimeException("Error while requesting release assets from GitHub: " + resp.statusCode());
 					}
 				});
 		return downloadUrlFuture.thenComposeAsync(asset -> {
@@ -145,7 +142,6 @@ public class VersionFetcher {
 			HttpRequest downloadRequest = HttpRequest.newBuilder(URI.create(url))
 					.GET().timeout(Duration.ofMinutes(5)).build();
 			Path file = Launcher.VERSIONS_DIR.resolve(fileName);
-			System.out.printf("Downloading %s to %s.%n", fileName, file.toAbsolutePath());
 			return httpClient.sendAsync(downloadRequest, HttpResponse.BodyHandlers.ofInputStream())
 					.thenApplyAsync(resp -> {
 						if (resp.statusCode() == 200) {
@@ -157,7 +153,7 @@ public class VersionFetcher {
 							}
 							return file;
 						} else {
-							throw new RuntimeException("Version download failed.");
+							throw new RuntimeException("Error while downloading release asset from GitHub: " + resp.statusCode());
 						}
 					});
 		});
