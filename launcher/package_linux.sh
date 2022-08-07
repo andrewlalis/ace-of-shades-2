@@ -23,6 +23,7 @@ jpackage \
   --linux-shortcut \
   --linux-deb-maintainer "andrewlalisofficial@gmail.com" \
   --linux-menu-group "Game" \
+  --linux-app-category "Game" \
   --runtime-image image \
   --main-jar $main_jar \
   --main-class nl.andrewl.aos2_launcher.Launcher \
