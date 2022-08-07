@@ -7,7 +7,7 @@
     <groupId>nl.andrewl</groupId>
     <artifactId>ace-of-shades-2</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
     <modules>
         <module>core</module>
         <module>server</module>
